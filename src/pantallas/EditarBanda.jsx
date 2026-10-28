@@ -5,6 +5,7 @@ import { Imagen } from '../componentes/Portadas.jsx'
 import { Boton, Campo, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { mensajeError } from '../lib/errores.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
@@ -47,8 +48,8 @@ export default function EditarBanda({ id }) {
         }
       }
       irABanda(banda.id)
-    } catch {
-      setError('No se pudo guardar. Revisá la conexión y probá de nuevo.')
+    } catch (e) {
+      setError(mensajeError(e))
     } finally {
       setGuardando(false)
     }
@@ -59,8 +60,8 @@ export default function EditarBanda({ id }) {
     try {
       await catalogo.fusionarBandas(banda, conflicto)
       irABanda(conflicto.id)
-    } catch {
-      setError('No se pudieron unir las bandas.')
+    } catch (e) {
+      setError(mensajeError(e, 'unir las bandas'))
       setConflicto(null)
     } finally {
       setGuardando(false)

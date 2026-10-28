@@ -2,6 +2,7 @@ import { useId, useMemo, useState } from 'react'
 import { IconoFormato } from '../componentes/Iconos.jsx'
 import { Boton, Encabezado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { mensajeError } from '../lib/errores.js'
 import { clasificar, parsearLista } from '../lib/importar.js'
 import { navegar } from '../lib/router.js'
 
@@ -31,8 +32,8 @@ export default function Importar() {
     setError(null)
     try {
       setResultado(await importar(aGuardar, sumarDuplicados ? 'sumar' : 'omitir'))
-    } catch {
-      setError('No se importó nada: hubo un error al guardar. El texto sigue acá para reintentar.')
+    } catch (e) {
+      setError(`No se importó nada. ${mensajeError(e, 'importar')} El texto sigue acá para reintentar.`)
     } finally {
       setGuardando(false)
     }

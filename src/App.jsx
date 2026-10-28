@@ -56,7 +56,7 @@ export default function App() {
 function Rutas({ mail }) {
   const { partes, consulta } = useRuta()
   const [prefs] = usePreferencias()
-  const { discosPorId, error } = useCatalogo()
+  const { discosPorId, error, miembro } = useCatalogo()
   const [busqueda, setBusqueda] = useState('')
   const [primera, segunda, tercera] = partes
   const formatoDeRuta = FORMATO_DE_SLUG[primera]
@@ -107,6 +107,11 @@ function Rutas({ mail }) {
 
   return (
     <>
+      {miembro === false && (
+        <p role="alert" className="border-b border-metal/50 px-4 py-2 text-center text-sm text-acento-texto">
+          Tu cuenta todavía no está habilitada en el catálogo compartido. Hay que sumarla a los miembros en Supabase.
+        </p>
+      )}
       {error && (
         <p role="alert" className="border-b border-metal/50 px-4 py-2 text-center text-sm text-acento-texto">
           No se pudo sincronizar: {error}

@@ -5,6 +5,7 @@ import { Tapa } from '../componentes/Portadas.jsx'
 import { BadgeFormato } from '../componentes/Tarjetas.jsx'
 import { linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { mensajeError } from '../lib/errores.js'
 import { SLUG_FORMATO, navegar, volver } from '../lib/router.js'
 
 export default function Disco({ id }) {
@@ -33,8 +34,8 @@ export default function Disco({ id }) {
       await borrarDisco(disco)
       if (quedanEnBanda) volver(rutaBanda)
       else navegar(SLUG_FORMATO[disco.formato], { reemplazar: true })
-    } catch {
-      setError('No se pudo borrar. Probá de nuevo.')
+    } catch (e) {
+      setError(mensajeError(e, 'borrar'))
       setBorrando(false)
       setConfirmando(false)
     }

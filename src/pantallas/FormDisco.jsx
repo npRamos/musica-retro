@@ -5,6 +5,7 @@ import { Imagen } from '../componentes/Portadas.jsx'
 import { Boton, Campo, Dialogo, Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { esLinkSpotifyValido } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { mensajeError } from '../lib/errores.js'
 import { navegar } from '../lib/router.js'
 
 const OPCIONES_FORMATO = [
@@ -55,8 +56,8 @@ export default function FormDisco({ disco, inicial = {} }) {
         if (r.estado === 'duplicado') setDuplicado(r.disco)
         else navegar(`disco/${r.disco.id}`, { reemplazar: true })
       }
-    } catch {
-      setErrorGeneral('No se pudo guardar. Revisá la conexión y probá de nuevo.')
+    } catch (e) {
+      setErrorGeneral(mensajeError(e))
     } finally {
       setGuardando(false)
     }
@@ -67,8 +68,8 @@ export default function FormDisco({ disco, inicial = {} }) {
     try {
       await catalogo.sumarCopia(duplicado, copias, imagen ?? undefined)
       navegar(`disco/${duplicado.id}`, { reemplazar: true })
-    } catch {
-      setErrorGeneral('No se pudo sumar la copia.')
+    } catch (e) {
+      setErrorGeneral(mensajeError(e, 'sumar la copia'))
       setDuplicado(null)
     } finally {
       setGuardando(false)

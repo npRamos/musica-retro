@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { borrar, borrarImagenesCacheadas, guardar, leer, pedirAlmacenamientoPersistente, precargarImagenes } from './almacen.js'
+import { esErrorDeRed } from './errores.js'
 import { borrarImagenes, firmarImagenes, procesarImagen, subirImagen } from './imagen.js'
 import { supabase } from './supabase.js'
 import { formatearTitulo, normalizar } from './texto.js'
@@ -8,14 +9,13 @@ const Contexto = createContext(null)
 const CLAVE_CACHE = 'catalogo'
 const VACIO = { bandas: [], discos: [], urls: {}, actualizadoEn: null }
 
-const esErrorDeRed = (error) => !navigator.onLine || /fetch|network|load failed/i.test(error?.message ?? '')
-
 export function CatalogoProvider({ sesion, children }) {
   const uid = sesion.user.id
   const [datos, setDatos] = useState(() => leer(CLAVE_CACHE) ?? VACIO)
   const [online, setOnline] = useState(navigator.onLine)
   const [sincronizando, setSincronizando] = useState(false)
   const [error, setError] = useState(null)
+  const [miembro, setMiembro] = useState(null)
   const enCurso = useRef(null)
 
   const sincronizar = useCallback(async () => {
@@ -23,12 +23,14 @@ export function CatalogoProvider({ sesion, children }) {
     enCurso.current = (async () => {
       setSincronizando(true)
       try {
-        const [bandasRes, discosRes] = await Promise.all([
+        const [bandasRes, discosRes, miembroRes] = await Promise.all([
           supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en'),
           supabase.from('discos').select('id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path'),
+          supabase.rpc('es_miembro'),
         ])
         if (bandasRes.error) throw bandasRes.error
         if (discosRes.error) throw discosRes.error
+        if (!miembroRes.error) setMiembro(miembroRes.data === true)
         const rutas = [...bandasRes.data.map((b) => b.imagen_path), ...discosRes.data.map((d) => d.tapa_path)].filter(Boolean)
         const urls = await firmarImagenes(rutas)
         const nuevos = { bandas: bandasRes.data, discos: discosRes.data, urls, actualizadoEn: new Date().toISOString() }
@@ -186,6 +188,7 @@ export function CatalogoProvider({ sesion, children }) {
     bandasPorId,
     discosPorId,
     online,
+    miembro,
     sincronizando,
     error,
     sincronizar,
