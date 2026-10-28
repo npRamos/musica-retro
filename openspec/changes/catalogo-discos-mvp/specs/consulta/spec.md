@@ -75,6 +75,10 @@ Al tocar un disco, el sistema SHALL mostrar su detalle con la tapa grande, banda
 - **WHEN** la usuaria toca "Signos" en la pantalla de Soda Stereo
 - **THEN** el sistema muestra el detalle de ese disco con sus datos y acciones
 
+#### Scenario: Deslizar a la contratapa
+- **WHEN** el disco tiene contratapa y la usuaria desliza la tapa hacia un costado
+- **THEN** se muestra la contratapa, con un indicador de cuál de las dos se está viendo
+
 #### Scenario: Volver desde el detalle
 - **WHEN** la usuaria usa el botón atrás en el detalle
 - **THEN** el sistema vuelve a la pantalla de la banda

@@ -24,6 +24,7 @@ export default function FormDisco({ disco, inicial = {} }) {
   const [copias, setCopias] = useState(editando ? disco.copias : 1)
   const [spotify, setSpotify] = useState(editando ? (disco.spotify_url ?? '') : '')
   const [imagen, setImagen] = useState(undefined)
+  const [contratapa, setContratapa] = useState(undefined)
   const [errores, setErrores] = useState({})
   const [guardando, setGuardando] = useState(false)
   const [errorGeneral, setErrorGeneral] = useState(null)
@@ -48,11 +49,11 @@ export default function FormDisco({ disco, inicial = {} }) {
     setErrorGeneral(null)
     try {
       if (editando) {
-        const r = await catalogo.actualizarDisco(disco, { banda, titulo, formato, copias, spotify_url: spotify.trim(), imagen })
+        const r = await catalogo.actualizarDisco(disco, { banda, titulo, formato, copias, spotify_url: spotify.trim(), imagen, contratapa })
         if (r.estado === 'conflicto') setConflicto(r.existente)
         else navegar(`disco/${disco.id}`, { reemplazar: true })
       } else {
-        const r = await catalogo.agregarDisco({ banda, titulo, formato, copias, imagen })
+        const r = await catalogo.agregarDisco({ banda, titulo, formato, copias, imagen, contratapa })
         if (r.estado === 'duplicado') setDuplicado(r.disco)
         else navegar(`disco/${r.disco.id}`, { reemplazar: true })
       }
@@ -66,7 +67,7 @@ export default function FormDisco({ disco, inicial = {} }) {
   const sumarCopia = async () => {
     setGuardando(true)
     try {
-      await catalogo.sumarCopia(duplicado, copias, imagen ?? undefined)
+      await catalogo.sumarCopia(duplicado, copias, imagen ?? undefined, contratapa ?? undefined)
       navegar(`disco/${duplicado.id}`, { reemplazar: true })
     } catch (e) {
       setErrorGeneral(mensajeError(e, 'sumar la copia'))
@@ -93,6 +94,15 @@ export default function FormDisco({ disco, inicial = {} }) {
           valor={imagen}
           onChange={setImagen}
           deshabilitado={guardando}
+        />
+        <SelectorImagen
+          etiqueta="Contratapa (lista de temas)"
+          actual={editando && disco.contratapa_path ? <Imagen ruta={disco.contratapa_path} ajuste="contain" /> : null}
+          valor={contratapa}
+          onChange={setContratapa}
+          deshabilitado={guardando}
+          opciones={{ recortar: false, lado: 1600 }}
+          ajuste="contain"
         />
         {editando && (
           <Campo

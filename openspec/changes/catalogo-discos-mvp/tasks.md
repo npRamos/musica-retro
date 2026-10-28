@@ -99,6 +99,14 @@
 - [x] 12.3 README: setup de Supabase (migrations, Auth con signups off, template con `{{ .Token }}`, Site/Redirect URLs, invitar a la usuaria), setup de Pages y variables, desarrollo local y cómo reactivar el keep-alive
 - [ ] 12.4 Configurar Supabase y GitHub según el README, hacer el primer deploy y correr el keep-alive a mano
 
+## 12b. Contratapa
+
+- [x] 12b.1 Migration `contratapa_path` + `fusionar_bandas` que la conserva; probada en Postgres local
+- [x] 12b.2 `procesarImagen` con recorte opcional y lado configurable (contratapa: sin recorte, 1600 px, tope de peso)
+- [x] 12b.3 Alta, edición, sumar copia y borrado con contratapa; segundo selector en el formulario
+- [x] 12b.4 Carrusel tapa ↔ contratapa en el detalle y visor a pantalla completa (zoom nativo, atrás lo cierra)
+- [ ] 12b.5 Aplicar la migration en Supabase antes del deploy y probar en el celular con una contratapa real
+
 ## 13. Exportación a CSV
 
 - [ ] 13.1 `generarCsv(discos, bandasPorId, alcance)` en `src/lib/exportar.js`: encabezado, orden, escapado RFC 4180, BOM, `\r\n`, fechas `AAAA-MM-DD`; con tests

@@ -25,13 +25,13 @@ export function CatalogoProvider({ sesion, children }) {
       try {
         const [bandasRes, discosRes, miembroRes] = await Promise.all([
           supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en'),
-          supabase.from('discos').select('id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path'),
+          supabase.from('discos').select('id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path, contratapa_path'),
           supabase.rpc('es_miembro'),
         ])
         if (bandasRes.error) throw bandasRes.error
         if (discosRes.error) throw discosRes.error
         if (!miembroRes.error) setMiembro(miembroRes.data === true)
-        const rutas = [...bandasRes.data.map((b) => b.imagen_path), ...discosRes.data.map((d) => d.tapa_path)].filter(Boolean)
+        const rutas = [...bandasRes.data.map((b) => b.imagen_path), ...discosRes.data.flatMap((d) => [d.tapa_path, d.contratapa_path])].filter(Boolean)
         const urls = await firmarImagenes(rutas)
         const nuevos = { bandas: bandasRes.data, discos: discosRes.data, urls, actualizadoEn: new Date().toISOString() }
         setDatos(nuevos)
@@ -78,30 +78,34 @@ export function CatalogoProvider({ sesion, children }) {
     return data
   }
 
-  const ponerTapa = async (disco, imagen) => {
+  // campo: 'tapa_path' | 'contratapa_path'. imagen: Blob nuevo | null (quitar) | undefined (sin cambios)
+  const ponerImagen = async (disco, campo, imagen) => {
     if (imagen === undefined) return
-    const anterior = disco.tapa_path
-    const ruta = imagen ? await subirImagen(uid, 'discos', disco.id, imagen) : null
-    const { error: err } = await supabase.from('discos').update({ tapa_path: ruta }).eq('id', disco.id)
+    const anterior = disco[campo]
+    const nombre = campo === 'contratapa_path' ? `${disco.id}-contratapa` : disco.id
+    const ruta = imagen ? await subirImagen(uid, 'discos', nombre, imagen) : null
+    const { error: err } = await supabase.from('discos').update({ [campo]: ruta }).eq('id', disco.id)
     if (err) throw err
     if (anterior) await borrarImagenes([anterior]).catch(() => {})
   }
 
-  const agregarDisco = async ({ banda, titulo, formato, copias, imagen }) => {
+  const agregarDisco = async ({ banda, titulo, formato, copias, imagen, contratapa }) => {
     const resultado = await rpc('agregar_disco', {
       p_banda: formatearTitulo(banda),
       p_titulo: formatearTitulo(titulo),
       p_formato: formato,
       p_copias: copias,
     })
-    if (resultado.estado === 'creado' && imagen) await ponerTapa(resultado.disco, imagen)
+    if (resultado.estado === 'creado' && imagen) await ponerImagen(resultado.disco, 'tapa_path', imagen)
+    if (resultado.estado === 'creado' && contratapa) await ponerImagen(resultado.disco, 'contratapa_path', contratapa)
     if (resultado.estado === 'creado') await sincronizar()
     return resultado
   }
 
-  const sumarCopia = async (disco, cantidad = 1, imagen) => {
+  const sumarCopia = async (disco, cantidad = 1, imagen, contratapa) => {
     await rpc('sumar_copia', { p_disco: disco.id, p_cantidad: cantidad })
-    if (imagen && !disco.tapa_path) await ponerTapa(disco, imagen)
+    if (imagen && !disco.tapa_path) await ponerImagen(disco, 'tapa_path', imagen)
+    if (contratapa && !disco.contratapa_path) await ponerImagen(disco, 'contratapa_path', contratapa)
     await sincronizar()
   }
 
@@ -115,7 +119,7 @@ export function CatalogoProvider({ sesion, children }) {
   }
 
   // Devuelve { estado: 'ok' } o { estado: 'conflicto', existente } si choca con otro disco.
-  const actualizarDisco = async (disco, { banda, titulo, formato, copias, spotify_url, imagen }) => {
+  const actualizarDisco = async (disco, { banda, titulo, formato, copias, spotify_url, imagen, contratapa }) => {
     const bandaDestino = await bandaPorNombre(banda)
     const { error: err } = await supabase
       .from('discos')
@@ -128,7 +132,8 @@ export function CatalogoProvider({ sesion, children }) {
       return { estado: 'conflicto', existente }
     }
     if (err) throw err
-    await ponerTapa(disco, imagen)
+    await ponerImagen(disco, 'tapa_path', imagen)
+    await ponerImagen(disco, 'contratapa_path', contratapa)
     await sincronizar()
     return { estado: 'ok' }
   }
@@ -136,7 +141,7 @@ export function CatalogoProvider({ sesion, children }) {
   const borrarDisco = async (disco) => {
     const { error: err } = await supabase.from('discos').delete().eq('id', disco.id)
     if (err) throw err
-    await borrarImagenes([disco.tapa_path]).catch(() => {})
+    await borrarImagenes([disco.tapa_path, disco.contratapa_path]).catch(() => {})
     // Una banda sin discos ya no aparece en ninguna pestaña: se limpia.
     if (!datos.discos.some((d) => d.id !== disco.id && d.banda_id === disco.banda_id)) {
       const banda = bandasPorId.get(disco.banda_id)

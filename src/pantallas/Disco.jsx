@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Boton, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { IconoBorrar, IconoEditar, IconoSpotify } from '../componentes/Iconos.jsx'
-import { Tapa } from '../componentes/Portadas.jsx'
+import Carrusel from '../componentes/Carrusel.jsx'
 import { BadgeFormato } from '../componentes/Tarjetas.jsx'
 import { linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
@@ -45,7 +45,7 @@ export default function Disco({ id }) {
     <>
       <Encabezado titulo="Detalle" atras={rutaBanda} />
       <main className="mx-auto max-w-md px-4 pt-4 pb-16">
-        <Tapa disco={disco} />
+        <Carrusel disco={disco} />
         <h2 className="mt-5 text-3xl leading-tight font-semibold">{disco.titulo}</h2>
         <button type="button" onClick={() => navegar(rutaBanda)} className="etiqueta mt-1 min-h-11 text-left text-lg tracking-[0.08em] text-acento-texto">
           {banda?.nombre}

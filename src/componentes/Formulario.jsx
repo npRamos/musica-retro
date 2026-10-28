@@ -67,7 +67,7 @@ export function CampoBanda({ valor, onChange, error, autoFocus }) {
 }
 
 // Foto desde la cámara o la galería, con vista previa. valor: Blob nuevo | null (quitar) | undefined (sin cambios)
-export function SelectorImagen({ etiqueta = 'Tapa', actual, valor, onChange, deshabilitado }) {
+export function SelectorImagen({ etiqueta = 'Tapa', actual, valor, onChange, deshabilitado, opciones, ajuste = 'cover' }) {
   const { procesarImagen } = useCatalogo()
   const camara = useRef(null)
   const galeria = useRef(null)
@@ -83,7 +83,7 @@ export function SelectorImagen({ etiqueta = 'Tapa', actual, valor, onChange, des
     setProcesando(true)
     setError(null)
     try {
-      onChange(await procesarImagen(archivo))
+      onChange(await procesarImagen(archivo, opciones))
     } catch {
       setError('No se pudo leer esa imagen. Probá con otra.')
     } finally {
@@ -99,7 +99,9 @@ export function SelectorImagen({ etiqueta = 'Tapa', actual, valor, onChange, des
       <p className="etiqueta text-xs text-suave">{etiqueta}</p>
       <div className="mt-2 flex items-start gap-4">
         <div className="relative size-28 shrink-0 overflow-hidden border border-metal/60 bg-superficie-solida">
-          {vistaPrevia && <img src={vistaPrevia} alt="Vista previa" className="absolute inset-0 size-full object-cover" />}
+          {vistaPrevia && (
+            <img src={vistaPrevia} alt="Vista previa" className={`absolute inset-0 size-full ${ajuste === 'contain' ? 'object-contain' : 'object-cover'}`} />
+          )}
           {muestraActual}
           {!hayImagen && <p className="absolute inset-0 grid place-items-center text-xs font-light text-suave">Sin imagen</p>}
           {procesando && <p className="absolute inset-0 grid place-items-center bg-fondo/80 text-xs">Procesando…</p>}

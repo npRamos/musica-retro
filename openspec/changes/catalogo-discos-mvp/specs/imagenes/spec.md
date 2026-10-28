@@ -15,6 +15,17 @@ El sistema SHALL permitir asignar una tapa a un disco, al darlo de alta o al edi
 - **WHEN** la usuaria toca "Otra" en la vista previa
 - **THEN** el sistema descarta la imagen y permite elegir o sacar otra
 
+### Requirement: Contratapa del disco
+Además de la tapa, el sistema SHALL permitir asignar una contratapa a cada disco (para ver la lista de temas), con las mismas opciones de cámara o galería. La contratapa MUST NOT recortarse: conserva su proporción y se guarda con hasta 1600 píxeles en el lado mayor, para que los temas se puedan leer.
+
+#### Scenario: Cargar contratapa de un CD
+- **WHEN** la usuaria saca una foto de la contratapa rectangular de un CD
+- **THEN** el sistema la guarda completa, sin cortar los bordes, y la muestra en el detalle del disco
+
+#### Scenario: Leer los temas
+- **WHEN** la usuaria toca la contratapa en el detalle
+- **THEN** se abre a pantalla completa y se puede ampliar con dos dedos
+
 ### Requirement: Imagen de banda
 El sistema SHALL permitir asignar, reemplazar o quitar una imagen propia de una banda desde la edición de la banda, con las mismas opciones de cámara o galería.
 

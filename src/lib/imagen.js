@@ -1,26 +1,37 @@
 import { BUCKET, supabase } from './supabase.js'
 
-const LADO_MAXIMO = 800
+const PESO_MAXIMO = 900_000 // el bucket acepta hasta 1 MB
 
 function aBlob(canvas, tipo, calidad) {
   return new Promise((resolve) => canvas.toBlob(resolve, tipo, calidad))
 }
 
-// Recorte cuadrado centrado, 800×800 como máximo, WebP (o JPEG si el navegador no codifica WebP).
-export async function procesarImagen(archivo) {
+async function codificar(canvas, calidad) {
+  const webp = await aBlob(canvas, 'image/webp', calidad)
+  if (webp && webp.type === 'image/webp') return webp
+  return aBlob(canvas, 'image/jpeg', calidad)
+}
+
+// Tapas: recorte cuadrado centrado a 800 px. Contratapas: sin recorte y hasta 1600 px, para leer los temas.
+// WebP (o JPEG si el navegador no codifica WebP).
+export async function procesarImagen(archivo, { recortar = true, lado = 800 } = {}) {
   const bitmap = await createImageBitmap(archivo, { imageOrientation: 'from-image' })
-  const lado = Math.min(bitmap.width, bitmap.height)
-  const salida = Math.min(LADO_MAXIMO, lado)
+  let [sx, sy, sw, sh] = [0, 0, bitmap.width, bitmap.height]
+  if (recortar) {
+    const menor = Math.min(sw, sh)
+    ;[sx, sy, sw, sh] = [(sw - menor) / 2, (sh - menor) / 2, menor, menor]
+  }
+  const escala = Math.min(1, lado / Math.max(sw, sh))
   const canvas = document.createElement('canvas')
-  canvas.width = salida
-  canvas.height = salida
+  canvas.width = Math.round(sw * escala)
+  canvas.height = Math.round(sh * escala)
   const ctx = canvas.getContext('2d')
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(bitmap, (bitmap.width - lado) / 2, (bitmap.height - lado) / 2, lado, lado, 0, 0, salida, salida)
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
   bitmap.close?.()
 
-  let blob = await aBlob(canvas, 'image/webp', 0.82)
-  if (!blob || blob.type !== 'image/webp') blob = await aBlob(canvas, 'image/jpeg', 0.85)
+  let blob = await codificar(canvas, 0.82)
+  if (blob && blob.size > PESO_MAXIMO) blob = await codificar(canvas, 0.65)
   if (!blob) throw new Error('No se pudo procesar la imagen')
   return blob
 }

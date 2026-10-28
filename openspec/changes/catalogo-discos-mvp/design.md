@@ -114,6 +114,13 @@ discos(id uuid pk, owner_id uuid default auth.uid(), banda_id uuid fk → bandas
 - **Cache-busting:** al reemplazar una imagen se guarda `?v=<timestamp>` en el `*_path` (o se cambia el nombre del archivo) para que la caché no muestre la versión vieja.
 - **Alternativa descartada:** bucket público con rutas no adivinables. Es más simple, pero cualquier link compartido queda abierto para siempre, y la usuaria pidió privacidad.
 
+### 8b. Contratapa
+- Columna `discos.contratapa_path` (migration `20261028010000_contratapa.sql`): dos lugares fijos, tapa y contratapa, en vez de una tabla de imágenes genérica. Alcanza para el caso y mantiene simple la carga.
+- Procesamiento: **sin recorte** (las contratapas de CD no son cuadradas) y hasta **1600 px** en el lado mayor para que la lista de temas sea legible; si el archivo supera ~900 KB, se recodifica con menos calidad (el bucket acepta hasta 1 MB).
+- Detalle: carrusel con `scroll-snap` (deslizar tapa ↔ contratapa) e indicador de puntos. Tocar una imagen abre un visor a pantalla completa, donde el zoom es el nativo del navegador (pellizcar). El botón atrás cierra el visor.
+- `fusionar_bandas` conserva la contratapa en los discos repetidos y devuelve la que sobra como huérfana. Al borrar un disco se borran las dos imágenes.
+- Costo: las contratapas pesan ~3–4 veces más que las tapas. Con ~125 discos son unas decenas de MB en Storage y en la caché del celular: dentro del free tier.
+
 ### 9. Offline: el catálogo vive también en el celular
 Consultar sin señal es un requisito central, no un extra. Hay tres capas guardadas en el dispositivo:
 

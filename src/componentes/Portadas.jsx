@@ -6,7 +6,9 @@ import { IconoFormato } from './Iconos.jsx'
 // Tonos sobrios para las tarjetas sin imagen: acero, óxido, musgo, ciruela, ceniza.
 const TONOS = ['#8a8f98', '#9c5b3a', '#5c6b5a', '#6b5a7a', '#7d7470']
 
-export function Imagen({ ruta, alt = '', className = '' }) {
+const AJUSTES = { cover: 'object-cover', contain: 'object-contain' }
+
+export function Imagen({ ruta, alt = '', ajuste = 'cover', className = '' }) {
   const { urls } = useCatalogo()
   const [fallo, setFallo] = useState(false)
   const url = ruta && urls[ruta]
@@ -19,7 +21,7 @@ export function Imagen({ ruta, alt = '', className = '' }) {
       loading="lazy"
       decoding="async"
       onError={() => setFallo(true)}
-      className={`absolute inset-0 size-full object-cover ${className}`}
+      className={`absolute inset-0 size-full ${AJUSTES[ajuste]} ${className}`}
     />
   )
 }
