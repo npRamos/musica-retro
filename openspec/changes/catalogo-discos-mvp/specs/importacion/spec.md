@@ -7,17 +7,6 @@ El sistema SHALL permitir pegar un texto con una línea por disco con el formato
 - **WHEN** la usuaria pega tres filas copiadas de una planilla con columnas banda, disco y formato
 - **THEN** el sistema interpreta tres discos
 
-### Requirement: Reimportar un CSV exportado
-El sistema SHALL aceptar el CSV generado por la exportación: MUST ignorar la primera línea si es el encabezado (`banda;disco;formato…`), usar solo las tres primeras columnas de cada línea, y respetar los campos entre comillas dobles.
-
-#### Scenario: Pegar un CSV exportado
-- **WHEN** la usuaria pega el contenido de un CSV exportado, con encabezado y seis columnas
-- **THEN** la vista previa interpreta un disco por fila, sin marcar el encabezado ni las columnas extra como error
-
-#### Scenario: Campo entre comillas
-- **WHEN** una línea es `Banda; "Uno; Dos"; cd`
-- **THEN** el título se interpreta como `Uno; Dos`
-
 ### Requirement: Formato tolerante
 El sistema MUST aceptar, sin distinguir mayúsculas, `vinilo`, `vinil`, `lp` o `v` como vinilo, y `cd` o `c` como CD.
 

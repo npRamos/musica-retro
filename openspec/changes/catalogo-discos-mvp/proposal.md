@@ -18,14 +18,13 @@ La colección (unos 100 CDs y 25 vinilos) creció lo suficiente como para olvida
 - **Orden elegible**: A→Z (por defecto), Z→A o última compra.
 - Buscador por disco o banda dentro de la pestaña activa, que avisa si lo tenés en el otro formato.
 - Importación de una lista pegada (`banda; disco; formato`) con vista previa antes de guardar.
-- **Exportación a CSV** del catálogo (todo, solo vinilos o solo CDs), compatible con Excel o Sheets y reimportable. Funciona sin conexión y en el celular se puede compartir directo.
 - Botón "Escuchar en Spotify" que abre la búsqueda web de Spotify, sin usar su API.
 - Caché local de solo lectura (datos e imágenes) para consultar sin conexión; la app es instalable (PWA).
 - GitHub Action programada que hace un ping a Supabase para evitar que el free tier pause el proyecto.
 - Deploy automático a GitHub Pages con GitHub Actions.
 - Identidad visual rock/metal propia, con tema oscuro y claro y **color de acento elegible: violeta "Sabbath" (por defecto) o rojo sangre**.
 
-**Fuera de alcance (etapa 2):** tapas y tracklist automáticos vía MusicBrainz / Cover Art Archive, links a temas individuales e integración con la API de Spotify.
+**Fuera de alcance (etapa 2):** tapas y tracklist automáticos vía MusicBrainz / Cover Art Archive, links a temas individuales, integración con la API de Spotify y **exportación a CSV** (todo, vinilos o CDs; reimportable).
 
 ## Capabilities
 
@@ -34,8 +33,7 @@ La colección (unos 100 CDs y 25 vinilos) creció lo suficiente como para olvida
 - `catalogo`: modelo de bandas y discos; alta, edición, borrado, autocompletado y creación de bandas, formato tipo título, normalización, detección de duplicados y corrección/unión de bandas.
 - `imagenes`: tapas de discos e imágenes de bandas desde la cámara o la galería, con recorte, compresión, almacenamiento privado y caché offline.
 - `consulta`: pestañas por formato, cuadrícula/lista de bandas, orden elegible, pantalla de banda, detalle de disco, buscador con aviso de otro formato, link a Spotify y consulta offline.
-- `importacion`: carga masiva pegando líneas de texto, con validación y vista previa (bandas nuevas, duplicados, líneas inválidas). Acepta un CSV exportado (ignora el encabezado y las columnas extra).
-- `exportacion`: descarga o envío del catálogo como CSV (todo, vinilos o CDs), legible en planillas y sin conexión.
+- `importacion`: carga masiva pegando líneas de texto, con validación y vista previa (bandas nuevas, duplicados, líneas inválidas).
 - `identidad-visual`: estética rock/metal, temas oscuro y claro, acento violeta o rojo, tipografía y diseño mobile-first.
 - `operacion`: deploy a GitHub Pages, keep-alive de Supabase, migrations versionadas y README de puesta en marcha.
 

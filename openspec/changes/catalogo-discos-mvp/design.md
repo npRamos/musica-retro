@@ -25,6 +25,7 @@ Inspiración visual (referencia de la usuaria: "Mobile music application – use
 - Multiusuario, compartir catálogo, roles.
 - Escritura offline (cola de sincronización).
 - Tapas o tracklists automáticos, integración con la API de Spotify o MusicBrainz (etapa 2).
+- Exportación a CSV (etapa 2). Lo pensado hasta ahora: CSV con `;` y BOM UTF-8 (Excel en español), columnas `banda;disco;formato;copias;fecha_carga;spotify_url`, alcance todo/vinilos/CDs, generado en el cliente (funciona offline), compartir con `navigator.share` o descargar, y que la importación acepte ese mismo archivo.
 - Recorte manual libre de imágenes (en la etapa 1 el recorte es cuadrado y centrado, con vista previa).
 
 ## Decisions
@@ -185,15 +186,6 @@ Consultar sin señal es un requisito central, no un extra. Hay tres capas guarda
 - La vista previa clasifica cada línea como: nueva, banda nueva, ya existe en el catálogo, repetida en la lista (se combina con `copias = n`) o inválida (con el motivo).
 - Para los duplicados contra el catálogo, la opción por defecto es **omitir**. Hay un toggle "sumarlos como copias".
 - La importación no lleva imágenes. Se agregan después desde el detalle.
-
-### 13b. Exportación a CSV
-- Se genera en el cliente a partir del catálogo en memoria, así que funciona sin conexión. No hace falta RPC ni Storage.
-- Columnas `banda;disco;formato;copias;fecha_carga;spotify_url`. Separador `;` (el de Excel en configuración regional española y el mismo de la importación), BOM UTF-8, fin de línea `\r\n`, fecha `AAAA-MM-DD` (local). Escapado RFC 4180: comillas dobles si el campo tiene `;`, `"` o salto de línea.
-- Orden: formato (vinilo, cd), banda y título A→Z con `localeCompare('es')`.
-- Entrega: si `navigator.canShare({ files: [archivo] })` responde que sí, se usa `navigator.share` (hoja de compartir del celular). Si no, o si la usuaria cancela por error, se descarga con `<a download>` sobre un `Blob`.
-- Nombre: `musica-retro-{todo|vinilos|cds}-AAAA-MM-DD.csv`.
-- Ida y vuelta: el parser de importación pasa a aceptar ≥ 3 campos (usa los tres primeros), ignora la primera línea si es el encabezado y respeta los campos entre comillas.
-- Dónde: en Ajustes, "Exportar CSV" abre una hoja con Todo / Solo vinilos / Solo CDs y la cantidad de discos de cada opción.
 
 ### 14. Identidad visual rock/metal
 Tokens en CSS (`@theme` de Tailwind v4 + variables en `:root`, `[data-theme]` y `[data-acento]`):

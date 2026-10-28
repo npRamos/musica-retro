@@ -107,18 +107,10 @@
 - [x] 12b.4 Carrusel tapa ↔ contratapa en el detalle y visor a pantalla completa (zoom nativo, atrás lo cierra)
 - [ ] 12b.5 Aplicar la migration en Supabase antes del deploy y probar en el celular con una contratapa real
 
-## 13. Exportación a CSV
+## 13. Verificación final
 
-- [ ] 13.1 `generarCsv(discos, bandasPorId, alcance)` en `src/lib/exportar.js`: encabezado, orden, escapado RFC 4180, BOM, `\r\n`, fechas `AAAA-MM-DD`; con tests
-- [ ] 13.2 Parser de importación: aceptar ≥ 3 campos, ignorar el encabezado y respetar comillas; tests de ida y vuelta (exportar → importar)
-- [ ] 13.3 Entrega: `navigator.share` con archivo si `canShare` lo permite; si no, descarga con `<a download>`; nombre `musica-retro-{alcance}-AAAA-MM-DD.csv`
-- [ ] 13.4 Ajustes: "Exportar CSV" con una hoja Todo / Solo vinilos / Solo CDs y sus cantidades; disponible también sin conexión
-
-## 14. Verificación final
-
-- [ ] 14.1 Probar en el celular: login con código, alta con foto, duplicado → sumar copia, mismo disco en otro formato, edición, borrado, corrección y unión de bandas
-- [ ] 14.2 Probar el modo avión: abrir desde el ícono, ver las tapas (también de bandas no visitadas), buscar, escrituras deshabilitadas
-- [ ] 14.3 Revisión visual en los dos temas y los dos acentos a 360px: sin scroll horizontal, áreas táctiles ≥ 44px, blackletter solo en títulos, nombres largos
-- [ ] 14.4 Recorrido pestaña → banda → disco → atrás → atrás; cuadrícula/lista y orden persistidos
-- [ ] 14.5 Importar la colección real y revisar los totales
-- [ ] 14.6 Exportar a CSV desde el celular (compartir) y desde la compu (descarga), abrirlo en una planilla y reimportarlo
+- [ ] 13.1 Probar en el celular: login con código, alta con foto, duplicado → sumar copia, mismo disco en otro formato, edición, borrado, corrección y unión de bandas
+- [ ] 13.2 Probar el modo avión: abrir desde el ícono, ver las tapas (también de bandas no visitadas), buscar, escrituras deshabilitadas
+- [ ] 13.3 Revisión visual en los dos temas y los dos acentos a 360px: sin scroll horizontal, áreas táctiles ≥ 44px, blackletter solo en títulos, nombres largos
+- [ ] 13.4 Recorrido pestaña → banda → disco → atrás → atrás; cuadrícula/lista y orden persistidos
+- [ ] 13.5 Importar la colección real y revisar los totales
