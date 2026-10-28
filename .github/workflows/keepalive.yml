@@ -18,9 +18,12 @@ jobs:
           SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           SUPABASE_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: |
+          # La clave legacy (anon) es un JWT y va también como Bearer; la publishable (sb_publishable_…) no.
+          auth=()
+          if [[ "$SUPABASE_KEY" != sb_* ]]; then auth=(-H "Authorization: Bearer $SUPABASE_KEY"); fi
           curl --fail-with-body --silent --show-error \
             -X POST "$SUPABASE_URL/rest/v1/rpc/ping" \
             -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "${auth[@]}" \
             -H "Content-Type: application/json" \
             -d '{}'
