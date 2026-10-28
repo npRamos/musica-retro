@@ -107,7 +107,7 @@ discos(id uuid pk, owner_id uuid default auth.uid(), banda_id uuid fk → bandas
 
 ### 8. Imágenes (tapas y bandas)
 - **Captura:** dos botones, "Sacar foto" (`<input type="file" accept="image/*" capture="environment">`) y "Elegir de galería" (sin `capture`).
-- **Procesamiento en el dispositivo:** `createImageBitmap` (respeta la orientación EXIF) → **recorte cuadrado centrado** → 800×800 en canvas → `toBlob('image/webp', 0.82)`, con JPEG si el navegador no codifica WebP (Safari viejo). Resultado: ~60–120 KB. Se muestra una vista previa con "Usar" o "Otra".
+- **Procesamiento en el dispositivo:** `createImageBitmap` (respeta la orientación EXIF) → **recorte cuadrado centrado** → 600×600 en canvas → `toBlob('image/webp', 0.75)`, con JPEG si el navegador no codifica WebP (Safari viejo). Resultado: ~40–60 KB. Con la contratapa (~120–180 KB), unos 200 KB por disco: ~5.000 discos en el 1 GB del plan gratis. Se muestra una vista previa con "Usar" o "Otra".
 - **Storage:** bucket **privado** `imagenes`. Rutas `<uid>/discos/<disco_id>.<ext>` y `<uid>/bandas/<banda_id>.<ext>`. Las policies sobre `storage.objects` exigen `(storage.foldername(name))[1] = auth.uid()::text`. Al reemplazar se hace upsert. Al borrar un disco o al unir bandas se borra el archivo.
 - **Lectura:** después de cargar el catálogo, un solo `createSignedUrls` con todas las rutas (validez de 7 días). Las URLs firmadas se guardan junto a la caché.
 - **Offline:** runtime caching del service worker (CacheFirst) para el host de Storage, con un `cacheKeyWillBeUsed` que **quita el `token` de la query**. Así la clave de caché es la ruta y una URL firmada nueva no invalida la imagen guardada.
@@ -116,10 +116,10 @@ discos(id uuid pk, owner_id uuid default auth.uid(), banda_id uuid fk → bandas
 
 ### 8b. Contratapa
 - Columna `discos.contratapa_path` (migration `20261028010000_contratapa.sql`): dos lugares fijos, tapa y contratapa, en vez de una tabla de imágenes genérica. Alcanza para el caso y mantiene simple la carga.
-- Procesamiento: **sin recorte** (las contratapas de CD no son cuadradas) y hasta **1600 px** en el lado mayor para que la lista de temas sea legible; si el archivo supera ~900 KB, se recodifica con menos calidad (el bucket acepta hasta 1 MB).
+- Procesamiento: **sin recorte** (las contratapas de CD no son cuadradas) y hasta **1200 px** (calidad 70%) en el lado mayor para que la lista de temas sea legible; si el archivo supera ~900 KB, se recodifica con menos calidad (el bucket acepta hasta 1 MB).
 - Detalle: carrusel con `scroll-snap` (deslizar tapa ↔ contratapa) e indicador de puntos. Tocar una imagen abre un visor a pantalla completa, donde el zoom es el nativo del navegador (pellizcar). El botón atrás cierra el visor.
 - `fusionar_bandas` conserva la contratapa en los discos repetidos y devuelve la que sobra como huérfana. Al borrar un disco se borran las dos imágenes.
-- Costo: las contratapas pesan ~3–4 veces más que las tapas. Con ~125 discos son unas decenas de MB en Storage y en la caché del celular: dentro del free tier.
+- Costo: con tapa y contratapa, ~200 KB por disco. Con ~125 discos son ~25 MB en Storage y en la caché del celular; el 1 GB del plan gratis alcanza para ~5.000 discos.
 
 ### 9. Offline: el catálogo vive también en el celular
 Consultar sin señal es un requisito central, no un extra. Hay tres capas guardadas en el dispositivo:

@@ -16,7 +16,7 @@ El sistema SHALL permitir asignar una tapa a un disco, al darlo de alta o al edi
 - **THEN** el sistema descarta la imagen y permite elegir o sacar otra
 
 ### Requirement: Contratapa del disco
-Además de la tapa, el sistema SHALL permitir asignar una contratapa a cada disco (para ver la lista de temas), con las mismas opciones de cámara o galería. La contratapa MUST NOT recortarse: conserva su proporción y se guarda con hasta 1600 píxeles en el lado mayor, para que los temas se puedan leer.
+Además de la tapa, el sistema SHALL permitir asignar una contratapa a cada disco (para ver la lista de temas), con las mismas opciones de cámara o galería. La contratapa MUST NOT recortarse: conserva su proporción y se guarda con hasta 1200 píxeles en el lado mayor, para que los temas se puedan leer.
 
 #### Scenario: Cargar contratapa de un CD
 - **WHEN** la usuaria saca una foto de la contratapa rectangular de un CD
@@ -38,11 +38,11 @@ El sistema SHALL permitir asignar, reemplazar o quitar una imagen propia de una 
 - **THEN** la tarjeta vuelve a mostrar el mosaico de tapas o la tarjeta tipográfica
 
 ### Requirement: Procesamiento en el dispositivo
-Antes de subirla, el sistema MUST recortar la imagen en cuadrado centrado, respetando su orientación, reducirla a 800×800 píxeles como máximo y comprimirla (WebP, o JPEG si el navegador no soporta WebP).
+Antes de subirla, el sistema MUST recortar la imagen en cuadrado centrado, respetando su orientación, reducirla a 600×600 píxeles como máximo y comprimirla (WebP, o JPEG si el navegador no soporta WebP).
 
 #### Scenario: Foto grande del celular
 - **WHEN** la usuaria saca una foto de 12 MP
-- **THEN** el archivo subido es cuadrado, de 800×800 como máximo y pesa menos de 250 KB
+- **THEN** el archivo subido es cuadrado, de 600×600 como máximo y pesa menos de 150 KB
 
 ### Requirement: Almacenamiento privado
 Las imágenes MUST guardarse en un almacenamiento privado, accesible solo con la sesión de la dueña. MUST NOT existir URLs públicas permanentes.

@@ -12,9 +12,10 @@ async function codificar(canvas, calidad) {
   return aBlob(canvas, 'image/jpeg', calidad)
 }
 
-// Tapas: recorte cuadrado centrado a 800 px. Contratapas: sin recorte y hasta 1600 px, para leer los temas.
+// Tapas: recorte cuadrado centrado a 600 px. Contratapas: sin recorte y hasta 1200 px, para leer los temas.
+// Tamaños y calidad pensados para que la colección entre holgada en el plan gratis (~200 KB por disco).
 // WebP (o JPEG si el navegador no codifica WebP).
-export async function procesarImagen(archivo, { recortar = true, lado = 800 } = {}) {
+export async function procesarImagen(archivo, { recortar = true, lado = 600, calidad = 0.75 } = {}) {
   const bitmap = await createImageBitmap(archivo, { imageOrientation: 'from-image' })
   let [sx, sy, sw, sh] = [0, 0, bitmap.width, bitmap.height]
   if (recortar) {
@@ -30,8 +31,8 @@ export async function procesarImagen(archivo, { recortar = true, lado = 800 } = 
   ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
   bitmap.close?.()
 
-  let blob = await codificar(canvas, 0.82)
-  if (blob && blob.size > PESO_MAXIMO) blob = await codificar(canvas, 0.65)
+  let blob = await codificar(canvas, calidad)
+  if (blob && blob.size > PESO_MAXIMO) blob = await codificar(canvas, 0.55)
   if (!blob) throw new Error('No se pudo procesar la imagen')
   return blob
 }

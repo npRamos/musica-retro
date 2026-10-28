@@ -81,7 +81,7 @@ Supabase pausa los proyectos gratuitos sin actividad. `.github/workflows/keepali
 | Modelo, RLS y RPC (`agregar_disco`, `importar_discos`, `renombrar_banda`, `fusionar_bandas`…) | `supabase/migrations/` |
 | Normalización y formato tipo título | `src/lib/texto.js` (espejo de `public.normalizar()`) |
 | Sincronización, caché offline y escrituras | `src/lib/catalogoContexto.jsx`, `src/lib/almacen.js` |
-| Fotos: recorte cuadrado, 800 px, WebP; bucket privado y URLs firmadas | `src/lib/imagen.js` |
+| Fotos: tapas 600 px recortadas, contratapas 1200 px sin recortar, WebP; bucket privado y URLs firmadas | `src/lib/imagen.js` |
 | Service worker: app shell + imágenes cacheadas por ruta (sin el token) | `vite.config.js` |
 | Tokens de color: temas escenario/fanzine × acentos violeta/rojo | `src/index.css` |
 

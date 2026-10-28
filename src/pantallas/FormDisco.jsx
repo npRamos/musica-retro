@@ -101,7 +101,7 @@ export default function FormDisco({ disco, inicial = {} }) {
           valor={contratapa}
           onChange={setContratapa}
           deshabilitado={guardando}
-          opciones={{ recortar: false, lado: 1600 }}
+          opciones={{ recortar: false, lado: 1200, calidad: 0.7 }}
           ajuste="contain"
         />
         {editando && (

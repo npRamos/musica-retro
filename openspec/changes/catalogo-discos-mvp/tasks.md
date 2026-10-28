@@ -57,7 +57,7 @@
 ## 7. Imágenes
 
 - [x] 7.1 Selector de imagen: "Sacar foto" (`capture="environment"`) y "Elegir de galería"
-- [x] 7.2 Procesamiento: `createImageBitmap` → recorte cuadrado centrado → 800×800 → WebP 0.82 (JPEG si no hay WebP), con vista previa "Usar" / "Otra"
+- [x] 7.2 Procesamiento: `createImageBitmap` → recorte cuadrado centrado → 600×600 → WebP 0.75 (JPEG si no hay WebP), con vista previa "Usar" / "Otra"
 - [x] 7.3 Subida a `imagenes/<uid>/{discos|bandas}/<id>.<ext>` con upsert, guardando la ruta con versión para cache-busting; borrado al quitar
 - [x] 7.4 Componente de imagen con placeholder (ícono de formato o tarjeta tipográfica) y carga diferida
 
@@ -102,7 +102,7 @@
 ## 12b. Contratapa
 
 - [x] 12b.1 Migration `contratapa_path` + `fusionar_bandas` que la conserva; probada en Postgres local
-- [x] 12b.2 `procesarImagen` con recorte opcional y lado configurable (contratapa: sin recorte, 1600 px, tope de peso)
+- [x] 12b.2 `procesarImagen` con recorte opcional y lado configurable (contratapa: sin recorte, 1200 px, tope de peso)
 - [x] 12b.3 Alta, edición, sumar copia y borrado con contratapa; segundo selector en el formulario
 - [x] 12b.4 Carrusel tapa ↔ contratapa en el detalle y visor a pantalla completa (zoom nativo, atrás lo cierra)
 - [ ] 12b.5 Aplicar la migration en Supabase antes del deploy y probar en el celular con una contratapa real
