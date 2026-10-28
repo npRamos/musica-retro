@@ -3,9 +3,10 @@ import { Encabezado, Vacio } from './componentes/ui.jsx'
 import { CatalogoProvider, useCatalogo } from './lib/catalogoContexto.jsx'
 import { cambiarPreferencia, usePreferencias } from './lib/preferencias.js'
 import { FORMATO_DE_SLUG, useRuta } from './lib/router.js'
-import { configurado, supabase } from './lib/supabase.js'
+import { configurado, supabase, vinoDeRecuperacion } from './lib/supabase.js'
 import Ajustes from './pantallas/Ajustes.jsx'
 import Banda from './pantallas/Banda.jsx'
+import { CambiarClave, NuevaClave } from './pantallas/Clave.jsx'
 import Disco from './pantallas/Disco.jsx'
 import EditarBanda from './pantallas/EditarBanda.jsx'
 import FormDisco from './pantallas/FormDisco.jsx'
@@ -15,12 +16,16 @@ import Login from './pantallas/Login.jsx'
 
 export default function App() {
   const [sesion, setSesion] = useState(undefined)
+  const [recuperando, setRecuperando] = useState(vinoDeRecuperacion)
 
   useEffect(() => {
     if (!configurado) return
     // getSession lee la sesión guardada: funciona también sin conexión.
     supabase.auth.getSession().then(({ data }) => setSesion(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_evento, nueva) => setSesion(nueva))
+    const { data } = supabase.auth.onAuthStateChange((evento, nueva) => {
+      setSesion(nueva)
+      if (evento === 'PASSWORD_RECOVERY') setRecuperando(true)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -39,6 +44,7 @@ export default function App() {
   }
   if (sesion === undefined) return null
   if (!sesion) return <Login />
+  if (recuperando) return <NuevaClave alTerminar={() => setRecuperando(false)} />
 
   return (
     <CatalogoProvider key={sesion.user.id} sesion={sesion}>
@@ -91,6 +97,8 @@ function Rutas({ mail }) {
     pantalla = <FormDisco key={consulta.toString()} inicial={inicial} />
   } else if (primera === 'importar') {
     pantalla = <Importar />
+  } else if (primera === 'ajustes' && segunda === 'clave') {
+    pantalla = <CambiarClave />
   } else if (primera === 'ajustes') {
     pantalla = <Ajustes mail={mail} />
   } else {

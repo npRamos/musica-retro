@@ -44,6 +44,7 @@
 - [x] 5.3 Manejo de sesión: detectar la sesión al volver del magic link y `onAuthStateChange`; proteger la app
 - [x] 5.4 Cerrar sesión: `signOut` + borrar la caché local de datos e imágenes
 - [x] 5.5 Ingreso con contraseña como opción principal (`signInWithPassword`), con el link por mail como alternativa y mensajes de límite más claros; SQL para asignar contraseñas en el README
+- [x] 5.6 Cambiar contraseña desde Ajustes (`updateUser`) y recuperación con "¿Olvidaste tu contraseña?" (`resetPasswordForEmail` → pantalla de nueva contraseña al volver del link)
 
 ## 6. Datos, sincronización y offline
 

@@ -1,4 +1,4 @@
-import { IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
+import { IconoEditar, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { usePreferencias } from '../lib/preferencias.js'
@@ -77,6 +77,18 @@ export default function Ajustes({ mail }) {
                   {!online && ' · sin conexión'}
                 </span>
               </span>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              disabled={!online}
+              onClick={() => navegar('ajustes/clave')}
+              className="flex min-h-14 w-full items-center gap-3 border-b border-metal/40 text-left disabled:opacity-40"
+            >
+              <IconoEditar />
+              <span className="flex-1">Cambiar contraseña</span>
+              <IconoSiguiente className="size-4 text-suave" />
             </button>
           </li>
           <li>

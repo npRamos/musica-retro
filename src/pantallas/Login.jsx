@@ -34,6 +34,16 @@ export default function Login() {
     else setError('Mail o contraseña incorrectos.')
   }
 
+  const pedirRecuperacion = async (e) => {
+    e.preventDefault()
+    setEnviando(true)
+    setError(null)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(mail.trim(), { redirectTo: location.origin + location.pathname })
+    setEnviando(false)
+    if (err) setError(err.status === 429 ? mensajeLimite(err) : 'No se pudo enviar el link. Probá de nuevo.')
+    else setPaso('olvide-enviado')
+  }
+
   const pedirLink = async (e) => {
     e?.preventDefault()
     setEnviando(true)
@@ -73,10 +83,40 @@ export default function Login() {
           <Boton type="submit" className="w-full" disabled={enviando || !mail.trim() || !clave}>
             {enviando ? 'Entrando…' : 'Entrar'}
           </Boton>
-          <Boton variante="fantasma" className="w-full" onClick={() => cambiarPaso('mail')}>
-            Prefiero recibir un link por mail
+          <div className="flex flex-col">
+            <Boton variante="fantasma" className="w-full" onClick={() => cambiarPaso('olvide')}>
+              ¿Olvidaste tu contraseña?
+            </Boton>
+            <Boton variante="fantasma" className="w-full" onClick={() => cambiarPaso('mail')}>
+              Prefiero recibir un link por mail
+            </Boton>
+          </div>
+        </form>
+      )}
+
+      {paso === 'olvide' && (
+        <form onSubmit={pedirRecuperacion} className="mt-12 space-y-6">
+          <p className="font-light text-suave">Te mandamos un link por mail. Abrilo en este dispositivo y elegí una contraseña nueva.</p>
+          {campoMail}
+          {error && <p className="text-sm text-acento-texto">{error}</p>}
+          <Boton type="submit" className="w-full" disabled={enviando || !mail.trim()}>
+            {enviando ? 'Enviando…' : 'Mandame el link'}
+          </Boton>
+          <Boton variante="fantasma" className="w-full" onClick={() => cambiarPaso('clave')}>
+            Volver
           </Boton>
         </form>
+      )}
+
+      {paso === 'olvide-enviado' && (
+        <div className="mt-12 space-y-6">
+          <p className="font-light text-suave">
+            Si <span className="text-texto">{mail}</span> tiene cuenta, te llega un mail con el link. Abrilo en este mismo dispositivo.
+          </p>
+          <Boton variante="secundario" className="w-full" onClick={() => cambiarPaso('clave')}>
+            Volver a entrar con contraseña
+          </Boton>
+        </div>
       )}
 
       {paso === 'mail' && (

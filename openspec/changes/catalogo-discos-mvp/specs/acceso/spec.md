@@ -11,6 +11,21 @@ El sistema SHALL permitir el ingreso con mail y contraseña como opción princip
 - **WHEN** el mail o la contraseña no coinciden
 - **THEN** el sistema muestra "Mail o contraseña incorrectos" sin indicar cuál de los dos falló
 
+### Requirement: Cambiar y recuperar la contraseña
+Con la sesión iniciada, el sistema SHALL permitir cambiar la contraseña desde Ajustes sin enviar mails. Sin sesión, SHALL ofrecer "¿Olvidaste tu contraseña?": envía un link por mail y, al abrirlo, MUST pedir una contraseña nueva antes de mostrar el catálogo. La contraseña nueva MUST tener al menos 8 caracteres y escribirse dos veces.
+
+#### Scenario: Cambiar desde Ajustes
+- **WHEN** la usuaria con sesión iniciada escribe dos veces una contraseña nueva de 8 o más caracteres
+- **THEN** el sistema la guarda y confirma "Contraseña cambiada"
+
+#### Scenario: Olvidó la contraseña
+- **WHEN** la usuaria pide el link de recuperación y lo abre en el dispositivo
+- **THEN** el sistema muestra la pantalla "Nueva contraseña" y, al guardarla, entra al catálogo
+
+#### Scenario: No coinciden
+- **WHEN** las dos contraseñas escritas son distintas
+- **THEN** el sistema no guarda y lo indica
+
 ### Requirement: Ingreso con magic link o código
 El sistema SHALL permitir el ingreso mediante un mail que contiene un magic link y un código de un solo uso. Ingresar con cualquiera de los dos MUST iniciar la sesión.
 

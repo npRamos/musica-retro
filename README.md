@@ -46,7 +46,7 @@ Catálogo personal de vinilos y CDs. Es una app web estática (Vite + React + Ta
    where email = 'uno@ejemplo.com';
    ```
 
-   Para cambiarla más adelante, se repite el mismo `update`. El link por mail queda como alternativa en la pantalla de ingreso.
+   Después, cada uno puede cambiarla desde **Ajustes → Cambiar contraseña**. Si alguien la olvida: **"¿Olvidaste tu contraseña?"** en el login manda un link por mail; si el mail no llega (por el límite de envíos), se repite este `update`.
 7. **Project Settings → API**: copiar la **Project URL** y la **anon / publishable key**.
 
 ### 2. Desarrollo local
