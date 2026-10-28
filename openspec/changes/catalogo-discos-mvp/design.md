@@ -47,7 +47,11 @@ Inspiración visual (referencia de la usuaria: "Mobile music application – use
   ```
 - **Estado:** el catálogo completo se carga una vez en memoria (~125 filas + bandas) y se filtra, agrupa y ordena en el cliente. No hace falta React Query ni Redux.
 
-### 3. Auth: magic link + código OTP en el mismo mail
+### 3. Auth: contraseña (principal) + magic link (alternativa)
+- **Contraseña primero.** El SMTP por defecto de Supabase manda pocos mails por hora, y las invitaciones ya los agotaron en la puesta en marcha. Por eso el ingreso principal es `signInWithPassword`. Las contraseñas se asignan por SQL (`extensions.crypt` + `gen_salt('bf')`), que además marca la cuenta como confirmada. No hay registro ni "olvidé mi contraseña": para dos personas, se cambia por SQL.
+- Los mensajes de error no distinguen si falló el mail o la contraseña. Un 429 se muestra como "esperá": para los links, con los segundos si Supabase los informa.
+
+#### Alternativa: magic link + código OTP en el mismo mail
 - `signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo } })`.
 - El template del mail incluye **el link y el código de 6 dígitos** (`{{ .Token }}`). La pantalla de login ofrece un campo para pegar el código (`verifyOtp({ type: 'email' })`).
 - **Por qué el código:** en el celular, el link suele abrirse en el navegador interno de Gmail, que no comparte la sesión con Chrome o Safari, o se termina abriendo en otro dispositivo. El código funciona en cualquier caso.

@@ -36,6 +36,17 @@ Catálogo personal de vinilos y CDs. Es una app web estática (Vite + React + Ta
    ```
 
    Una cuenta que no está en `miembros` puede iniciar sesión, pero ve el catálogo vacío y no puede guardar nada.
+
+   **Contraseñas** (para no depender del mail): cada persona elige la suya y la carga en el SQL Editor. Esto también confirma la cuenta aunque no haya aceptado la invitación:
+
+   ```sql
+   update auth.users
+   set encrypted_password = extensions.crypt('LA-CONTRASEÑA', extensions.gen_salt('bf')),
+       email_confirmed_at = coalesce(email_confirmed_at, now())
+   where email = 'uno@ejemplo.com';
+   ```
+
+   Para cambiarla más adelante, se repite el mismo `update`. El link por mail queda como alternativa en la pantalla de ingreso.
 7. **Project Settings → API**: copiar la **Project URL** y la **anon / publishable key**.
 
 ### 2. Desarrollo local

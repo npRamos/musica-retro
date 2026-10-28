@@ -43,6 +43,7 @@
 - [x] 5.2 Paso de código: 6 dígitos → `verifyOtp({ type: 'email' })`, con errores y "reenviar mail"
 - [x] 5.3 Manejo de sesión: detectar la sesión al volver del magic link y `onAuthStateChange`; proteger la app
 - [x] 5.4 Cerrar sesión: `signOut` + borrar la caché local de datos e imágenes
+- [x] 5.5 Ingreso con contraseña como opción principal (`signInWithPassword`), con el link por mail como alternativa y mensajes de límite más claros; SQL para asignar contraseñas en el README
 
 ## 6. Datos, sincronización y offline
 

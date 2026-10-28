@@ -1,5 +1,16 @@
 ## ADDED Requirements
 
+### Requirement: Ingreso con contraseña
+El sistema SHALL permitir el ingreso con mail y contraseña como opción principal, sin enviar ningún mail. Las contraseñas MUST asignarlas la administradora; la app no ofrece registro ni recuperación de contraseña.
+
+#### Scenario: Ingreso correcto
+- **WHEN** la usuaria escribe su mail y su contraseña y toca "Entrar"
+- **THEN** el sistema inicia la sesión y muestra el catálogo
+
+#### Scenario: Contraseña incorrecta
+- **WHEN** el mail o la contraseña no coinciden
+- **THEN** el sistema muestra "Mail o contraseña incorrectos" sin indicar cuál de los dos falló
+
 ### Requirement: Ingreso con magic link o código
 El sistema SHALL permitir el ingreso mediante un mail que contiene un magic link y un código de un solo uso. Ingresar con cualquiera de los dos MUST iniciar la sesión.
 
