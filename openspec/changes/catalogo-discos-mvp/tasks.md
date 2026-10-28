@@ -97,10 +97,18 @@
 - [x] 12.3 README: setup de Supabase (migrations, Auth con signups off, template con `{{ .Token }}`, Site/Redirect URLs, invitar a la usuaria), setup de Pages y variables, desarrollo local y cómo reactivar el keep-alive
 - [ ] 12.4 Configurar Supabase y GitHub según el README, hacer el primer deploy y correr el keep-alive a mano
 
-## 13. Verificación final
+## 13. Exportación a CSV
 
-- [ ] 13.1 Probar en el celular: login con código, alta con foto, duplicado → sumar copia, mismo disco en otro formato, edición, borrado, corrección y unión de bandas
-- [ ] 13.2 Probar el modo avión: abrir desde el ícono, ver las tapas (también de bandas no visitadas), buscar, escrituras deshabilitadas
-- [ ] 13.3 Revisión visual en los dos temas y los dos acentos a 360px: sin scroll horizontal, áreas táctiles ≥ 44px, blackletter solo en títulos, nombres largos
-- [ ] 13.4 Recorrido pestaña → banda → disco → atrás → atrás; cuadrícula/lista y orden persistidos
-- [ ] 13.5 Importar la colección real y revisar los totales
+- [ ] 13.1 `generarCsv(discos, bandasPorId, alcance)` en `src/lib/exportar.js`: encabezado, orden, escapado RFC 4180, BOM, `\r\n`, fechas `AAAA-MM-DD`; con tests
+- [ ] 13.2 Parser de importación: aceptar ≥ 3 campos, ignorar el encabezado y respetar comillas; tests de ida y vuelta (exportar → importar)
+- [ ] 13.3 Entrega: `navigator.share` con archivo si `canShare` lo permite; si no, descarga con `<a download>`; nombre `musica-retro-{alcance}-AAAA-MM-DD.csv`
+- [ ] 13.4 Ajustes: "Exportar CSV" con una hoja Todo / Solo vinilos / Solo CDs y sus cantidades; disponible también sin conexión
+
+## 14. Verificación final
+
+- [ ] 14.1 Probar en el celular: login con código, alta con foto, duplicado → sumar copia, mismo disco en otro formato, edición, borrado, corrección y unión de bandas
+- [ ] 14.2 Probar el modo avión: abrir desde el ícono, ver las tapas (también de bandas no visitadas), buscar, escrituras deshabilitadas
+- [ ] 14.3 Revisión visual en los dos temas y los dos acentos a 360px: sin scroll horizontal, áreas táctiles ≥ 44px, blackletter solo en títulos, nombres largos
+- [ ] 14.4 Recorrido pestaña → banda → disco → atrás → atrás; cuadrícula/lista y orden persistidos
+- [ ] 14.5 Importar la colección real y revisar los totales
+- [ ] 14.6 Exportar a CSV desde el celular (compartir) y desde la compu (descarga), abrirlo en una planilla y reimportarlo
