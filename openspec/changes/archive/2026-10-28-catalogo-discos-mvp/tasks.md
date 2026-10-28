@@ -16,7 +16,7 @@
 - [x] 2.7 RPC `renombrar_banda` (devuelve `ok` o `conflicto`) y `fusionar_bandas` (mueve discos, suma copias en los choques, borra el origen, devuelve las rutas huérfanas)
 - [x] 2.8 RPC `ping()` con grant a `anon`
 - [x] 2.9 Bucket privado `imagenes` y policies de `storage.objects` por carpeta `<uid>/`
-- [ ] 2.10 Aplicar las migrations en el proyecto Supabase y verificar con SQL que `anon` no lee filas ni imágenes y que una alta duplicada devuelve `duplicado`
+- [x] 2.10 Aplicar las migrations en el proyecto Supabase y verificar con SQL que `anon` no lee filas ni imágenes y que una alta duplicada devuelve `duplicado`
 
 ## 3. Utilidades puras (con tests)
 
@@ -97,7 +97,7 @@
 - [x] 12.1 Workflow `deploy.yml`: build con las variables del repo y `actions/deploy-pages` en cada push a `main`
 - [x] 12.2 Workflow `keepalive.yml`: cron cada 3 días + `workflow_dispatch`, POST a `/rest/v1/rpc/ping`, que falla si la respuesta no es 2xx
 - [x] 12.3 README: setup de Supabase (migrations, Auth con signups off, template con `{{ .Token }}`, Site/Redirect URLs, invitar a la usuaria), setup de Pages y variables, desarrollo local y cómo reactivar el keep-alive
-- [ ] 12.4 Configurar Supabase y GitHub según el README, hacer el primer deploy y correr el keep-alive a mano
+- [x] 12.4 Configurar Supabase y GitHub según el README, hacer el primer deploy y correr el keep-alive a mano
 
 ## 12b. Contratapa
 
@@ -105,12 +105,12 @@
 - [x] 12b.2 `procesarImagen` con recorte opcional y lado configurable (contratapa: sin recorte, 1200 px, tope de peso)
 - [x] 12b.3 Alta, edición, sumar copia y borrado con contratapa; segundo selector en el formulario
 - [x] 12b.4 Carrusel tapa ↔ contratapa en el detalle y visor a pantalla completa (zoom nativo, atrás lo cierra)
-- [ ] 12b.5 Aplicar la migration en Supabase antes del deploy y probar en el celular con una contratapa real
+- [x] 12b.5 Aplicar la migration en Supabase antes del deploy y probar en el celular con una contratapa real
 
 ## 13. Verificación final
 
-- [ ] 13.1 Probar en el celular: login con código, alta con foto, duplicado → sumar copia, mismo disco en otro formato, edición, borrado, corrección y unión de bandas
-- [ ] 13.2 Probar el modo avión: abrir desde el ícono, ver las tapas (también de bandas no visitadas), buscar, escrituras deshabilitadas
-- [ ] 13.3 Revisión visual en los dos temas y los dos acentos a 360px: sin scroll horizontal, áreas táctiles ≥ 44px, blackletter solo en títulos, nombres largos
-- [ ] 13.4 Recorrido pestaña → banda → disco → atrás → atrás; cuadrícula/lista y orden persistidos
-- [ ] 13.5 Importar la colección real y revisar los totales
+- [x] 13.1 Probar en el celular: login con código, alta con foto, duplicado → sumar copia, mismo disco en otro formato, edición, borrado, corrección y unión de bandas
+- [x] 13.2 Probar el modo avión: abrir desde el ícono, ver las tapas (también de bandas no visitadas), buscar, escrituras deshabilitadas
+- [x] 13.3 Revisión visual en los dos temas y los dos acentos a 360px: sin scroll horizontal, áreas táctiles ≥ 44px, blackletter solo en títulos, nombres largos
+- [x] 13.4 Recorrido pestaña → banda → disco → atrás → atrás; cuadrícula/lista y orden persistidos
+- [x] 13.5 Importar la colección real y revisar los totales
