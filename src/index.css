@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* ─── Tokens ─────────────────────────────────────────────────────────────
+   Tema oscuro "escenario" por defecto; claro "fanzine" por preferencia del
+   sistema o elección manual. El acento (violeta Sabbath / rojo sangre) es
+   independiente del tema. */
+:root {
+  color-scheme: dark;
+  --fondo: #0d0c0f;
+  --superficie: rgb(24 22 27 / 0.78);
+  --superficie-solida: #18161b;
+  --texto: #ebe5f0;
+  --texto-suave: #9b95a3;
+  --metal: #3d3942;
+  --violeta: #7a2bd1;
+  --violeta-texto: #b88cff;
+  --rojo: #c1121f;
+  --rojo-texto: #ff5c66;
+  --sobre-acento: #fbf8ff;
+  --brillo: 18%;
+  --grano: 0.06;
+
+  --acento: var(--violeta);
+  --acento-texto: var(--violeta-texto);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="oscuro"]) {
+    color-scheme: light;
+    --fondo: #efe9dd;
+    --superficie: rgb(228 220 203 / 0.82);
+    --superficie-solida: #e4dccb;
+    --texto: #141214;
+    --texto-suave: #5a5450;
+    --metal: #2a2725;
+    --violeta: #5b1a9e;
+    --violeta-texto: #5b1a9e;
+    --rojo: #a10e19;
+    --rojo-texto: #a10e19;
+    --brillo: 9%;
+    --grano: 0.08;
+  }
+}
+
+:root[data-theme="claro"] {
+  color-scheme: light;
+  --fondo: #efe9dd;
+  --superficie: rgb(228 220 203 / 0.82);
+  --superficie-solida: #e4dccb;
+  --texto: #141214;
+  --texto-suave: #5a5450;
+  --metal: #2a2725;
+  --violeta: #5b1a9e;
+  --violeta-texto: #5b1a9e;
+  --rojo: #a10e19;
+  --rojo-texto: #a10e19;
+  --brillo: 9%;
+  --grano: 0.08;
+}
+
+:root[data-acento="rojo"] {
+  --acento: var(--rojo);
+  --acento-texto: var(--rojo-texto);
+}
+
+@theme inline {
+  --font-display: "Pirata One", "UnifrakturCook", serif;
+  --font-cond: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sans: "Barlow", system-ui, sans-serif;
+
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-superficie-solida: var(--superficie-solida);
+  --color-texto: var(--texto);
+  --color-suave: var(--texto-suave);
+  --color-metal: var(--metal);
+  --color-acento: var(--acento);
+  --color-acento-texto: var(--acento-texto);
+  --color-sobre-acento: var(--sobre-acento);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────── */
+html {
+  background: var(--fondo);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Luz de escenario + grano: la única "luz" de la interfaz */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 55% at 50% -12%, color-mix(in srgb, var(--acento) var(--brillo), transparent) 0%, transparent 72%),
+    var(--fondo);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grano);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+:focus-visible {
+  outline: 2px solid var(--acento-texto);
+  outline-offset: 2px;
+}
+
+@layer base {
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+@layer utilities {
+  .etiqueta {
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+  }
+}

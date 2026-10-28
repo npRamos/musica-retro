@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d0c0f" />
+    <meta name="description" content="Catálogo personal de vinilos y CDs" />
+    <link rel="icon" type="image/svg+xml" href="/musica-retro/icono.svg" />
+    <link rel="apple-touch-icon" href="/musica-retro/icono-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&family=Pirata+One&display=swap"
+    />
+    <title>Música Retro</title>
+    <script>
+      // Tema y acento antes del primer pintado, para que no parpadee.
+      try {
+        var p = JSON.parse(localStorage.getItem('musica-retro:preferencias') || '{}')
+        if (p.tema && p.tema !== 'sistema') document.documentElement.setAttribute('data-theme', p.tema)
+        document.documentElement.setAttribute('data-acento', p.acento || 'violeta')
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
