@@ -221,7 +221,7 @@ Tokens en CSS (`@theme` de Tailwind v4 + variables en `:root`, `[data-theme]` y 
 
 ## Risks / Trade-offs
 
-- [GitHub desactiva los workflows programados después de 60 días sin actividad en el repo] → GitHub avisa por mail antes. El README documenta cómo reactivarlo.
+- [GitHub desactiva los workflows programados después de 60 días sin actividad en el repo] → El keep-alive hace un commit de "latido" (`.github/latido`) si el último commit tiene ≥ 50 días. Como es un push con `GITHUB_TOKEN`, no dispara un redeploy. Respaldo: GitHub avisa por mail y se reactiva con un clic.
 - [El ping podría no contar como "actividad" para Supabase] → `ping()` ejecuta SQL en la base. Verificarlo en las primeras semanas.
 - [La anon key queda visible en el bundle] → Es el diseño previsto por Supabase. RLS bloquea todo para `anon` y los signups están apagados.
 - [Las URLs firmadas vencen] → Se regeneran en cada carga con conexión. Sin conexión, el SW sirve la imagen por ruta, sin depender del token.

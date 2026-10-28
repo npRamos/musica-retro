@@ -1,13 +1,20 @@
 name: Keep-alive de Supabase
 
 # El free tier de Supabase pausa los proyectos sin actividad. Este ping ejecuta SQL cada 3 días.
+# GitHub, a su vez, pausa los workflows programados tras 60 días sin actividad en el repo:
+# por eso, si el último commit tiene 50 días o más, se hace un commit de "latido".
 on:
   schedule:
     - cron: '17 9 */3 * *'
   workflow_dispatch:
+    inputs:
+      forzar_latido:
+        description: 'Hacer el commit de latido aunque no hayan pasado 50 días'
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   ping:
@@ -27,3 +34,23 @@ jobs:
             "${auth[@]}" \
             -H "Content-Type: application/json" \
             -d '{}'
+
+      - uses: actions/checkout@v4
+
+      - name: Latido del repo
+        env:
+          FORZAR: ${{ inputs.forzar_latido }}
+        run: |
+          dias=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+          echo "Último commit hace $dias días"
+          if [ "$dias" -lt 50 ] && [ "$FORZAR" != "true" ]; then
+            echo "No hace falta latido"
+            exit 0
+          fi
+          date -u +%Y-%m-%dT%H:%M:%SZ > .github/latido
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/latido
+          # Los push hechos con GITHUB_TOKEN no disparan otros workflows: no hay redeploy.
+          git commit -m "Latido: mantiene activo el keep-alive [skip ci]"
+          git push

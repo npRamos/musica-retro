@@ -61,7 +61,7 @@ Si el repo tiene otro nombre, cambiar `base` en `vite.config.js` y las rutas `/m
 
 Supabase pausa los proyectos gratuitos sin actividad. `.github/workflows/keepalive.yml` llama cada 3 días a la función `ping()` (lo único accesible sin sesión). Si falla, GitHub manda un mail.
 
-**GitHub desactiva los workflows programados después de 60 días sin commits.** GitHub avisa por mail antes. Para reactivarlo: **Actions → Keep-alive de Supabase → Enable workflow**. Si el proyecto llegara a pausarse, se reactiva desde el panel de Supabase con **Restore**, sin perder datos.
+**GitHub desactiva los workflows programados después de 60 días sin actividad en el repo.** Para evitarlo, el mismo workflow hace un commit de "latido" (actualiza `.github/latido`) cuando el último commit tiene 50 días o más. En uso normal no genera commits. Si aun así se desactivara, GitHub avisa por mail y se reactiva con **Actions → Keep-alive de Supabase → Enable workflow**. Si el proyecto llegara a pausarse, se reactiva desde el panel de Supabase con **Restore**, sin perder datos.
 
 ## Cómo funciona
 
