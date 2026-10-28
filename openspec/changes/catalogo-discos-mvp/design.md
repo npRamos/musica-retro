@@ -1,6 +1,6 @@
 ## Context
 
-Proyecto nuevo, sin código previo. Es para una sola usuaria, con un catálogo chico (~125 discos que crecen despacio). El uso principal es desde el celular, consultando "¿ya lo tengo?" en una disquería, donde la señal suele ser mala. Restricciones:
+Proyecto nuevo, sin código previo. Es un catálogo compartido por una pareja (dos cuentas), con un catálogo chico (~125 discos que crecen despacio). El uso principal es desde el celular, consultando "¿ya lo tengo?" en una disquería, donde la señal suele ser mala. Restricciones:
 
 - **Sin servidor propio.** El hosting es estático (GitHub Pages).
 - **Datos privados** y sincronizados entre dispositivos.
@@ -51,7 +51,8 @@ Inspiración visual (referencia de la usuaria: "Mobile music application – use
 - `signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo } })`.
 - El template del mail incluye **el link y el código de 6 dígitos** (`{{ .Token }}`). La pantalla de login ofrece un campo para pegar el código (`verifyOtp({ type: 'email' })`).
 - **Por qué el código:** en el celular, el link suele abrirse en el navegador interno de Gmail, que no comparte la sesión con Chrome o Safari, o se termina abriendo en otro dispositivo. El código funciona en cualquier caso.
-- Signups deshabilitados en el dashboard. La usuaria se crea a mano (invite) una sola vez.
+- Signups deshabilitados en el dashboard. Las cuentas se crean a mano (invite) y se suman a `public.miembros`.
+- Con el SMTP por defecto de Supabase no se pueden editar los templates, así que el mail trae solo el link: hay que abrirlo en el mismo dispositivo donde está la app. El código queda disponible si algún día se configura un SMTP propio.
 - La sesión persiste en localStorage (default de supabase-js), así que se inicia sesión una vez por dispositivo.
 
 ### 4. Modelo de datos y normalización en la base
@@ -92,9 +93,13 @@ discos(id uuid pk, owner_id uuid default auth.uid(), banda_id uuid fk → bandas
 - Las RPC corren como `security invoker`, así que RLS sigue aplicando.
 - Al borrar el último disco de una banda, la banda también se borra (con su imagen): una banda sin discos no aparecería en ninguna pestaña.
 
-### 7. RLS
-- `enable row level security` en las dos tablas, con policies `for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid())`.
-- `anon` no tiene ningún acceso a las tablas.
+### 7. RLS: catálogo compartido entre miembros
+- Tabla `miembros(user_id)` y función `es_miembro()` (`security definer`, solo consulta si `auth.uid()` está en la lista).
+- Policies `for all to authenticated using (es_miembro()) with check (es_miembro())` en bandas, discos y `storage.objects` del bucket `imagenes`.
+- `owner_id` pasa a llamarse `cargado_por` (quién lo cargó) y la unicidad es del catálogo entero: `unique(nombre_norm)` y `unique(banda_id, titulo_norm, formato)`.
+- **Por qué una lista de miembros** y no "cualquier usuario autenticado": si alguna vez se activaran los registros por error, una cuenta nueva no vería nada.
+- `anon` no tiene ningún acceso a las tablas; `miembros` no es legible desde la API.
+- Implementado en la migration `20261028000000_catalogo_compartido.sql`, sobre la inicial.
 
 ### 8. Imágenes (tapas y bandas)
 - **Captura:** dos botones, "Sacar foto" (`<input type="file" accept="image/*" capture="environment">`) y "Elegir de galería" (sin `capture`).
@@ -169,6 +174,15 @@ Consultar sin señal es un requisito central, no un extra. Hay tres capas guarda
 - La vista previa clasifica cada línea como: nueva, banda nueva, ya existe en el catálogo, repetida en la lista (se combina con `copias = n`) o inválida (con el motivo).
 - Para los duplicados contra el catálogo, la opción por defecto es **omitir**. Hay un toggle "sumarlos como copias".
 - La importación no lleva imágenes. Se agregan después desde el detalle.
+
+### 13b. Exportación a CSV
+- Se genera en el cliente a partir del catálogo en memoria, así que funciona sin conexión. No hace falta RPC ni Storage.
+- Columnas `banda;disco;formato;copias;fecha_carga;spotify_url`. Separador `;` (el de Excel en configuración regional española y el mismo de la importación), BOM UTF-8, fin de línea `\r\n`, fecha `AAAA-MM-DD` (local). Escapado RFC 4180: comillas dobles si el campo tiene `;`, `"` o salto de línea.
+- Orden: formato (vinilo, cd), banda y título A→Z con `localeCompare('es')`.
+- Entrega: si `navigator.canShare({ files: [archivo] })` responde que sí, se usa `navigator.share` (hoja de compartir del celular). Si no, o si la usuaria cancela por error, se descarga con `<a download>` sobre un `Blob`.
+- Nombre: `musica-retro-{todo|vinilos|cds}-AAAA-MM-DD.csv`.
+- Ida y vuelta: el parser de importación pasa a aceptar ≥ 3 campos (usa los tres primeros), ignora la primera línea si es el encabezado y respeta los campos entre comillas.
+- Dónde: en Ajustes, "Exportar CSV" abre una hoja con Todo / Solo vinilos / Solo CDs y la cantidad de discos de cada opción.
 
 ### 14. Identidad visual rock/metal
 Tokens en CSS (`@theme` de Tailwind v4 + variables en `:root`, `[data-theme]` y `[data-acento]`):

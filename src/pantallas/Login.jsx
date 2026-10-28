@@ -47,7 +47,8 @@ export default function Login() {
       ) : (
         <form onSubmit={entrar} className="mt-12 space-y-6">
           <p className="font-light text-suave">
-            Te mandamos un mail a <span className="text-texto">{mail}</span>. Tocá el link o escribí acá el código.
+            Te mandamos un mail a <span className="text-texto">{mail}</span>. Abrilo en este mismo dispositivo y tocá el link para entrar. Si el
+            mail trae un código, también podés escribirlo acá.
           </p>
           <Campo
             etiqueta="Código"

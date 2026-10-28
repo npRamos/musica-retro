@@ -90,7 +90,10 @@ create policy discos_de_la_duena on public.discos
   using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
 
+-- Permisos explícitos: no dependen de "Automatically expose new tables".
 revoke all on public.bandas, public.discos from anon;
+grant select, insert, update, delete on public.bandas, public.discos to authenticated;
+grant usage on type public.formato_disco to authenticated;
 
 -- ─── RPC ────────────────────────────────────────────────────────────────
 -- Busca o crea la banda y agrega el disco. Si ya existe, no inserta y lo devuelve.

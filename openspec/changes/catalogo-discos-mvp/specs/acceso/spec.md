@@ -15,8 +15,8 @@ El sistema SHALL permitir el ingreso mediante un mail que contiene un magic link
 - **WHEN** la usuaria escribe un código incorrecto o vencido
 - **THEN** el sistema muestra un error y permite pedir un nuevo mail
 
-### Requirement: Una sola usuaria, sin registro
-El sistema MUST NOT permitir la creación de cuentas nuevas desde la app. Solo una cuenta creada previamente por la administradora puede ingresar.
+### Requirement: Solo cuentas invitadas, sin registro
+El sistema MUST NOT permitir la creación de cuentas nuevas desde la app. Solo pueden ingresar las cuentas invitadas previamente por la administradora.
 
 #### Scenario: Mail no registrado
 - **WHEN** alguien pide acceso con un mail que no tiene cuenta
@@ -33,13 +33,22 @@ El sistema SHALL mantener la sesión iniciada en cada dispositivo entre visitas 
 - **WHEN** la usuaria elige "Cerrar sesión"
 - **THEN** el sistema cierra la sesión, borra la caché local del catálogo y muestra la pantalla de ingreso
 
-### Requirement: Datos aislados por dueña
-El sistema MUST impedir el acceso a bandas y discos a cualquier solicitud que no esté autenticada como la dueña de esos datos.
+### Requirement: Catálogo compartido entre miembros
+El sistema SHALL ofrecer un único catálogo compartido: todas las cuentas listadas como miembros ven y editan las mismas bandas, discos e imágenes. El sistema MUST impedir el acceso a cualquier solicitud sin sesión o de una cuenta que no sea miembro.
+
+#### Scenario: Lo que carga uno lo ve el otro
+- **WHEN** un miembro agrega un disco con tapa
+- **THEN** el otro miembro, al sincronizar, ve ese disco y su tapa
+
+#### Scenario: Duplicado entre miembros
+- **WHEN** un miembro carga un disco que el otro ya había cargado (misma banda, título y formato)
+- **THEN** el sistema avisa que ya está en el catálogo y ofrece sumar copia
+
+#### Scenario: Cuenta que no es miembro
+- **WHEN** una cuenta con sesión iniciada no está en la lista de miembros
+- **THEN** no ve ninguna banda, disco ni imagen, y no puede guardar nada
 
 #### Scenario: Acceso anónimo a la API
 - **WHEN** se consulta la API de datos sin sesión, usando solo la clave pública
 - **THEN** el sistema no devuelve ninguna banda ni disco
 
-#### Scenario: Escritura con otra dueña
-- **WHEN** una solicitud autenticada intenta crear un disco con un `owner_id` distinto del propio
-- **THEN** el sistema rechaza la operación

@@ -3,7 +3,7 @@
 Catálogo personal de vinilos y CDs. Es una app web estática (Vite + React + Tailwind) publicada en GitHub Pages, con los datos privados en Supabase (Postgres + Auth + Storage). Se instala en el celular como app y se puede consultar sin conexión.
 
 - El código del repo es público y no contiene secretos.
-- Los datos y las imágenes solo los puede ver la dueña: el acceso es por mail y está protegido con RLS.
+- Es un catálogo compartido: lo ven y lo editan las cuentas listadas en `public.miembros`. El acceso es por mail y los datos están protegidos con RLS.
 
 ## Puesta en marcha
 
@@ -11,24 +11,31 @@ Catálogo personal de vinilos y CDs. Es una app web estática (Vite + React + Ta
 
 1. Crear un proyecto nuevo (región São Paulo o US East).
 2. Aplicar la estructura. Hay dos opciones:
-   - **SQL Editor:** pegar y ejecutar `supabase/migrations/20261027000000_catalogo.sql`.
+   - **SQL Editor:** pegar y ejecutar, en orden, los archivos de `supabase/migrations/`.
    - **CLI:** `supabase link --project-ref <ref>` y después `supabase db push`.
 
    Con eso quedan creadas las tablas, los triggers, RLS, las funciones RPC, el bucket privado `imagenes` y sus policies.
 3. **Authentication → Sign In / Providers → Email**:
    - Email habilitado.
-   - **Allow new users to sign up: desactivado** (una sola usuaria).
+   - **Allow new users to sign up: desactivado** (solo entran cuentas invitadas).
 4. **Authentication → URL Configuration**:
    - Site URL: `https://<tu-usuario>.github.io/musica-retro/`
    - Redirect URLs: la misma y `http://localhost:5173/musica-retro/`
-5. **Authentication → Emails → Magic Link**: agregar el código al template, para poder entrar aunque el link se abra en otro navegador:
+5. **(Opcional) Código en el mail.** Con el correo por defecto de Supabase el mail trae solo el link, que hay que abrir en el mismo dispositivo donde está la app. El correo por defecto envía solo a miembros de la organización (**Organization → Team**) y pocos mails por hora. Para sumar un código que sirva desde cualquier navegador, hay que configurar un SMTP propio (**Emails → SMTP Settings**) y editar **Templates → Magic link or OTP**:
 
    ```html
    <h2>Música Retro</h2>
    <p><a href="{{ .ConfirmationURL }}">Entrar</a></p>
    <p>O escribí este código en la app: <strong>{{ .Token }}</strong></p>
    ```
-6. **Authentication → Users → Invite user**: invitar tu mail. Esa es la única cuenta.
+6. **Authentication → Users → Invite user**: invitar el mail de cada persona que va a usar la app. Después, en el **SQL Editor**, sumarlas al catálogo compartido:
+
+   ```sql
+   insert into public.miembros (user_id)
+   select id from auth.users where email in ('uno@ejemplo.com', 'otra@ejemplo.com');
+   ```
+
+   Una cuenta que no está en `miembros` puede iniciar sesión, pero ve el catálogo vacío y no puede guardar nada.
 7. **Project Settings → API**: copiar la **Project URL** y la **anon / publishable key**.
 
 ### 2. Desarrollo local

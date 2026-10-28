@@ -6,7 +6,7 @@ La colección (unos 100 CDs y 25 vinilos) creció lo suficiente como para olvida
 
 - Nueva app web estática (Vite + React + Tailwind) publicada en GitHub Pages, mobile-first.
 - Datos en Supabase (Postgres + Auth + Storage). La estructura vive como migrations SQL en el repo para poder portarla.
-- Acceso privado con magic link (y código de un solo uso en el mismo mail). Hay una sola usuaria, los registros nuevos están deshabilitados y los datos se protegen con RLS.
+- Acceso privado con magic link (y código de un solo uso en el mismo mail). Es un **catálogo compartido** entre las cuentas invitadas (la pareja), con los registros nuevos deshabilitados y los datos protegidos con RLS según una lista de miembros.
 - Alta de discos con banda, título y formato (vinilo/CD). La fecha de carga es automática y las copias arrancan en 1 por defecto.
 - **Tapas de discos e imágenes de bandas** desde la cámara o la galería. Se recortan en cuadrado, se comprimen en el dispositivo y se guardan en un bucket privado.
 - Autocompletado de bandas: si la banda no existe, se crea al guardar. La comparación ignora mayúsculas, tildes y espacios.
@@ -18,6 +18,7 @@ La colección (unos 100 CDs y 25 vinilos) creció lo suficiente como para olvida
 - **Orden elegible**: A→Z (por defecto), Z→A o última compra.
 - Buscador por disco o banda dentro de la pestaña activa, que avisa si lo tenés en el otro formato.
 - Importación de una lista pegada (`banda; disco; formato`) con vista previa antes de guardar.
+- **Exportación a CSV** del catálogo (todo, solo vinilos o solo CDs), compatible con Excel o Sheets y reimportable. Funciona sin conexión y en el celular se puede compartir directo.
 - Botón "Escuchar en Spotify" que abre la búsqueda web de Spotify, sin usar su API.
 - Caché local de solo lectura (datos e imágenes) para consultar sin conexión; la app es instalable (PWA).
 - GitHub Action programada que hace un ping a Supabase para evitar que el free tier pause el proyecto.
@@ -29,11 +30,12 @@ La colección (unos 100 CDs y 25 vinilos) creció lo suficiente como para olvida
 ## Capabilities
 
 ### New Capabilities
-- `acceso`: ingreso privado con magic link o código, sesión persistente por dispositivo, una sola usuaria y aislamiento de datos por dueña.
+- `acceso`: ingreso privado con magic link o código, sesión persistente por dispositivo, solo cuentas invitadas y catálogo compartido entre miembros.
 - `catalogo`: modelo de bandas y discos; alta, edición, borrado, autocompletado y creación de bandas, formato tipo título, normalización, detección de duplicados y corrección/unión de bandas.
 - `imagenes`: tapas de discos e imágenes de bandas desde la cámara o la galería, con recorte, compresión, almacenamiento privado y caché offline.
 - `consulta`: pestañas por formato, cuadrícula/lista de bandas, orden elegible, pantalla de banda, detalle de disco, buscador con aviso de otro formato, link a Spotify y consulta offline.
-- `importacion`: carga masiva pegando líneas de texto, con validación y vista previa (bandas nuevas, duplicados, líneas inválidas).
+- `importacion`: carga masiva pegando líneas de texto, con validación y vista previa (bandas nuevas, duplicados, líneas inválidas). Acepta un CSV exportado (ignora el encabezado y las columnas extra).
+- `exportacion`: descarga o envío del catálogo como CSV (todo, vinilos o CDs), legible en planillas y sin conexión.
 - `identidad-visual`: estética rock/metal, temas oscuro y claro, acento violeta o rojo, tipografía y diseño mobile-first.
 - `operacion`: deploy a GitHub Pages, keep-alive de Supabase, migrations versionadas y README de puesta en marcha.
 
