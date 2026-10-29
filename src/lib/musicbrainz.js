@@ -46,13 +46,18 @@ function dormir(ms, signal) {
 
 const escapar = (palabra) => palabra.replace(/[+\-&|!(){}[\]^"~*?:\\/]/g, '\\$&')
 
+// Signos que separan palabras: con comodín, "ac\/dc*" no encuentra AC/DC y "ac AND dc*" sí.
+// Los puntos y apóstrofos quedan dentro de la palabra ("b.b." encuentra a B.B. King; "b AND b" no).
+const SEPARADORES = /[/\-&+,:;!?()[\]{}"…]/g
+
 // Lucene: todas las palabras obligatorias y la última como prefijo ("artist:(los AND pioj*)"),
 // para encontrar el nombre mientras se escribe. En minúsculas no se confunden con AND/OR.
 export function consultaParcial(campo, texto) {
-  const palabras = normalizar(texto).split(' ').filter(Boolean).map(escapar)
+  const palabras = normalizar(texto).replace(SEPARADORES, ' ').split(' ').filter(Boolean).map(escapar)
   if (!palabras.length) return ''
+  // Sin comodín solo si toda la búsqueda es una letra suelta (demasiado amplia): "ac AND d*" sí encuentra AC/DC.
   const ultima = palabras.pop()
-  palabras.push(ultima.length >= 2 ? `${ultima}*` : ultima)
+  palabras.push(ultima.length >= 2 || palabras.length ? `${ultima}*` : ultima)
   return `${campo}:(${palabras.join(' AND ')})`
 }
 
