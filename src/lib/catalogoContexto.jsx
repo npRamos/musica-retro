@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { borrar, borrarImagenesCacheadas, guardar, leer, pedirAlmacenamientoPersistente, precargarImagenes } from './almacen.js'
 import { esErrorDeRed } from './errores.js'
-import { borrarImagenes, firmarImagenes, procesarImagen, subirImagen } from './imagen.js'
+import { borrarImagenes, firmarImagenes, procesarImagen, procesarLogo, subirImagen } from './imagen.js'
+import { musicbrainz } from './musicbrainz.js'
 import { supabase } from './supabase.js'
 import { formatearTitulo, normalizar } from './texto.js'
 
@@ -17,6 +18,7 @@ export function CatalogoProvider({ sesion, children }) {
   const [error, setError] = useState(null)
   const [miembro, setMiembro] = useState(null)
   const enCurso = useRef(null)
+  const logosVistos = useRef(new Set()) // bandas cuyo logo ya se buscó en esta sesión
 
   const sincronizar = useCallback(async () => {
     if (enCurso.current) return enCurso.current
@@ -24,7 +26,7 @@ export function CatalogoProvider({ sesion, children }) {
       setSincronizando(true)
       try {
         const [bandasRes, discosRes, miembroRes] = await Promise.all([
-          supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid'),
+          supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid, logo_path, logo_invertir, logo_buscado_en'),
           supabase
             .from('discos')
             .select(
@@ -35,7 +37,7 @@ export function CatalogoProvider({ sesion, children }) {
         if (bandasRes.error) throw bandasRes.error
         if (discosRes.error) throw discosRes.error
         if (!miembroRes.error) setMiembro(miembroRes.data === true)
-        const rutas = [...bandasRes.data.map((b) => b.imagen_path), ...discosRes.data.flatMap((d) => [d.tapa_path, d.contratapa_path])].filter(Boolean)
+        const rutas = [...bandasRes.data.flatMap((b) => [b.imagen_path, b.logo_path]), ...discosRes.data.flatMap((d) => [d.tapa_path, d.contratapa_path])].filter(Boolean)
         const urls = await firmarImagenes(rutas)
         const nuevos = { bandas: bandasRes.data, discos: discosRes.data, urls, actualizadoEn: new Date().toISOString() }
         setDatos(nuevos)
@@ -105,13 +107,18 @@ export function CatalogoProvider({ sesion, children }) {
     if (resultado.estado === 'creado' && imagen) await ponerImagen(resultado.disco, 'tapa_path', imagen)
     if (resultado.estado === 'creado' && contratapa) await ponerImagen(resultado.disco, 'contratapa_path', contratapa)
     if (resultado.estado === 'creado') await sincronizar()
+    buscarLogoSiFalta(resultado.banda, resultado.banda?.mbid)
     return resultado
   }
 
   // Si el disco existente todavía no tenía datos de MusicBrainz, se completa con los elegidos en el alta.
   const sumarCopia = async (disco, cantidad = 1, imagen, contratapa, datos) => {
     await rpc('sumar_copia', { p_disco: disco.id, p_cantidad: cantidad })
-    if (datos?.mb_release && disco.mb_estado !== 'enlazado') await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
+    if (datos?.mb_release && disco.mb_estado !== 'enlazado') {
+      await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
+      const banda = bandasPorId.get(disco.banda_id)
+      buscarLogoSiFalta(banda, banda?.mbid ?? datos.banda_mbid)
+    }
     if (imagen && !disco.tapa_path) await ponerImagen(disco, 'tapa_path', imagen)
     if (contratapa && !disco.contratapa_path) await ponerImagen(disco, 'contratapa_path', contratapa)
     await sincronizar()
@@ -127,11 +134,12 @@ export function CatalogoProvider({ sesion, children }) {
   }
 
   // Devuelve { estado: 'ok' } o { estado: 'conflicto', existente } si choca con otro disco.
-  const actualizarDisco = async (disco, { banda, titulo, formato, copias, anio = null, spotify_url, imagen, contratapa }) => {
+  // fecha_carga: solo si cambió (undefined = no se toca).
+  const actualizarDisco = async (disco, { banda, titulo, formato, copias, anio = null, fecha_carga, spotify_url, imagen, contratapa }) => {
     const bandaDestino = await bandaPorNombre(banda)
     const { error: err } = await supabase
       .from('discos')
-      .update({ banda_id: bandaDestino.id, titulo: titulo.trim(), formato, copias, anio, spotify_url: spotify_url || null })
+      .update({ banda_id: bandaDestino.id, titulo: titulo.trim(), formato, copias, anio, spotify_url: spotify_url || null, ...(fecha_carga && { fecha_carga }) })
       .eq('id', disco.id)
     if (err?.code === '23505') {
       const existente = datos.discos.find(
@@ -150,6 +158,8 @@ export function CatalogoProvider({ sesion, children }) {
   // salvo que se pida reemplazarlas. sincronizar = false deja la recarga para después (modo pendientes).
   const completarDisco = async (disco, datos, { imagen, contratapa, reemplazar = {}, sincronizar: recargar = true } = {}) => {
     await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
+    const banda = bandasPorId.get(disco.banda_id)
+    buscarLogoSiFalta(banda, banda?.mbid ?? datos.banda_mbid)
     if (imagen && (!disco.tapa_path || reemplazar.tapa)) await ponerImagen(disco, 'tapa_path', imagen)
     if (contratapa && (!disco.contratapa_path || reemplazar.contratapa)) await ponerImagen(disco, 'contratapa_path', contratapa)
     if (recargar) await sincronizar()
@@ -169,7 +179,7 @@ export function CatalogoProvider({ sesion, children }) {
     if (!datos.discos.some((d) => d.id !== disco.id && d.banda_id === disco.banda_id)) {
       const banda = bandasPorId.get(disco.banda_id)
       const { error: errBanda } = await supabase.from('bandas').delete().eq('id', disco.banda_id)
-      if (!errBanda) await borrarImagenes([banda?.imagen_path]).catch(() => {})
+      if (!errBanda) await borrarImagenes([banda?.imagen_path, banda?.logo_path]).catch(() => {})
     }
     await sincronizar()
   }
@@ -194,6 +204,42 @@ export function CatalogoProvider({ sesion, children }) {
     if (err) throw err
     if (anterior) await borrarImagenes([anterior]).catch(() => {})
     await sincronizar()
+  }
+
+  // logo: { blob, invertir } para poner o reemplazar, null para quitar. Siempre marca que ya se buscó,
+  // así un logo quitado no vuelve solo.
+  const cambiarLogoBanda = async (banda, logo, { recargar = true } = {}) => {
+    const anterior = banda.logo_path
+    const ruta = logo ? await subirImagen(uid, 'bandas', `${banda.id}-logo`, logo.blob) : null
+    const { error: err } = await supabase
+      .from('bandas')
+      .update({ logo_path: ruta, logo_invertir: logo?.invertir ?? false, logo_buscado_en: new Date().toISOString() })
+      .eq('id', banda.id)
+    if (err) throw err
+    if (anterior) await borrarImagenes([anterior]).catch(() => {})
+    if (recargar) await sincronizar()
+  }
+
+  // Logo de Wikidata para el artista, procesado (o null si no tiene).
+  const buscarLogo = async (mbid, opciones) => {
+    const blob = await musicbrainz.logoDeArtista(mbid, opciones)
+    return blob ? procesarLogo(blob) : null
+  }
+
+  // Al quedar enlazada, una banda que nunca buscó su logo lo busca una vez, en segundo plano.
+  // Una falla de red no marca nada: se reintenta en otra oportunidad.
+  const buscarLogoSiFalta = (banda, mbid) => {
+    if (!banda || !mbid || banda.logo_path || banda.logo_buscado_en || logosVistos.current.has(banda.id)) return
+    logosVistos.current.add(banda.id)
+    ;(async () => {
+      try {
+        const logo = await buscarLogo(mbid)
+        if (logo) await cambiarLogoBanda(banda, logo)
+        else await supabase.from('bandas').update({ logo_buscado_en: new Date().toISOString() }).eq('id', banda.id)
+      } catch {
+        logosVistos.current.delete(banda.id)
+      }
+    })()
   }
 
   const importar = async (items, duplicados) => {
@@ -230,6 +276,8 @@ export function CatalogoProvider({ sesion, children }) {
     renombrarBanda,
     fusionarBandas,
     cambiarImagenBanda,
+    cambiarLogoBanda,
+    buscarLogo,
     importar,
     cerrarSesion,
   }

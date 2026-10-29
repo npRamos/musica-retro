@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { SelectorImagen } from '../componentes/Formulario.jsx'
 import { IconoFormato, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Imagen } from '../componentes/Portadas.jsx'
@@ -6,6 +6,7 @@ import { Boton, Campo, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { mensajeError } from '../lib/errores.js'
+import { procesarLogo } from '../lib/imagen.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
@@ -16,6 +17,7 @@ export default function EditarBanda({ id }) {
   const banda = bandasPorId.get(id)
   const [nombre, setNombre] = useState(banda?.nombre ?? '')
   const [imagen, setImagen] = useState(undefined)
+  const [logo, setLogo] = useState(undefined) // { blob, invertir } nuevo | null (quitar) | undefined (sin cambios)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const [conflicto, setConflicto] = useState(null)
@@ -40,6 +42,7 @@ export default function EditarBanda({ id }) {
     setError(null)
     try {
       if (imagen !== undefined) await catalogo.cambiarImagenBanda(banda, imagen)
+      if (logo !== undefined) await catalogo.cambiarLogoBanda(banda, logo)
       if (nombre.trim() !== banda.nombre) {
         const r = await catalogo.renombrarBanda(banda, nombre)
         if (r.estado === 'conflicto') {
@@ -88,6 +91,7 @@ export default function EditarBanda({ id }) {
           onChange={setImagen}
           deshabilitado={guardando}
         />
+        <SelectorLogo banda={banda} valor={logo} onChange={setLogo} deshabilitado={guardando} />
         {error && <p className="text-sm text-acento-texto">{error}</p>}
         <Boton type="submit" className="w-full" disabled={guardando || !online}>
           {!online ? 'Sin conexión' : guardando ? 'Guardando…' : 'Guardar'}
@@ -129,5 +133,70 @@ export default function EditarBanda({ id }) {
         </Dialogo>
       )}
     </>
+  )
+}
+
+// Logo: vista previa sobre fondo oscuro (como en la tarjeta), buscar en Wikidata, elegir un archivo o quitar.
+function SelectorLogo({ banda, valor, onChange, deshabilitado }) {
+  const { buscarLogo, online } = useCatalogo()
+  const archivo = useRef(null)
+  const [trabajando, setTrabajando] = useState(false)
+  const [aviso, setAviso] = useState(null)
+  const vistaPrevia = useMemo(() => (valor ? URL.createObjectURL(valor.blob) : null), [valor])
+  useEffect(() => () => vistaPrevia && URL.revokeObjectURL(vistaPrevia), [vistaPrevia])
+
+  const correr = async (obtener, sinResultado) => {
+    setTrabajando(true)
+    setAviso(null)
+    try {
+      const nuevo = await obtener()
+      if (nuevo) onChange(nuevo)
+      else setAviso(sinResultado)
+    } catch {
+      setAviso('No se pudo conseguir el logo. Probá de nuevo o con otro archivo.')
+    } finally {
+      setTrabajando(false)
+    }
+  }
+
+  const elegir = (e) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (f) correr(() => procesarLogo(f))
+  }
+
+  const actual = valor === undefined && banda.logo_path
+  const invertir = valor ? valor.invertir : banda.logo_invertir
+  const hayLogo = Boolean(vistaPrevia || actual)
+
+  return (
+    <div>
+      <p className="etiqueta text-xs text-suave">Logo</p>
+      <div className="mt-2 flex items-start gap-4">
+        <div className="relative size-28 shrink-0 overflow-hidden border border-metal/60 bg-[#141218]">
+          {vistaPrevia && <img src={vistaPrevia} alt="Logo" className={`absolute inset-0 size-full object-contain p-2 ${invertir ? 'invert' : ''}`} />}
+          {actual && <Imagen ruta={banda.logo_path} ajuste="contain" className={`p-2 ${invertir ? 'invert' : ''}`} />}
+          {!hayLogo && <p className="absolute inset-0 grid place-items-center text-xs font-light text-[#9b95a3]">Sin logo</p>}
+          {trabajando && <p className="absolute inset-0 grid place-items-center bg-black/70 text-xs text-[#ebe5f0]">Buscando…</p>}
+        </div>
+        <div className="flex flex-col gap-2">
+          {banda.mbid && (
+            <Boton variante="secundario" disabled={deshabilitado || trabajando || !online} onClick={() => correr(() => buscarLogo(banda.mbid), 'Wikidata no tiene el logo de esta banda.')}>
+              Buscar en Wikidata
+            </Boton>
+          )}
+          <Boton variante="secundario" disabled={deshabilitado || trabajando} onClick={() => archivo.current.click()}>
+            Elegir archivo
+          </Boton>
+          {hayLogo && (
+            <Boton variante="fantasma" disabled={deshabilitado} onClick={() => onChange(banda.logo_path ? null : undefined)}>
+              Quitar
+            </Boton>
+          )}
+        </div>
+      </div>
+      <p className="mt-2 text-sm font-light text-suave">{aviso ?? 'Ideal: un PNG con fondo transparente.'}</p>
+      <input ref={archivo} type="file" accept="image/png,image/webp,image/jpeg,image/svg+xml" hidden onChange={elegir} />
+    </div>
   )
 }

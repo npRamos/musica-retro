@@ -4,7 +4,7 @@ import { IconoCd, IconoVinilo } from '../componentes/Iconos.jsx'
 import { Imagen } from '../componentes/Portadas.jsx'
 import { TemasPlegables } from '../componentes/Temas.jsx'
 import { Boton, Campo, Dialogo, Encabezado, Hoja, Segmentado } from '../componentes/ui.jsx'
-import { NOMBRE_FORMATO_SINGULAR, esLinkSpotifyValido, leerAnio } from '../lib/catalogo.js'
+import { NOMBRE_FORMATO_SINGULAR, esLinkSpotifyValido, fechaLocal, leerAnio, mediodiaLocal } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { coincideFormato, describirEdicion, elegirEdicion } from '../lib/discografia.js'
 import { mensajeError } from '../lib/errores.js'
@@ -31,6 +31,8 @@ export default function FormDisco({ disco, inicial = {} }) {
   const [copias, setCopias] = useState(editando ? disco.copias : 1)
   const [anioTexto, setAnioTexto] = useState(editando ? String(disco.anio ?? '') : '')
   const [spotify, setSpotify] = useState(editando ? (disco.spotify_url ?? '') : '')
+  const [fecha, setFecha] = useState(editando ? fechaLocal(disco.fecha_carga) : '')
+  const hoy = fechaLocal(new Date())
   const [imagen, setImagen] = useState(undefined)
   const [contratapa, setContratapa] = useState(undefined)
   // Si la usuaria eligió o quitó una imagen, MusicBrainz ya no la pisa.
@@ -106,6 +108,8 @@ export default function FormDisco({ disco, inicial = {} }) {
     const { error: errorAnio } = leerAnio(anioTexto)
     if (errorAnio) e.anio = errorAnio
     if (spotify.trim() && !esLinkSpotifyValido(spotify.trim())) e.spotify = 'Tiene que ser un link de open.spotify.com'
+    if (editando && !fecha) e.fecha = 'Elegí una fecha'
+    else if (editando && fecha > hoy) e.fecha = 'La fecha no puede ser futura'
     setErrores(e)
     return Object.keys(e).length === 0
   }
@@ -123,6 +127,7 @@ export default function FormDisco({ disco, inicial = {} }) {
           formato,
           copias,
           anio: leerAnio(anioTexto).anio,
+          fecha_carga: fecha !== fechaLocal(disco.fecha_carga) ? mediodiaLocal(fecha) : undefined,
           spotify_url: spotify.trim(),
           imagen,
           contratapa,
@@ -264,6 +269,14 @@ export default function FormDisco({ disco, inicial = {} }) {
             error={errores.spotify}
             ayuda="Si lo dejás vacío, se busca por banda y título."
           />
+        )}
+        {editando && (
+          <details className="border-y border-metal/40" open={Boolean(errores.fecha)}>
+            <summary className="etiqueta flex min-h-12 cursor-pointer items-center text-sm">Más datos</summary>
+            <div className="pb-4">
+              <Campo etiqueta="Fecha de carga" type="date" max={hoy} value={fecha} onChange={(e) => setFecha(e.target.value)} error={errores.fecha} />
+            </div>
+          </details>
         )}
         {editando && online && (
           <Boton variante="secundario" className="w-full" onClick={() => navegar(`disco/${disco.id}/completar`)}>

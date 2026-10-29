@@ -1,3 +1,4 @@
+import { debeInvertirse } from './logo.js'
 import { musicbrainz } from './musicbrainz.js'
 import { BUCKET, supabase } from './supabase.js'
 
@@ -49,9 +50,30 @@ export async function imagenesDeMusicbrainz(edicion, signal) {
   }
 }
 
+// Logo: sin recorte, hasta 600 px, con transparencia (WebP con alfa o PNG; nunca JPEG).
+// invertir: es oscuro sobre transparente y se mostrará invertido sobre el fondo oscuro de la tarjeta.
+export async function procesarLogo(archivo) {
+  const bitmap = await createImageBitmap(archivo)
+  const escala = Math.min(1, 600 / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(bitmap.width * escala))
+  canvas.height = Math.max(1, Math.round(bitmap.height * escala))
+  const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  bitmap.close?.()
+  const invertir = debeInvertirse(ctx.getImageData(0, 0, canvas.width, canvas.height).data)
+  let blob = await aBlob(canvas, 'image/webp', 0.9)
+  if (!blob || blob.type !== 'image/webp') blob = await aBlob(canvas, 'image/png')
+  if (!blob) throw new Error('No se pudo procesar el logo')
+  return { blob, invertir }
+}
+
+const EXTENSION = { 'image/webp': 'webp', 'image/png': 'png', 'image/jpeg': 'jpg' }
+
 // El nombre lleva la fecha: al reemplazar cambia la ruta y ninguna caché muestra la vieja.
 export async function subirImagen(uid, tipo, id, blob) {
-  const extension = blob.type === 'image/webp' ? 'webp' : 'jpg'
+  const extension = EXTENSION[blob.type] ?? 'jpg'
   const ruta = `${uid}/${tipo}/${id}-${Date.now()}.${extension}`
   const { error } = await supabase.storage.from(BUCKET).upload(ruta, blob, {
     contentType: blob.type,

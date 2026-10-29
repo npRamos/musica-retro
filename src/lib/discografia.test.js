@@ -9,6 +9,7 @@ import {
   elegirArtista,
   elegirDisco,
   elegirEdicion,
+  elegirLogo,
   simplificarDisco,
   simplificarEdicion,
   tituloMedio,
@@ -151,5 +152,17 @@ describe('candidatos', () => {
     expect(elegirDisco(lista, 'Otro')).toBeNull()
     expect(elegirDisco(lista, 'Otro', { aproximado: true }).titulo).toBe('Canción animal')
     expect(elegirDisco([{ titulo: 'x', score: 60 }], 'Otro', { aproximado: true })).toBeNull()
+  })
+})
+
+describe('elegirLogo', () => {
+  const decl = (valor, rank = 'normal') => ({ rank, mainsnak: { datavalue: { value: valor } } })
+  it('prefiere el de rango preferido y descarta los obsoletos', () => {
+    expect(elegirLogo([decl('viejo.png', 'deprecated'), decl('a.svg'), decl('b.svg', 'preferred')])).toBe('b.svg')
+    expect(elegirLogo([decl('viejo.png', 'deprecated'), decl('a.svg')])).toBe('a.svg')
+  })
+  it('sin logo', () => {
+    expect(elegirLogo(undefined)).toBeNull()
+    expect(elegirLogo([decl('x.png', 'deprecated')])).toBeNull()
   })
 })

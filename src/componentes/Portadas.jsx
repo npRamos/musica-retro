@@ -54,15 +54,17 @@ const MOSAICO = {
   4: { grilla: 'grid-cols-2 grid-rows-2', celdas: ['', '', '', ''] },
 }
 
-// Imagen de banda → mosaico de tapas → tarjeta tipográfica.
+// Imagen de banda → logo sobre fondo oscuro (mosaico oscurecido o tono) → mosaico de tapas → tarjeta tipográfica.
 export function PortadaBanda({ banda, tapas = [], formato, chica = false }) {
   const tono = TONOS[tonoDe(banda.nombre, TONOS.length)]
-  const fondoTipografico = { background: `color-mix(in srgb, var(--superficie-solida) 72%, ${tono})` }
+  const conLogo = Boolean(banda.logo_path) && !banda.imagen_path
+  // Con logo, el fondo es oscuro en los dos temas: los logos se diseñan para leerse sobre oscuro.
+  const fondo = { background: conLogo ? `color-mix(in srgb, #141218 78%, ${tono})` : `color-mix(in srgb, var(--superficie-solida) 72%, ${tono})` }
   const mosaico = MOSAICO[tapas.length]
 
   return (
-    <div className="relative aspect-square overflow-hidden border border-metal/50" style={fondoTipografico}>
-      {!chica && (
+    <div className="relative aspect-square overflow-hidden border border-metal/50" style={fondo}>
+      {!chica && !conLogo && (
         <>
           <IconoFormato formato={formato} className="absolute -right-[22%] -bottom-[22%] size-[85%] text-texto opacity-[0.07]" />
           <div className="absolute inset-0 flex flex-col justify-between p-3">
@@ -73,7 +75,7 @@ export function PortadaBanda({ banda, tapas = [], formato, chica = false }) {
           </div>
         </>
       )}
-      {chica && <p className="etiqueta absolute inset-0 grid place-items-center text-lg">{banda.nombre.slice(0, 1)}</p>}
+      {chica && !conLogo && <p className="etiqueta absolute inset-0 grid place-items-center text-lg">{banda.nombre.slice(0, 1)}</p>}
       {tapas.length === 1 && <Imagen ruta={tapas[0]} />}
       {mosaico && (
         <div className={`absolute inset-0 grid gap-px bg-fondo ${mosaico.grilla}`}>
@@ -83,6 +85,17 @@ export function PortadaBanda({ banda, tapas = [], formato, chica = false }) {
             </div>
           ))}
         </div>
+      )}
+      {conLogo && (
+        <>
+          {tapas.length > 0 && <div className="absolute inset-0 bg-black/65" />}
+          <Imagen
+            ruta={banda.logo_path}
+            alt={`Logo de ${banda.nombre}`}
+            ajuste="contain"
+            className={`${chica ? 'p-[8%]' : 'p-[12%]'} ${banda.logo_invertir ? 'invert' : ''}`}
+          />
+        </>
       )}
       <Imagen ruta={banda.imagen_path} alt={banda.nombre} />
     </div>

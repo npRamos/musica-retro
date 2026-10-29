@@ -147,9 +147,10 @@ export function Dialogo({ titulo, children, acciones, alCerrar }) {
   )
 }
 
-// Hoja inferior con opciones (por ejemplo, el orden).
-export function Hoja({ titulo, opciones, valor, onElegir, alCerrar }) {
+// Hoja inferior con opciones (por ejemplo, el orden). Con grupos, varias listas con su título: [{ titulo, opciones, valor, onElegir }].
+export function Hoja({ titulo, opciones, valor, onElegir, alCerrar, grupos }) {
   useEscape(alCerrar)
+  const listas = grupos ?? [{ titulo, opciones, valor, onElegir }]
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={alCerrar}>
       <div
@@ -159,19 +160,23 @@ export function Hoja({ titulo, opciones, valor, onElegir, alCerrar }) {
         className="max-h-[85vh] w-full overflow-y-auto border-t border-metal bg-superficie-solida pb-[env(safe-area-inset-bottom)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="etiqueta px-5 pt-4 pb-2 text-xs text-suave">{titulo}</p>
-        {opciones.map((o) => (
-          <button
-            key={o.valor}
-            type="button"
-            onClick={() => onElegir(o.valor)}
-            className={`flex min-h-14 w-full items-center justify-between border-t border-metal/40 px-5 text-left text-lg ${
-              valor === o.valor ? 'text-acento-texto' : ''
-            }`}
-          >
-            {o.texto}
-            {valor === o.valor && <span className="size-2.5 rounded-full bg-acento" aria-label="elegido" />}
-          </button>
+        {listas.map((lista) => (
+          <div key={lista.titulo}>
+            <p className="etiqueta px-5 pt-4 pb-2 text-xs text-suave">{lista.titulo}</p>
+            {lista.opciones.map((o) => (
+              <button
+                key={o.valor}
+                type="button"
+                onClick={() => lista.onElegir(o.valor)}
+                className={`flex min-h-14 w-full items-center justify-between border-t border-metal/40 px-5 text-left text-lg ${
+                  lista.valor === o.valor ? 'text-acento-texto' : ''
+                }`}
+              >
+                {o.texto}
+                {lista.valor === o.valor && <span className="size-2.5 rounded-full bg-acento" aria-label="elegido" />}
+              </button>
+            ))}
+          </div>
         ))}
       </div>
     </div>

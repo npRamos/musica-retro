@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandasDeFormato, buscar, esLinkSpotifyValido, leerAnio, linkSpotify, ordenarBandas, ordenarDiscos } from './catalogo.js'
+import { bandasDeFormato, buscar, esLinkSpotifyValido, fechaLocal, leerAnio, linkSpotify, mediodiaLocal, ordenarBandas, ordenarDiscos } from './catalogo.js'
 
 const bandas = [
   { id: 'b1', nombre: 'Soda Stereo' },
@@ -42,6 +42,20 @@ describe('ordenarDiscos', () => {
     const suyos = discos.filter((d) => d.banda_id === 'b1')
     expect(ordenarDiscos(suyos, 'az').map((d) => d.id)).toEqual(['d2', 'd3', 'd1'])
     expect(ordenarDiscos(suyos, 'reciente').map((d) => d.id)).toEqual(['d2', 'd3', 'd1'])
+  })
+  it('con bandas: A→Z por banda, año y título; Z→A al revés', () => {
+    const conBandas = new Map([
+      ['dio', { nombre: 'Dio' }],
+      ['acdc', { nombre: 'AC/DC' }],
+    ])
+    const lista = [
+      { id: 'last', banda_id: 'dio', titulo: 'The Last in Line', anio: 1984 },
+      { id: 'sin', banda_id: 'dio', titulo: 'Angry Machines' },
+      { id: 'holy', banda_id: 'dio', titulo: 'Holy Diver', anio: 1983 },
+      { id: 'back', banda_id: 'acdc', titulo: 'Back in Black', anio: 1980 },
+    ]
+    expect(ordenarDiscos(lista, 'az', conBandas).map((d) => d.id)).toEqual(['back', 'holy', 'last', 'sin'])
+    expect(ordenarDiscos(lista, 'za', conBandas).map((d) => d.id)).toEqual(['sin', 'last', 'holy', 'back'])
   })
   it('por año, con los que no tienen año al final por título', () => {
     const conAnio = [
@@ -88,5 +102,15 @@ describe('leerAnio', () => {
     expect(leerAnio('86').error).toBe('El año tiene que tener 4 cifras')
     expect(leerAnio('3000').error).toBeTruthy()
     expect(leerAnio('19a6').error).toBeTruthy()
+  })
+})
+
+describe('fecha de carga', () => {
+  it('ida y vuelta sin correrse de día', () => {
+    const iso = mediodiaLocal('2019-03-15')
+    expect(new Date(iso).getHours()).toBe(12)
+    expect(fechaLocal(iso)).toBe('2019-03-15')
+    expect(fechaLocal(new Date(2026, 9, 28, 23, 59))).toBe('2026-10-28')
+    expect(fechaLocal(new Date(2026, 0, 1, 0, 1))).toBe('2026-01-01')
   })
 })

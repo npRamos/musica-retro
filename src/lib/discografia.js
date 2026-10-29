@@ -108,6 +108,14 @@ export function duracion(ms) {
 
 export const tituloMedio = (medio, total) => (total > 1 ? `Disco ${medio.medio}` : null)
 
+// ─── Logo (Wikidata P154) ───────────────────────────────────────────────
+// Archivo de Commons del logo: el de rango preferido o el primero que no esté obsoleto.
+export function elegirLogo(declaraciones = []) {
+  const validas = declaraciones.filter((d) => d.rank !== 'deprecated' && d.mainsnak?.datavalue?.value)
+  const elegida = validas.find((d) => d.rank === 'preferred') ?? validas[0]
+  return elegida ? elegida.mainsnak.datavalue.value : null
+}
+
 // ─── Candidatos para completar ──────────────────────────────────────────
 export const elegirArtista = (artistas, nombre) =>
   artistas.find((a) => a.score >= 90 && normalizar(a.nombre) === normalizar(nombre)) ?? null

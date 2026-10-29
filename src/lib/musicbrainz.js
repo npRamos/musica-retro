@@ -3,6 +3,7 @@ import {
   elegirArtista,
   elegirDisco,
   elegirEdicion,
+  elegirLogo,
   simplificarArtista,
   simplificarDisco,
   simplificarEdicion,
@@ -14,6 +15,8 @@ import { normalizar } from './texto.js'
 
 const MB = 'https://musicbrainz.org/ws/2/'
 const CAA = 'https://coverartarchive.org/release/'
+const WIKIDATA = 'https://www.wikidata.org/wiki/Special:EntityData/'
+const COMMONS = 'https://commons.wikimedia.org/wiki/Special:FilePath/'
 
 export class ErrorMusicBrainz extends Error {
   constructor(mensaje = 'MusicBrainz no responde') {
@@ -169,6 +172,22 @@ export function crearCliente({ fetch: pedirHttp = (...a) => fetch(...a), espera 
         bajar(images.find((i) => i.back || i.types?.includes('Back'))),
       ])
       return { tapa, contratapa }
+    },
+
+    // Logo de un artista: MusicBrainz (relación con Wikidata) → Wikidata P154 → Commons a 600 px (PNG aunque sea SVG).
+    // null si no hay. Solo el pedido a MusicBrainz pasa por la cola.
+    async logoDeArtista(mbid, { signal } = {}) {
+      const artista = await pedir(`artist/${mbid}`, { inc: 'url-rels' }, signal)
+      const enlace = artista.relations?.find((r) => r.type === 'wikidata')?.url?.resource
+      const item = enlace?.match(/Q\d+$/)?.[0]
+      if (!item) return null
+      const respuesta = await obtener(`${WIKIDATA}${item}.json`, signal)
+      if (!respuesta.ok) throw new ErrorMusicBrainz('Wikidata no responde')
+      const { entities = {} } = await respuesta.json()
+      // Si el ítem fue redirigido, la entidad viene con otro id: se toma la única que hay.
+      const archivo = elegirLogo(Object.values(entities)[0]?.claims?.P154)
+      if (!archivo) return null
+      return bajarImagen(`${COMMONS}${encodeURIComponent(archivo.replaceAll(' ', '_'))}?width=600`, signal)
     },
 
     // Candidato para un disco ya cargado: artista (enlazado o por nombre), disco por título y edición por formato.

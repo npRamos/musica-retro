@@ -11,10 +11,14 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
   const { bandas, discos, bandasPorId, online, actualizadoEn } = useCatalogo()
   const [prefs, cambiar] = usePreferencias()
   const [eligiendoOrden, setEligiendoOrden] = useState(false)
-  const { vista, orden } = prefs
+  const { vista, orden, agrupar } = prefs
 
   const cuenta = useMemo(() => contarPorFormato(discos), [discos])
   const items = useMemo(() => ordenarBandas(bandasDeFormato(bandas, discos, formato), orden), [bandas, discos, formato, orden])
+  const sueltos = useMemo(
+    () => (agrupar === 'discos' ? ordenarDiscos(discos.filter((d) => d.formato === formato), orden, bandasPorId) : []),
+    [agrupar, discos, formato, orden, bandasPorId],
+  )
   const resultados = useMemo(() => {
     const r = buscar(discos, bandasPorId, busqueda, formato)
     return { ...r, enFormato: ordenarDiscos(r.enFormato, orden, bandasPorId) }
@@ -32,7 +36,7 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
       <header className="sticky top-0 z-20 border-b border-metal/50 bg-fondo/92 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 px-4 pt-3">
           <h1 className="font-display min-w-0 flex-1 truncate text-[2.1rem] leading-none">Música Retro</h1>
-          <BotonCirculo etiqueta={`Orden: ${ORDENES[orden]}`} onClick={() => setEligiendoOrden(true)}>
+          <BotonCirculo etiqueta={`Orden y vista: ${ORDENES[orden]}`} onClick={() => setEligiendoOrden(true)}>
             <IconoOrden />
           </BotonCirculo>
           <BotonCirculo etiqueta={vista === 'grilla' ? 'Ver como lista' : 'Ver como cuadrícula'} onClick={() => cambiar('vista', vista === 'grilla' ? 'lista' : 'grilla')}>
@@ -120,6 +124,12 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
               )
             )}
           </>
+        ) : agrupar === 'discos' && sueltos.length > 0 ? (
+          <Contenedor>
+            {sueltos.map((d) => (
+              <TarjetaDisco key={d.id} disco={d} banda={bandasPorId.get(d.banda_id)} vista={vista} mostrarBanda onClick={() => navegar(`disco/${d.id}`)} />
+            ))}
+          </Contenedor>
         ) : items.length > 0 ? (
           <Contenedor>
             {items.map((item) => (
@@ -148,13 +158,30 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
 
       {eligiendoOrden && (
         <Hoja
-          titulo="Ordenar"
-          valor={orden}
-          opciones={Object.entries(ORDENES).map(([valor, texto]) => ({ valor, texto }))}
-          onElegir={(v) => {
-            cambiar('orden', v)
-            setEligiendoOrden(false)
-          }}
+          titulo="Orden y vista"
+          grupos={[
+            {
+              titulo: 'Mostrar',
+              valor: agrupar,
+              opciones: [
+                { valor: 'bandas', texto: 'Por banda' },
+                { valor: 'discos', texto: 'Todos los discos' },
+              ],
+              onElegir: (v) => {
+                cambiar('agrupar', v)
+                setEligiendoOrden(false)
+              },
+            },
+            {
+              titulo: 'Ordenar',
+              valor: orden,
+              opciones: Object.entries(ORDENES).map(([valor, texto]) => ({ valor, texto })),
+              onElegir: (v) => {
+                cambiar('orden', v)
+                setEligiendoOrden(false)
+              },
+            },
+          ]}
           alCerrar={() => setEligiendoOrden(false)}
         />
       )}

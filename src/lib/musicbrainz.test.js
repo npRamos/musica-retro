@@ -167,4 +167,23 @@ describe('consultas', () => {
       mb_release: null,
     })
   })
+
+  it('logo: MusicBrainz → Wikidata → Commons; null si no hay', async () => {
+    const { fetch, llamadas } = simular((url) => {
+      // Formas recortadas de las respuestas reales (28/10/2026)
+      if (url.includes('/artist/maiden?')) return json({ relations: [{ type: 'wikidata', url: { resource: 'https://www.wikidata.org/wiki/Q42482' } }] })
+      if (url.includes('/artist/sumo?')) return json({ relations: [{ type: 'wikidata', url: { resource: 'https://www.wikidata.org/wiki/Q632499' } }] })
+      if (url.includes('/artist/sin-wikidata?')) return json({ relations: [{ type: 'discogs', url: { resource: 'https://www.discogs.com/artist/1' } }] })
+      if (url.endsWith('Q42482.json'))
+        return json({ entities: { Q42482: { claims: { P154: [{ rank: 'normal', mainsnak: { datavalue: { value: 'Logo iron maiden.png' } } }] } } } })
+      if (url.endsWith('Q632499.json')) return json({ entities: { Q632499: { claims: {} } } })
+      if (url.startsWith('https://commons.wikimedia.org/')) return json(null)
+      throw new Error(`inesperado ${url}`)
+    })
+    const mb = crearCliente({ fetch, espera: 0 })
+    expect(await mb.logoDeArtista('maiden')).toBeInstanceOf(Blob)
+    expect(llamadas.at(-1).url).toBe('https://commons.wikimedia.org/wiki/Special:FilePath/Logo_iron_maiden.png?width=600')
+    expect(await mb.logoDeArtista('sumo')).toBeNull()
+    expect(await mb.logoDeArtista('sin-wikidata')).toBeNull()
+  })
 })

@@ -47,12 +47,16 @@ export function ordenarBandas(items, orden) {
 }
 
 export function ordenarDiscos(discos, orden, bandasPorId) {
-  const nombre = (d) => (bandasPorId ? `${bandasPorId.get(d.banda_id)?.nombre ?? ''} ${d.titulo}` : d.titulo)
+  const nombre = (d) => d.titulo
   const copia = [...discos]
   if (orden === 'reciente') return copia.sort((a, b) => (b.fecha_carga > a.fecha_carga ? 1 : b.fecha_carga < a.fecha_carga ? -1 : 0))
   // Por año: del más viejo al más nuevo; los que no tienen año, al final por título.
-  if (orden === 'anio') return copia.sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || comparar(nombre(a), nombre(b)))
-  copia.sort((a, b) => comparar(nombre(a), nombre(b)))
+  const porAnio = (a, b) => (a.anio ?? 9999) - (b.anio ?? 9999)
+  if (orden === 'anio') return copia.sort((a, b) => porAnio(a, b) || comparar(nombre(a), nombre(b)))
+  // Con bandas (todos los discos, búsqueda): por banda y, dentro de cada una, como discografía.
+  const banda = (d) => bandasPorId?.get(d.banda_id)?.nombre ?? ''
+  if (bandasPorId) copia.sort((a, b) => comparar(banda(a), banda(b)) || porAnio(a, b) || comparar(a.titulo, b.titulo))
+  else copia.sort((a, b) => comparar(a.titulo, b.titulo))
   return orden === 'za' ? copia.reverse() : copia
 }
 
@@ -83,6 +87,18 @@ export function leerAnio(texto) {
   const n = Number(t)
   if (!/^\d{4}$/.test(t) || n < 1900 || n > 2100) return { error: 'El año tiene que tener 4 cifras' }
   return { anio: n }
+}
+
+// Fecha de carga: "aaaa-mm-dd" en hora local (para un input date) y vuelta a las 12:00 locales,
+// así ningún huso horario la corre de día.
+const dosCifras = (n) => String(n).padStart(2, '0')
+export function fechaLocal(fecha) {
+  const d = new Date(fecha)
+  return `${d.getFullYear()}-${dosCifras(d.getMonth() + 1)}-${dosCifras(d.getDate())}`
+}
+export function mediodiaLocal(dia) {
+  const [a, m, d] = dia.split('-').map(Number)
+  return new Date(a, m - 1, d, 12).toISOString()
 }
 
 export function esLinkSpotifyValido(url) {
