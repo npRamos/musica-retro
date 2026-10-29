@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { IconoFormato } from '../componentes/Iconos.jsx'
 import { Boton, Encabezado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
@@ -23,6 +23,20 @@ export default function Importar() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const [resultado, setResultado] = useState(null)
+  const archivo = useRef(null)
+
+  // Un .csv (por ejemplo, la planilla exportada) se carga en el área de texto y pasa por la misma vista previa.
+  const elegirArchivo = async (e) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    try {
+      setTexto(await f.text())
+      setError(null)
+    } catch {
+      setError('No se pudo leer ese archivo.')
+    }
+  }
 
   const vista = useMemo(() => (revisando ? clasificar(parsearLista(texto), bandas, discos) : null), [revisando, texto, bandas, discos])
   const aGuardar = vista ? vista.items.filter((i) => i.estado !== 'existe' || sumarDuplicados) : []
@@ -78,9 +92,15 @@ export default function Importar() {
               className="mt-2 block w-full resize-y border border-metal bg-superficie p-3 font-mono text-sm leading-relaxed outline-none placeholder:text-suave/50 focus:border-acento"
             />
             <p className="mt-2 text-sm font-light text-suave">
-              También podés pegar tres columnas copiadas de una planilla. Formatos: vinilo, lp, v · cd, c.
+              También podés pegar tres columnas copiadas de una planilla, o elegir la planilla que exporta la app (con sus copias, años y fechas).
+              Formatos: vinilo, lp, v · cd, c.
             </p>
-            <Boton className="mt-6 w-full" disabled={!texto.trim()} onClick={() => setRevisando(true)}>
+            <Boton variante="secundario" className="mt-4 w-full" onClick={() => archivo.current.click()}>
+              Elegir archivo (.csv)
+            </Boton>
+            <input ref={archivo} type="file" accept=".csv,.txt,text/csv,text/plain" hidden onChange={elegirArchivo} />
+            {error && <p className="mt-3 text-sm text-acento-texto">{error}</p>}
+            <Boton className="mt-4 w-full" disabled={!texto.trim()} onClick={() => setRevisando(true)}>
               Revisar
             </Boton>
           </>
@@ -108,7 +128,9 @@ export default function Importar() {
                     <span className="block truncate font-medium">{i.titulo}</span>
                     <span className="etiqueta block truncate text-xs text-suave">
                       {i.banda}
-                      {i.copias > 1 && ` · ${i.copias} copias (líneas ${i.lineas.join(', ')})`}
+                      {i.anio && ` · ${i.anio}`}
+                      {i.copias > 1 && ` · ${i.copias} copias${i.lineas.length > 1 ? ` (líneas ${i.lineas.join(', ')})` : ''}`}
+                      {i.fecha_carga && ` · cargado ${new Date(i.fecha_carga).toLocaleDateString('es-AR')}`}
                     </span>
                   </span>
                   <span className={`etiqueta shrink-0 text-xs ${ESTADOS[i.estado].clase}`}>

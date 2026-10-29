@@ -99,4 +99,15 @@ Sumo; After Chabón; vinilo
 
 Formatos aceptados: `vinilo`, `vinil`, `lp`, `v`, `cd`, `c`. Antes de guardar se ve una vista previa. La importación es todo o nada.
 
+También se puede elegir un `.csv`: la planilla que genera la app (ver abajo) se vuelve a importar con sus copias, años, fechas de carga y links de Spotify. Con una fila de encabezado, las columnas se toman por nombre (Banda o Artista, Disco o Álbum, Formato, Copias, Año, Cargado, Spotify).
+
 Los discos importados quedan **pendientes** de datos de MusicBrainz. **Ajustes → Completar pendientes** los recorre de a uno y propone año, temas, tapa y contratapa para confirmar con un toque.
+
+## Compartir el catálogo
+
+**Ajustes → Compartir el catálogo** (Todo, Vinilos o CDs):
+
+- **Planilla para Excel (CSV):** `;` como separador y UTF-8 con BOM, para que Excel en español la abra en columnas y con tildes. En el celular abre la hoja de compartir; en la computadora se descarga.
+- **Copiar** o **WhatsApp:** la lista como texto, agrupada por banda, con año y copias.
+
+Desde la pantalla de una banda, **Compartir esta banda** manda solo sus discos. Todo funciona sin conexión, salvo abrir WhatsApp.

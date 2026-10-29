@@ -149,3 +149,32 @@ export const IconoSalir = (p) => (
     <path d="M14.5 8 18.5 12l-4 4M18.5 12H9" />
   </Icono>
 )
+
+export const IconoCompartir = (p) => (
+  <Icono {...p}>
+    <circle cx="6" cy="12" r="2.5" />
+    <circle cx="17.5" cy="6" r="2.5" />
+    <circle cx="17.5" cy="18" r="2.5" />
+    <path d="m8.3 10.8 7-3.6M8.3 13.2l7 3.6" />
+  </Icono>
+)
+
+export const IconoCopiar = (p) => (
+  <Icono {...p}>
+    <rect x="8.5" y="8.5" width="11" height="11" />
+    <path d="M15.5 8.5V4.5h-11v11h4" />
+  </Icono>
+)
+
+export const IconoMensaje = (p) => (
+  <Icono {...p}>
+    <path d="M4.5 19.5 6 15.6A7.5 7.5 0 1 1 9 18.6z" />
+  </Icono>
+)
+
+export const IconoPlanilla = (p) => (
+  <Icono {...p}>
+    <rect x="4.5" y="4.5" width="15" height="15" />
+    <path d="M4.5 9.5h15M4.5 14.5h15M10 9.5v10" />
+  </Icono>
+)

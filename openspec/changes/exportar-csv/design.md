@@ -11,8 +11,11 @@ El importador actual (`src/lib/importar.js`) exige exactamente 3 campos por lín
 - Exportar y compartir sin conexión.
 - Que la misma planilla se pueda volver a importar sin perder copias, año, fecha de carga ni Spotify.
 
+- Mandar la lista por WhatsApp en dos toques, completa o de una banda.
+
 **Non-Goals:**
 - Respaldo completo (temas, enlaces a MusicBrainz, imágenes).
+- Integración con la API de WhatsApp: solo el enlace de compartir.
 - Exportar a `.xlsx` o PDF.
 - Importar imágenes.
 
@@ -38,7 +41,34 @@ El importador actual (`src/lib/importar.js`) exige exactamente 3 campos por lín
 - Si la usuaria cancela la hoja de compartir (`AbortError`), no se muestra ningún error.
 - Funciona sin conexión porque usa el catálogo en memoria.
 
-### 3. Importación con encabezado
+### 3. Copiar o compartir como texto
+- **Formato** pensado para leerse en el chat: bandas en negrita con la sintaxis de WhatsApp (`*Banda*`), un disco por línea con año y copias, y una línea en blanco entre bandas:
+
+  ```
+  *Música Retro* · CDs (72)
+
+  *AC/DC*
+  • Back in Black (1980)
+  • Who Made Who (1986)
+
+  *Black Sabbath*
+  • Sabotage (1975) ×2
+  ```
+  - Con alcance Todo, cada disco lleva el formato: `• Signos (1986) · CD`.
+  - Por banda, el encabezado es el nombre de la banda y van todos sus discos, de los dos formatos.
+  - El orden es por banda y, dentro de cada una, por año y título, como en la app.
+- **Acciones:**
+  - **Copiar**, con `navigator.clipboard.writeText` (y un aviso "Copiado").
+  - **WhatsApp**: abre `https://wa.me/?text=<texto codificado>`. En el celular abre la app y deja elegir el chat; en la computadora abre WhatsApp Web.
+- **Dónde:**
+  - en Ajustes, sección "Compartir el catálogo", junto a "Descargar planilla" y con el mismo selector de alcance;
+  - en la pantalla de una banda, un botón "Compartir esta banda" al final de la lista, que abre una hoja con Copiar y WhatsApp.
+
+    **Alternativa descartada:** un cuarto botón en el encabezado de la banda, que cortaría el nombre en pantallas angostas.
+- **Límite:** WhatsApp acepta mensajes de hasta 65.536 caracteres. El catálogo actual (~72 discos) usa unos 2.500. Si el texto supera 60.000 caracteres, "WhatsApp" se deshabilita con el aviso "Muy largo para un mensaje: usá Copiar o la planilla".
+- Funciona sin conexión para copiar; WhatsApp necesita señal de todos modos.
+
+### 4. Importación con encabezado
 - El parser revisa la primera línea no vacía: si, normalizada, tiene las columnas `banda` y `disco`, es un **encabezado**. Las columnas se mapean por nombre, con alias: `año|anio|ano`, `cargado|fecha|fecha_carga`, `spotify|spotify_url`, `copias`, `formato`. Las columnas desconocidas se ignoran.
 - Sin encabezado: comportamiento actual (exactamente 3 campos posicionales, `;` o tabulación).
 - Parser de campos con comillas (el mismo criterio RFC 4180 que la exportación), tolerando BOM al inicio.
@@ -47,7 +77,7 @@ El importador actual (`src/lib/importar.js`) exige exactamente 3 campos por lín
 - **Archivo:** además del área de texto, un botón "Elegir archivo" (`accept=".csv,text/csv,text/plain"`) que lee el archivo con `File.text()` y lo pone en el área de texto, así la vista previa es la misma.
 - Banda y título siguen pasando por `formatearTitulo()`. Lo exportado ya está formateado, así que no cambia.
 
-### 4. RPC `importar_discos`
+### 5. RPC `importar_discos`
 - Cada ítem acepta además `anio`, `fecha_carga` y `spotify_url`. Al crear un disco: el año va en `p_datos` de `agregar_disco`; la fecha de carga y Spotify se escriben con un `update` en la misma transacción. Si no vienen, quedan los valores por defecto (`now()`, null).
 - Duplicados con "sumar como copias": solo suman copias, igual que hoy; no pisan año, fecha ni Spotify del disco existente.
 

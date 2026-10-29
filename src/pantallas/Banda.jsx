@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
-import { BotonCirculo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
-import { IconoEditar, IconoGrilla, IconoLista, IconoMas, IconoOrden } from '../componentes/Iconos.jsx'
+import { AccionesTexto } from '../componentes/Compartir.jsx'
+import { Boton, BotonCirculo, Dialogo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
+import { IconoCompartir, IconoEditar, IconoGrilla, IconoLista, IconoMas, IconoOrden } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaDisco } from '../componentes/Tarjetas.jsx'
 import { NOMBRE_FORMATO, ORDENES_BANDA, ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { textoBanda } from '../lib/exportar.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
@@ -12,6 +14,7 @@ export default function Banda({ id, formato }) {
   // El orden de esta pantalla es propio (por año por defecto), independiente del de la grilla de bandas.
   const [{ vista, ordenBanda: orden }, cambiar] = usePreferencias()
   const [eligiendoOrden, setEligiendoOrden] = useState(false)
+  const [compartiendo, setCompartiendo] = useState(false)
   const banda = bandasPorId.get(id)
   const suyos = useMemo(() => ordenarDiscos(discos.filter((d) => d.banda_id === id && d.formato === formato), orden), [discos, id, formato, orden])
 
@@ -60,7 +63,26 @@ export default function Banda({ id, formato }) {
         ) : (
           <Vacio titulo={`Sin ${NOMBRE_FORMATO[formato].toLowerCase()} de ${banda.nombre}`} />
         )}
+        <div className="px-4 pt-4">
+          <Boton variante="fantasma" className="w-full" onClick={() => setCompartiendo(true)}>
+            <IconoCompartir /> Compartir esta banda
+          </Boton>
+        </div>
       </main>
+      {compartiendo && (
+        <Dialogo
+          titulo={`Compartir ${banda.nombre}`}
+          alCerrar={() => setCompartiendo(false)}
+          acciones={
+            <Boton variante="fantasma" onClick={() => setCompartiendo(false)}>
+              Cerrar
+            </Boton>
+          }
+        >
+          <pre className="mb-4 max-h-60 overflow-y-auto border border-metal/50 p-3 font-sans text-sm whitespace-pre-wrap">{textoBanda(banda, discos)}</pre>
+          <AccionesTexto texto={textoBanda(banda, discos)} />
+        </Dialogo>
+      )}
       <Fab
         etiqueta={online ? 'Agregar disco de esta banda' : 'Sin conexión'}
         disabled={!online}

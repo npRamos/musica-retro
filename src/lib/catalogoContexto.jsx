@@ -244,7 +244,7 @@ export function CatalogoProvider({ sesion, children }) {
 
   const importar = async (items, duplicados) => {
     const resumen = await rpc('importar_discos', {
-      p_items: items.map(({ banda, titulo, formato, copias }) => ({ banda, titulo, formato, copias })),
+      p_items: items.map(({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url }) => ({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url })),
       p_duplicados: duplicados,
     })
     await sincronizar()

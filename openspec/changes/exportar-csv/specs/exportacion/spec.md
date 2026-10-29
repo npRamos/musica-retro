@@ -43,3 +43,22 @@ La exportación MUST funcionar sin conexión, con los datos de la copia local de
 #### Scenario: Sin señal
 - **WHEN** la usuaria exporta sin conexión
 - **THEN** obtiene la planilla con los datos de la última sincronización
+
+### Requirement: Compartir el catálogo como texto
+El sistema SHALL permitir copiar o enviar por WhatsApp el catálogo como texto legible: desde Ajustes, con el alcance Todo, Vinilos o CDs; y desde la pantalla de una banda, solo los discos de esa banda en los dos formatos. El texto MUST agrupar los discos por banda (nombre en negrita con la sintaxis de WhatsApp), con un disco por línea con su año y sus copias cuando son más de una, y el formato de cada disco cuando el alcance incluye los dos. "WhatsApp" MUST abrir el enlace de compartir de WhatsApp con el texto. Si el texto es demasiado largo para un mensaje, el sistema MUST deshabilitar WhatsApp y sugerir copiar o descargar la planilla.
+
+#### Scenario: Copiar los CDs
+- **WHEN** la usuaria elige "CDs" y toca "Copiar"
+- **THEN** el portapapeles tiene la lista de CDs agrupada por banda y el sistema avisa "Copiado"
+
+#### Scenario: Una banda por WhatsApp
+- **WHEN** en la pantalla de Black Sabbath la usuaria toca "Compartir esta banda" y después "WhatsApp"
+- **THEN** se abre WhatsApp para elegir el chat, con el mensaje "*Black Sabbath*" y sus discos, por ejemplo "• Sabotage (1975) · CD ×2"
+
+#### Scenario: Todo el catálogo
+- **WHEN** el alcance es "Todo"
+- **THEN** cada disco indica si es vinilo o CD
+
+#### Scenario: Sin conexión
+- **WHEN** la usuaria copia el catálogo sin señal
+- **THEN** el texto se copia con los datos de la última sincronización

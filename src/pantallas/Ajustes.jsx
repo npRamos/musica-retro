@@ -1,4 +1,5 @@
 import { IconoBuscar, IconoEditar, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
+import { CompartirCatalogo } from '../componentes/Compartir.jsx'
 import { Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { usePreferencias } from '../lib/preferencias.js'
@@ -46,6 +47,8 @@ export default function Ajustes({ mail }) {
             ))}
           </div>
         </fieldset>
+
+        <CompartirCatalogo />
 
         <ul className="border-t border-metal/40">
           <li>
