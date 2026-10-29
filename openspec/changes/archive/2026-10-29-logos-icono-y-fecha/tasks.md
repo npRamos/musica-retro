@@ -2,7 +2,7 @@
 
 - [x] 1.1 `public/icono.svg`: vinilo sobre vidrio líquido violeta (gradiente radial, manchas difusas, reflejo y sombra del disco)
 - [x] 1.2 Exportar `icono-192.png`, `icono-512.png` e `icono-maskable-512.png` (disco dentro de la zona segura) con Inkscape
-- [ ] 1.3 Verificar en el celular el acceso directo (normal y recortado en círculo en Android)
+- [x] 1.3 Verificar en el celular el acceso directo (normal y recortado en círculo en Android)
 
 ## 2. Fecha de carga
 
@@ -43,6 +43,6 @@
 ## 8. Verificación
 
 - [x] 8.1 `npm test` y `npm run build` sin errores
-- [ ] 8.2 En el celular: completar un disco de Iron Maiden y ver el logo en la grilla en los dos temas; banda sin logo igual que antes; logo propio; quitar logo
-- [ ] 8.3 Corregir la fecha de carga de un disco importado y verificar "Última compra"
-- [ ] 8.4 Alternar entre "Por banda" y "Todos los discos" en las dos pestañas y con los tres órdenes
+- [x] 8.2 En el celular: completar un disco de Iron Maiden y ver el logo en la grilla en los dos temas; banda sin logo igual que antes; logo propio; quitar logo
+- [x] 8.3 Corregir la fecha de carga de un disco importado y verificar "Última compra"
+- [x] 8.4 Alternar entre "Por banda" y "Todos los discos" en las dos pestañas y con los tres órdenes

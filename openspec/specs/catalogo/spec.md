@@ -91,7 +91,7 @@ El sistema MUST detectar un alta de un disco que ya existe con la misma banda, e
 - **THEN** el sistema lo guarda como un disco nuevo, sin aviso de duplicado
 
 ### Requirement: Edición de disco
-El sistema SHALL permitir modificar el título, la banda, el formato, las copias (entero ≥ 1), el año (entre 1900 y 2100, opcional), la tapa, la contratapa y un link de Spotify opcional (que MUST pertenecer a `open.spotify.com`). El título editado MUST guardarse exactamente como se escribió. Si la edición lo convierte en un disco que ya existe, el sistema MUST NOT guardarla y SHALL ofrecer ir al disco existente.
+El sistema SHALL permitir modificar el título, la banda, el formato, las copias (entero ≥ 1), el año (entre 1900 y 2100, opcional), la tapa, la contratapa, un link de Spotify opcional (que MUST pertenecer a `open.spotify.com`) y, dentro de una sección plegada "Más datos", la fecha de carga (que MUST NOT ser futura). El título editado MUST guardarse exactamente como se escribió. Si la edición lo convierte en un disco que ya existe, el sistema MUST NOT guardarla y SHALL ofrecer ir al disco existente.
 
 #### Scenario: Corregir título
 - **WHEN** la usuaria cambia el título "Sigons" por "Signos" y guarda
@@ -116,6 +116,18 @@ El sistema SHALL permitir modificar el título, la banda, el formato, las copias
 #### Scenario: Año inválido
 - **WHEN** la usuaria escribe el año 94
 - **THEN** el sistema no guarda e indica que el año tiene que tener 4 cifras
+
+#### Scenario: Fecha de carga oculta
+- **WHEN** la usuaria abre la edición de un disco
+- **THEN** la fecha de carga no se ve hasta que abre "Más datos"
+
+#### Scenario: Corregir la fecha de carga
+- **WHEN** la usuaria cambia la fecha de carga de un disco importado al 15/03/2019 y guarda
+- **THEN** el detalle muestra "15 de marzo de 2019" y el disco se ordena con esa fecha en "Última compra"
+
+#### Scenario: Fecha futura
+- **WHEN** la usuaria elige una fecha posterior a hoy
+- **THEN** el sistema no guarda e indica que la fecha no puede ser futura
 
 ### Requirement: Corrección de bandas
 El sistema SHALL permitir renombrar una banda y cambiar o quitar su imagen. El nombre editado MUST guardarse exactamente como se escribió. Si el nombre nuevo coincide (normalizado) con otra banda existente, el sistema SHALL ofrecer unir ambas.
