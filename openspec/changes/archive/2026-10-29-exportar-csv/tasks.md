@@ -34,7 +34,7 @@
 ## 6. Base de datos
 
 - [x] 6.1 Migration: `importar_discos` acepta por ítem `anio`, `fecha_carga` y `spotify_url`; los escribe solo en discos creados; "sumar como copias" no los pisa
-- [ ] 6.2 Aplicar y probar por SQL con y sin los campos nuevos
+- [x] 6.2 Aplicar y probar por SQL con y sin los campos nuevos
 
 ## 7. Pantalla de importación
 
@@ -45,6 +45,6 @@
 ## 8. Verificación
 
 - [x] 8.1 `npm test` y `npm run build` sin errores
-- [ ] 8.2 Exportar desde el celular, abrir en Excel en español y en Google Sheets, y compartir el archivo por WhatsApp
-- [ ] 8.3 Reimportar el archivo exportado en un catálogo de prueba y comparar copias, año, fechas y Spotify
-- [ ] 8.4 Copiar el catálogo y mandarlo por WhatsApp (completo y de una banda) y ver cómo se lee en el chat
+- [x] 8.2 Exportar desde el celular, abrir en Excel en español y en Google Sheets, y compartir el archivo por WhatsApp
+- [x] 8.3 Reimportar el archivo exportado en un catálogo de prueba y comparar copias, año, fechas y Spotify
+- [x] 8.4 Copiar el catálogo y mandarlo por WhatsApp (completo y de una banda) y ver cómo se lee en el chat
