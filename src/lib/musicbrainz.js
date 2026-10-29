@@ -16,7 +16,8 @@ import { normalizar } from './texto.js'
 const MB = 'https://musicbrainz.org/ws/2/'
 const CAA = 'https://coverartarchive.org/release/'
 const WIKIDATA = 'https://www.wikidata.org/wiki/Special:EntityData/'
-const COMMONS = 'https://commons.wikimedia.org/wiki/Special:FilePath/'
+// La API de Commons (con origin=*) permite CORS; Special:FilePath no, porque sus redirecciones no lo declaran.
+const COMMONS = 'https://commons.wikimedia.org/w/api.php'
 
 export class ErrorMusicBrainz extends Error {
   constructor(mensaje = 'MusicBrainz no responde') {
@@ -174,8 +175,8 @@ export function crearCliente({ fetch: pedirHttp = (...a) => fetch(...a), espera 
       return { tapa, contratapa }
     },
 
-    // Logo de un artista: MusicBrainz (relación con Wikidata) → Wikidata P154 → Commons a 600 px (PNG aunque sea SVG).
-    // null si no hay. Solo el pedido a MusicBrainz pasa por la cola.
+    // Logo de un artista: MusicBrainz (relación con Wikidata) → Wikidata P154 → miniatura de Commons de ~600 px
+    // (PNG aunque el original sea SVG). null si no hay. Solo el pedido a MusicBrainz pasa por la cola.
     async logoDeArtista(mbid, { signal } = {}) {
       const artista = await pedir(`artist/${mbid}`, { inc: 'url-rels' }, signal)
       const enlace = artista.relations?.find((r) => r.type === 'wikidata')?.url?.resource
@@ -187,7 +188,21 @@ export function crearCliente({ fetch: pedirHttp = (...a) => fetch(...a), espera 
       // Si el ítem fue redirigido, la entidad viene con otro id: se toma la única que hay.
       const archivo = elegirLogo(Object.values(entities)[0]?.claims?.P154)
       if (!archivo) return null
-      return bajarImagen(`${COMMONS}${encodeURIComponent(archivo.replaceAll(' ', '_'))}?width=600`, signal)
+      const consulta = new URLSearchParams({
+        action: 'query',
+        titles: `File:${archivo}`,
+        prop: 'imageinfo',
+        iiprop: 'url',
+        iiurlwidth: '600',
+        format: 'json',
+        origin: '*',
+      })
+      const info = await obtener(`${COMMONS}?${consulta}`, signal)
+      if (!info.ok) throw new ErrorMusicBrainz('Commons no responde')
+      const { query } = await info.json()
+      const imagen = Object.values(query?.pages ?? {})[0]?.imageinfo?.[0]
+      const url = imagen?.thumburl ?? imagen?.url
+      return url ? bajarImagen(url, signal) : null
     },
 
     // Candidato para un disco ya cargado: artista (enlazado o por nombre), disco por título y edición por formato.
