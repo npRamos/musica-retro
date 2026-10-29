@@ -1,7 +1,7 @@
 # catalogo Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Cargar y mantener los discos y las bandas: altas con autocompletado, normalización de nombres para comparar, formato tipo título, detección de duplicados, edición, corrección y unión de bandas y borrado, con las escrituras habilitadas solo con conexión.
 ## Requirements
 ### Requirement: Alta de disco
 El sistema SHALL permitir agregar un disco indicando banda, título y formato (`vinilo` o `cd`), con tapa, contratapa, año y lista de temas opcionales. La fecha de carga MUST registrarse automáticamente con el momento del alta y la cantidad de copias MUST valer 1 por defecto, editable antes de guardar.

@@ -1,7 +1,7 @@
 # identidad-visual Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Dar a la app su aspecto propio: estética rock/metal, tema oscuro y claro, color de acento elegible, diferenciación visual de vinilo y CD, diseño pensado primero para el celular e ícono de la aplicación.
 ## Requirements
 ### Requirement: Estética rock/metal propia
 La interfaz SHALL combinar una identidad rock/metal (tipografía blackletter solo en el logo y los títulos de sección, etiquetas condensadas en mayúsculas) con el estilo de la referencia: fondo casi negro con una luz difusa del color de acento, separadores finos, íconos de línea, controles circulares delineados y las imágenes como protagonistas. La interfaz MUST NOT usar degradés lineales violeta→azul o violeta→rosa, glassmorphism con blur, sombras difusas, tarjetas muy redondeadas, emojis como íconos, ni Inter como fuente principal.

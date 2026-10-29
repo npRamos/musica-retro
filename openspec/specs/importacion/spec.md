@@ -1,7 +1,7 @@
 # importacion Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Cargar muchos discos de una vez a partir de una lista pegada o de un archivo CSV, incluida la planilla que exporta la app, con una vista previa que clasifica cada línea, combina repetidos, maneja duplicados contra el catálogo y guarda todo o nada.
 ## Requirements
 ### Requirement: Importar lista pegada
 El sistema SHALL permitir pegar un texto, o elegir un archivo `.csv`, con una línea por disco. Sin fila de encabezado, cada línea MUST tener el formato `banda; disco; formato`. Si la primera línea es un encabezado con las columnas Banda y Disco, el sistema MUST tomar las columnas por su nombre, aceptando además Formato, Copias, Año, Cargado y Spotify, e ignorar las columnas desconocidas. El separador MUST poder ser `;` o tabulación, los campos entre comillas MUST interpretarse correctamente y las líneas vacías MUST ignorarse.

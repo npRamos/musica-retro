@@ -1,7 +1,7 @@
 # acceso Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Controlar quién entra a la app: solo cuentas invitadas por la administradora, con contraseña, magic link o código, sesión que se mantiene en cada dispositivo y un único catálogo compartido entre las cuentas miembro.
 ## Requirements
 ### Requirement: Ingreso con contraseña
 El sistema SHALL permitir el ingreso con mail y contraseña como opción principal, sin enviar ningún mail. Las contraseñas MUST asignarlas la administradora; la app no ofrece registro ni recuperación de contraseña.

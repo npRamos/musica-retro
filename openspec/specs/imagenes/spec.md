@@ -1,7 +1,7 @@
 # imagenes Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Manejar las imágenes de discos y bandas: tapa, contratapa, imagen y logo de banda, sacadas con la cámara, elegidas de la galería o traídas de Cover Art Archive y Wikidata, procesadas en el dispositivo, guardadas en almacenamiento privado, disponibles sin conexión y borradas cuando dejan de usarse.
 ## Requirements
 ### Requirement: Tapa de disco desde cámara o galería
 El sistema SHALL permitir asignar una tapa a un disco, al darlo de alta o al editarlo, sacando una foto con la cámara o eligiendo una imagen de la galería. Antes de guardar, MUST mostrar una vista previa con opción de descartarla.

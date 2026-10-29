@@ -1,7 +1,7 @@
 # operacion Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Mantener la app publicada y la base activa: deploy automático a GitHub Pages, keep-alive de Supabase, estructura de la base en migrations versionadas y un README para ponerla en marcha desde cero.
 ## Requirements
 ### Requirement: Deploy automático a GitHub Pages
 Cada push a la rama `main` SHALL construir la app y publicarla en GitHub Pages. La configuración de Supabase MUST tomarse de variables del repositorio, nunca del código.

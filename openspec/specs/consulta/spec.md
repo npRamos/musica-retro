@@ -1,7 +1,7 @@
 # consulta Specification
 
 ## Purpose
-TBD - created by archiving change catalogo-discos-mvp. Update Purpose after archive.
+Recorrer y buscar la colección desde el celular: pestañas de vinilos y CDs, bandas en cuadrícula o lista, orden elegible, pantallas de banda y de disco, buscador, enlace a Spotify, consulta sin conexión e instalación en la pantalla de inicio.
 ## Requirements
 ### Requirement: Pestañas por formato
 La pantalla principal SHALL tener dos pestañas, "Vinilos" y "CDs", cada una con la cantidad de discos de ese formato. Cada pestaña MUST mostrar solo las bandas que tienen al menos un disco en ese formato. El sistema SHALL recordar en el dispositivo la última pestaña elegida.
