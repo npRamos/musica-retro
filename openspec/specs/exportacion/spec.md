@@ -1,7 +1,7 @@
 # exportacion Specification
 
 ## Purpose
-TBD - created by archiving change exportar-csv. Update Purpose after archive.
+Sacar el catálogo de la app: descargarlo como planilla CSV que se abre bien en Excel en español y Google Sheets, y compartirlo como texto para copiar o mandar por WhatsApp, completo, por formato o de una sola banda, también sin conexión.
 ## Requirements
 ### Requirement: Descargar el catálogo como planilla
 El sistema SHALL permitir, desde Ajustes, descargar el catálogo como planilla CSV eligiendo el alcance: Todo, Vinilos o CDs. La planilla MUST tener una fila por disco, con las columnas Banda, Disco, Formato, Copias, Año, Cargado y Spotify, ordenadas por banda, año y título.
