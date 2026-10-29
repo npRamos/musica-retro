@@ -57,6 +57,6 @@
 ## 8. Verificación
 
 - [x] 8.1 `npm test` y `npm run build` sin errores
-- [ ] 8.2 Probar en el celular: alta de "Soda Stereo – Signos" en CD y vinilo, una banda inexistente, MusicBrainz cortado (bloquear el host) y sin conexión
-- [ ] 8.3 Completar 5 discos importados desde pendientes, incluido uno "No es", y verificar que no vuelve a aparecer
-- [ ] 8.4 Verificar offline que temas, año y tapas de MB se ven igual que los propios
+- [x] 8.2 Probar en el celular: alta de "Soda Stereo – Signos" en CD y vinilo, una banda inexistente, MusicBrainz cortado (bloquear el host) y sin conexión
+- [x] 8.3 Completar 5 discos importados desde pendientes, incluido uno "No es", y verificar que no vuelve a aparecer
+- [x] 8.4 Verificar offline que temas, año y tapas de MB se ven igual que los propios
