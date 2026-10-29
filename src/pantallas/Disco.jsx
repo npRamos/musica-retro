@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Boton, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { IconoBorrar, IconoEditar, IconoSpotify } from '../componentes/Iconos.jsx'
 import Carrusel from '../componentes/Carrusel.jsx'
+import { ListaTemas } from '../componentes/Temas.jsx'
 import { BadgeFormato } from '../componentes/Tarjetas.jsx'
 import { linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
@@ -58,6 +59,12 @@ export default function Disco({ id }) {
               <BadgeFormato formato={disco.formato} />
             </dd>
           </div>
+          {disco.anio && (
+            <div className="flex min-h-12 items-center justify-between">
+              <dt className="etiqueta text-xs text-suave">Año</dt>
+              <dd className="etiqueta text-xl">{disco.anio}</dd>
+            </div>
+          )}
           <div className="flex min-h-12 items-center justify-between">
             <dt className="etiqueta text-xs text-suave">Copias</dt>
             <dd className="etiqueta text-xl">{disco.copias}</dd>
@@ -67,6 +74,15 @@ export default function Disco({ id }) {
             <dd className="font-light">{new Date(disco.fecha_carga).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
           </div>
         </dl>
+
+        {disco.temas?.length > 0 && (
+          <section className="mt-6">
+            <h3 className="etiqueta text-xs text-suave">Temas</h3>
+            <div className="mt-1">
+              <ListaTemas temas={disco.temas} />
+            </div>
+          </section>
+        )}
 
         <a
           href={linkSpotify(disco, banda)}

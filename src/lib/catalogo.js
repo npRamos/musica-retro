@@ -4,6 +4,8 @@ export const FORMATOS = ['vinilo', 'cd']
 export const NOMBRE_FORMATO = { vinilo: 'Vinilos', cd: 'CDs' }
 export const NOMBRE_FORMATO_SINGULAR = { vinilo: 'vinilo', cd: 'CD' }
 export const ORDENES = { az: 'A → Z', za: 'Z → A', reciente: 'Última compra' }
+// Dentro de una banda se suma la discografía por año (el orden por defecto ahí).
+export const ORDENES_BANDA = { anio: 'Por año', ...ORDENES }
 
 const comparar = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true })
 
@@ -48,6 +50,8 @@ export function ordenarDiscos(discos, orden, bandasPorId) {
   const nombre = (d) => (bandasPorId ? `${bandasPorId.get(d.banda_id)?.nombre ?? ''} ${d.titulo}` : d.titulo)
   const copia = [...discos]
   if (orden === 'reciente') return copia.sort((a, b) => (b.fecha_carga > a.fecha_carga ? 1 : b.fecha_carga < a.fecha_carga ? -1 : 0))
+  // Por año: del más viejo al más nuevo; los que no tienen año, al final por título.
+  if (orden === 'anio') return copia.sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || comparar(nombre(a), nombre(b)))
   copia.sort((a, b) => comparar(nombre(a), nombre(b)))
   return orden === 'za' ? copia.reverse() : copia
 }
@@ -70,6 +74,15 @@ export function buscar(discos, bandasPorId, texto, formato) {
 export function linkSpotify(disco, banda) {
   if (disco.spotify_url) return disco.spotify_url
   return `https://open.spotify.com/search/${encodeURIComponent(`${banda?.nombre ?? ''} ${disco.titulo}`.trim())}`
+}
+
+// Año opcional: vacío o 4 cifras entre 1900 y 2100.
+export function leerAnio(texto) {
+  const t = String(texto ?? '').trim()
+  if (!t) return { anio: null }
+  const n = Number(t)
+  if (!/^\d{4}$/.test(t) || n < 1900 || n > 2100) return { error: 'El año tiene que tener 4 cifras' }
+  return { anio: n }
 }
 
 export function esLinkSpotifyValido(url) {

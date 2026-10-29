@@ -1,6 +1,8 @@
-// Minúsculas, sin tildes, espacios colapsados. Espejo de public.normalizar() en la base.
+// Minúsculas, sin tildes, comillas rectas, espacios colapsados. Espejo de public.normalizar() en la base.
 export function normalizar(texto = '') {
   return texto
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()

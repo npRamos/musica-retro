@@ -156,7 +156,7 @@ export function Hoja({ titulo, opciones, valor, onElegir, alCerrar }) {
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className="w-full border-t border-metal bg-superficie-solida pb-[env(safe-area-inset-bottom)]"
+        className="max-h-[85vh] w-full overflow-y-auto border-t border-metal bg-superficie-solida pb-[env(safe-area-inset-bottom)]"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="etiqueta px-5 pt-4 pb-2 text-xs text-suave">{titulo}</p>

@@ -3,7 +3,8 @@ import { guardar, leer } from './almacen.js'
 import { supabase } from './supabase.js'
 
 // Preferencias por dispositivo, con suscripción para que todas las pantallas se enteren.
-const POR_DEFECTO = { tema: 'sistema', acento: 'violeta', vista: 'grilla', orden: 'az', formato: 'vinilo' }
+// orden: grilla de bandas y búsqueda; ordenBanda: discos dentro de una banda (discografía por año).
+const POR_DEFECTO = { tema: 'sistema', acento: 'violeta', vista: 'grilla', orden: 'az', ordenBanda: 'anio', formato: 'vinilo' }
 const oyentes = new Set()
 let estado = { ...POR_DEFECTO, ...leer('preferencias', {}) }
 

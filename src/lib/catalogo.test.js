@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandasDeFormato, buscar, esLinkSpotifyValido, linkSpotify, ordenarBandas, ordenarDiscos } from './catalogo.js'
+import { bandasDeFormato, buscar, esLinkSpotifyValido, leerAnio, linkSpotify, ordenarBandas, ordenarDiscos } from './catalogo.js'
 
 const bandas = [
   { id: 'b1', nombre: 'Soda Stereo' },
@@ -43,6 +43,16 @@ describe('ordenarDiscos', () => {
     expect(ordenarDiscos(suyos, 'az').map((d) => d.id)).toEqual(['d2', 'd3', 'd1'])
     expect(ordenarDiscos(suyos, 'reciente').map((d) => d.id)).toEqual(['d2', 'd3', 'd1'])
   })
+  it('por año, con los que no tienen año al final por título', () => {
+    const conAnio = [
+      { id: 'dynamo', titulo: 'Dynamo', anio: 1992 },
+      { id: 'zeta', titulo: 'Zeta', anio: null },
+      { id: 'signos', titulo: 'Signos', anio: 1986 },
+      { id: 'alfa', titulo: 'Alfa' },
+      { id: 'doble', titulo: 'Doble Vida', anio: 1988 },
+    ]
+    expect(ordenarDiscos(conAnio, 'anio').map((d) => d.id)).toEqual(['signos', 'doble', 'dynamo', 'alfa', 'zeta'])
+  })
 })
 
 describe('buscar', () => {
@@ -68,5 +78,15 @@ describe('spotify', () => {
     expect(esLinkSpotifyValido('https://open.spotify.com/album/abc')).toBe(true)
     expect(esLinkSpotifyValido('https://evil.com/open.spotify.com')).toBe(false)
     expect(esLinkSpotifyValido('cualquier cosa')).toBe(false)
+  })
+})
+
+describe('leerAnio', () => {
+  it('vacío es sin año; acepta 4 cifras entre 1900 y 2100', () => {
+    expect(leerAnio('')).toEqual({ anio: null })
+    expect(leerAnio(' 1986 ')).toEqual({ anio: 1986 })
+    expect(leerAnio('86').error).toBe('El año tiene que tener 4 cifras')
+    expect(leerAnio('3000').error).toBeTruthy()
+    expect(leerAnio('19a6').error).toBeTruthy()
   })
 })

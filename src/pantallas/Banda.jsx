@@ -2,14 +2,15 @@ import { useMemo, useState } from 'react'
 import { BotonCirculo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
 import { IconoEditar, IconoGrilla, IconoLista, IconoMas, IconoOrden } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaDisco } from '../componentes/Tarjetas.jsx'
-import { NOMBRE_FORMATO, ORDENES, ordenarDiscos } from '../lib/catalogo.js'
+import { NOMBRE_FORMATO, ORDENES_BANDA, ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
 export default function Banda({ id, formato }) {
   const { bandasPorId, discos, online } = useCatalogo()
-  const [{ vista, orden }, cambiar] = usePreferencias()
+  // El orden de esta pantalla es propio (por año por defecto), independiente del de la grilla de bandas.
+  const [{ vista, ordenBanda: orden }, cambiar] = usePreferencias()
   const [eligiendoOrden, setEligiendoOrden] = useState(false)
   const banda = bandasPorId.get(id)
   const suyos = useMemo(() => ordenarDiscos(discos.filter((d) => d.banda_id === id && d.formato === formato), orden), [discos, id, formato, orden])
@@ -33,7 +34,7 @@ export default function Banda({ id, formato }) {
         atras={SLUG_FORMATO[formato]}
         acciones={
           <>
-            <BotonCirculo etiqueta={`Orden: ${ORDENES[orden]}`} className="border-transparent" onClick={() => setEligiendoOrden(true)}>
+            <BotonCirculo etiqueta={`Orden: ${ORDENES_BANDA[orden]}`} className="border-transparent" onClick={() => setEligiendoOrden(true)}>
               <IconoOrden />
             </BotonCirculo>
             <BotonCirculo
@@ -71,9 +72,9 @@ export default function Banda({ id, formato }) {
         <Hoja
           titulo="Ordenar"
           valor={orden}
-          opciones={Object.entries(ORDENES).map(([valor, texto]) => ({ valor, texto }))}
+          opciones={Object.entries(ORDENES_BANDA).map(([valor, texto]) => ({ valor, texto }))}
           onElegir={(v) => {
-            cambiar('orden', v)
+            cambiar('ordenBanda', v)
             setEligiendoOrden(false)
           }}
           alCerrar={() => setEligiendoOrden(false)}

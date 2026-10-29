@@ -7,6 +7,10 @@ describe('normalizar', () => {
     expect(normalizar('soda  stéreo ')).toBe(normalizar('Soda Stereo'))
     expect(normalizar('Señales')).toBe('senales')
   })
+  it('iguala las comillas tipográficas con las rectas', () => {
+    expect(normalizar('Don’t Stop')).toBe(normalizar("Don't Stop"))
+    expect(normalizar('“Hola”')).toBe('"hola"')
+  })
 })
 
 describe('formatearTitulo', () => {

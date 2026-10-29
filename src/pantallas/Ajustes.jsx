@@ -1,4 +1,4 @@
-import { IconoEditar, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
+import { IconoBuscar, IconoEditar, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { usePreferencias } from '../lib/preferencias.js'
@@ -10,7 +10,8 @@ const ACENTOS = [
 ]
 
 export default function Ajustes({ mail }) {
-  const { online, actualizadoEn, sincronizando, sincronizar, cerrarSesion } = useCatalogo()
+  const { discos, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion } = useCatalogo()
+  const pendientes = discos.filter((d) => d.mb_estado === 'pendiente').length
   const [prefs, cambiar] = usePreferencias()
 
   return (
@@ -56,6 +57,23 @@ export default function Ajustes({ mail }) {
             >
               <IconoImportar />
               <span className="flex-1">Importar una lista</span>
+              <IconoSiguiente className="size-4 text-suave" />
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              disabled={!online || !pendientes}
+              onClick={() => navegar('completar')}
+              className="flex min-h-14 w-full items-center gap-3 border-b border-metal/40 text-left disabled:opacity-40"
+            >
+              <IconoBuscar />
+              <span className="flex-1">
+                Completar pendientes
+                <span className="block text-sm font-light text-suave">
+                  {pendientes ? `${pendientes} ${pendientes === 1 ? 'disco' : 'discos'} sin datos de MusicBrainz` : 'Todos completos'}
+                </span>
+              </span>
               <IconoSiguiente className="size-4 text-suave" />
             </button>
           </li>

@@ -1,3 +1,4 @@
+import { musicbrainz } from './musicbrainz.js'
 import { BUCKET, supabase } from './supabase.js'
 
 const PESO_MAXIMO = 900_000 // el bucket acepta hasta 1 MB
@@ -35,6 +36,17 @@ export async function procesarImagen(archivo, { recortar = true, lado = 600, cal
   if (blob && blob.size > PESO_MAXIMO) blob = await codificar(canvas, 0.55)
   if (!blob) throw new Error('No se pudo procesar la imagen')
   return blob
+}
+
+export const OPCIONES_CONTRATAPA = { recortar: false, lado: 1200, calidad: 0.7 }
+
+// Tapa y contratapa de Cover Art Archive, procesadas como una foto (null si no hay o no se pudo).
+export async function imagenesDeMusicbrainz(edicion, signal) {
+  const { tapa, contratapa } = await musicbrainz.imagenesDeEdicion(edicion, { signal })
+  return {
+    tapa: tapa ? await procesarImagen(tapa).catch(() => null) : null,
+    contratapa: contratapa ? await procesarImagen(contratapa, OPCIONES_CONTRATAPA).catch(() => null) : null,
+  }
 }
 
 // El nombre lleva la fecha: al reemplazar cambia la ruta y ninguna caché muestra la vieja.

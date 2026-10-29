@@ -24,8 +24,12 @@ export function CatalogoProvider({ sesion, children }) {
       setSincronizando(true)
       try {
         const [bandasRes, discosRes, miembroRes] = await Promise.all([
-          supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en'),
-          supabase.from('discos').select('id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path, contratapa_path'),
+          supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid'),
+          supabase
+            .from('discos')
+            .select(
+              'id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path, contratapa_path, anio, temas, mb_estado, mb_release_group, mb_release',
+            ),
           supabase.rpc('es_miembro'),
         ])
         if (bandasRes.error) throw bandasRes.error
@@ -89,12 +93,14 @@ export function CatalogoProvider({ sesion, children }) {
     if (anterior) await borrarImagenes([anterior]).catch(() => {})
   }
 
-  const agregarDisco = async ({ banda, titulo, formato, copias, imagen, contratapa }) => {
+  // datos: año y datos de MusicBrainz (p_datos). bandaTalCual: el nombre viene de MusicBrainz y no se formatea.
+  const agregarDisco = async ({ banda, titulo, formato, copias, imagen, contratapa, datos = null, bandaTalCual = false }) => {
     const resultado = await rpc('agregar_disco', {
-      p_banda: formatearTitulo(banda),
+      p_banda: bandaTalCual ? banda.trim() : formatearTitulo(banda),
       p_titulo: formatearTitulo(titulo),
       p_formato: formato,
       p_copias: copias,
+      p_datos: datos,
     })
     if (resultado.estado === 'creado' && imagen) await ponerImagen(resultado.disco, 'tapa_path', imagen)
     if (resultado.estado === 'creado' && contratapa) await ponerImagen(resultado.disco, 'contratapa_path', contratapa)
@@ -102,8 +108,10 @@ export function CatalogoProvider({ sesion, children }) {
     return resultado
   }
 
-  const sumarCopia = async (disco, cantidad = 1, imagen, contratapa) => {
+  // Si el disco existente todavía no tenía datos de MusicBrainz, se completa con los elegidos en el alta.
+  const sumarCopia = async (disco, cantidad = 1, imagen, contratapa, datos) => {
     await rpc('sumar_copia', { p_disco: disco.id, p_cantidad: cantidad })
+    if (datos?.mb_release && disco.mb_estado !== 'enlazado') await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
     if (imagen && !disco.tapa_path) await ponerImagen(disco, 'tapa_path', imagen)
     if (contratapa && !disco.contratapa_path) await ponerImagen(disco, 'contratapa_path', contratapa)
     await sincronizar()
@@ -119,11 +127,11 @@ export function CatalogoProvider({ sesion, children }) {
   }
 
   // Devuelve { estado: 'ok' } o { estado: 'conflicto', existente } si choca con otro disco.
-  const actualizarDisco = async (disco, { banda, titulo, formato, copias, spotify_url, imagen, contratapa }) => {
+  const actualizarDisco = async (disco, { banda, titulo, formato, copias, anio = null, spotify_url, imagen, contratapa }) => {
     const bandaDestino = await bandaPorNombre(banda)
     const { error: err } = await supabase
       .from('discos')
-      .update({ banda_id: bandaDestino.id, titulo: titulo.trim(), formato, copias, spotify_url: spotify_url || null })
+      .update({ banda_id: bandaDestino.id, titulo: titulo.trim(), formato, copias, anio, spotify_url: spotify_url || null })
       .eq('id', disco.id)
     if (err?.code === '23505') {
       const existente = datos.discos.find(
@@ -136,6 +144,21 @@ export function CatalogoProvider({ sesion, children }) {
     await ponerImagen(disco, 'contratapa_path', contratapa)
     await sincronizar()
     return { estado: 'ok' }
+  }
+
+  // Suma año, temas y enlaces sin tocar banda ni título. Las imágenes solo llenan lugares vacíos,
+  // salvo que se pida reemplazarlas. sincronizar = false deja la recarga para después (modo pendientes).
+  const completarDisco = async (disco, datos, { imagen, contratapa, reemplazar = {}, sincronizar: recargar = true } = {}) => {
+    await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
+    if (imagen && (!disco.tapa_path || reemplazar.tapa)) await ponerImagen(disco, 'tapa_path', imagen)
+    if (contratapa && (!disco.contratapa_path || reemplazar.contratapa)) await ponerImagen(disco, 'contratapa_path', contratapa)
+    if (recargar) await sincronizar()
+  }
+
+  const marcarSinCoincidencia = async (disco, { sincronizar: recargar = true } = {}) => {
+    const { error: err } = await supabase.from('discos').update({ mb_estado: 'sin_coincidencia' }).eq('id', disco.id)
+    if (err) throw err
+    if (recargar) await sincronizar()
   }
 
   const borrarDisco = async (disco) => {
@@ -201,6 +224,8 @@ export function CatalogoProvider({ sesion, children }) {
     agregarDisco,
     sumarCopia,
     actualizarDisco,
+    completarDisco,
+    marcarSinCoincidencia,
     borrarDisco,
     renombrarBanda,
     fusionarBandas,

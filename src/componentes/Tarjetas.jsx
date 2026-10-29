@@ -43,6 +43,8 @@ function Copias({ copias }) {
   return <span className={copias > 1 ? 'text-acento-texto' : 'text-suave'}>×{copias}</span>
 }
 
+const Anio = ({ anio }) => (anio ? <span className="text-suave">{anio} ·</span> : null)
+
 export function TarjetaDisco({ disco, banda, vista, mostrarBanda = false, onClick }) {
   if (vista === 'lista') {
     return (
@@ -54,7 +56,7 @@ export function TarjetaDisco({ disco, banda, vista, mostrarBanda = false, onClic
             {mostrarBanda && <span className="etiqueta block truncate text-xs text-suave">{banda?.nombre}</span>}
           </span>
           <span className="text-sm font-light">
-            <Copias copias={disco.copias} />
+            <Anio anio={disco.anio} /> <Copias copias={disco.copias} />
           </span>
           <IconoSiguiente className="size-4 text-suave" />
         </button>
@@ -68,6 +70,7 @@ export function TarjetaDisco({ disco, banda, vista, mostrarBanda = false, onClic
         <p className="mt-2 line-clamp-2 leading-tight font-medium">{disco.titulo}</p>
         <p className="mt-0.5 flex items-center gap-1.5 text-sm font-light">
           {mostrarBanda ? <span className="etiqueta min-w-0 truncate text-xs text-suave">{banda?.nombre}</span> : null}
+          <Anio anio={disco.anio} />
           <Copias copias={disco.copias} />
         </p>
       </button>

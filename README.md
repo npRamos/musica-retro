@@ -78,7 +78,8 @@ Supabase pausa los proyectos gratuitos sin actividad. `.github/workflows/keepali
 
 | Tema | Dónde |
 |---|---|
-| Modelo, RLS y RPC (`agregar_disco`, `importar_discos`, `renombrar_banda`, `fusionar_bandas`…) | `supabase/migrations/` |
+| Modelo, RLS y RPC (`agregar_disco`, `completar_disco`, `importar_discos`, `renombrar_banda`, `fusionar_bandas`…) | `supabase/migrations/` |
+| MusicBrainz y Cover Art Archive: cola de 1 pedido/s, búsquedas, edición según el formato, temas e imágenes | `src/lib/musicbrainz.js`, `src/lib/discografia.js` |
 | Normalización y formato tipo título | `src/lib/texto.js` (espejo de `public.normalizar()`) |
 | Sincronización, caché offline y escrituras | `src/lib/catalogoContexto.jsx`, `src/lib/almacen.js` |
 | Fotos: tapas 600 px recortadas, contratapas 1200 px sin recortar, WebP; bucket privado y URLs firmadas | `src/lib/imagen.js` |
@@ -97,3 +98,5 @@ Sumo; After Chabón; vinilo
 ```
 
 Formatos aceptados: `vinilo`, `vinil`, `lp`, `v`, `cd`, `c`. Antes de guardar se ve una vista previa. La importación es todo o nada.
+
+Los discos importados quedan **pendientes** de datos de MusicBrainz. **Ajustes → Completar pendientes** los recorre de a uno y propone año, temas, tapa y contratapa para confirmar con un toque.

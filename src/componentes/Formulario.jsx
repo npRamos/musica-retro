@@ -1,11 +1,52 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { agruparDiscos } from '../lib/discografia.js'
+import { musicbrainz } from '../lib/musicbrainz.js'
 import { normalizar } from '../lib/texto.js'
+import { useConsultaMb } from '../lib/useConsultaMb.js'
 import { IconoCamara, IconoGaleria } from './Iconos.jsx'
 import { Boton } from './ui.jsx'
 
-// Banda con sugerencias de las existentes; si no coincide ninguna, se creará al guardar.
-export function CampoBanda({ valor, onChange, error, autoFocus }) {
+const ESTILO_INPUT =
+  'mt-1 block min-h-11 w-full border-0 border-b border-metal bg-transparent px-0 text-lg outline-none focus:border-acento focus-visible:outline-none'
+
+// Lista desplegable bajo un campo. Los botones no roban el foco (mousedown) para que el blur no la cierre antes del clic.
+function Desplegable({ id, children }) {
+  return (
+    <ul id={id} role="listbox" className="absolute inset-x-0 top-full z-30 mt-1 max-h-80 overflow-y-auto border border-metal bg-superficie-solida">
+      {children}
+    </ul>
+  )
+}
+
+function Grupo({ children }) {
+  return <li className="etiqueta border-b border-metal/40 px-3 pt-3 pb-1 text-xs text-acento-texto">{children}</li>
+}
+
+function Opcion({ onClick, children, nueva = false }) {
+  return (
+    <li role="option" aria-selected="false">
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onClick}
+        className={`flex min-h-12 w-full items-center gap-3 border-b border-metal/40 px-3 text-left ${nueva ? 'text-acento-texto' : ''}`}
+      >
+        {children}
+      </button>
+    </li>
+  )
+}
+
+function Aviso({ children }) {
+  return <li className="border-b border-metal/40 px-3 py-3 text-sm font-light text-suave">{children}</li>
+}
+
+const detalleArtista = (a) => [a.pais, a.desambiguacion].filter(Boolean).join(' · ')
+
+// Banda: primero las del catálogo; después, si conMusicbrainz, artistas de MusicBrainz (con pausa al escribir).
+// Si no coincide ninguna, se creará al guardar. onElegirMb recibe el artista elegido, o null para "usar tal cual".
+export function CampoBanda({ valor, onChange, onElegirMb, enlazada = false, conMusicbrainz = false, error, autoFocus }) {
   const { bandas } = useCatalogo()
   const id = useId()
   const [abierto, setAbierto] = useState(false)
@@ -15,6 +56,15 @@ export function CampoBanda({ valor, onChange, error, autoFocus }) {
     () => (q ? bandas.filter((b) => b.nombre_norm.includes(q) && b.nombre_norm !== q).slice(0, 6) : []),
     [bandas, q],
   )
+
+  const buscarMb = conMusicbrainz && abierto && q.length >= 2 && !exacta
+  const mb = useConsultaMb(buscarMb ? q : null, (signal) => musicbrainz.buscarArtistas(valor, { signal }), { pausa: 500 })
+  // Un artista ya enlazado a una banda del catálogo se muestra solo como esa banda.
+  const enlazados = useMemo(() => new Set(bandas.map((b) => b.mbid).filter(Boolean)), [bandas])
+  const artistas = (mb.datos ?? mb.ultimos ?? []).filter((a) => !enlazados.has(a.id)).slice(0, 5)
+
+  const cerrar = () => setAbierto(false)
+  const hayLista = abierto && (sugerencias.length > 0 || buscarMb)
 
   return (
     <div className="relative">
@@ -28,39 +78,156 @@ export function CampoBanda({ valor, onChange, error, autoFocus }) {
         autoComplete="off"
         autoCapitalize="words"
         role="combobox"
-        aria-expanded={abierto && sugerencias.length > 0}
+        aria-expanded={hayLista}
         aria-controls={`${id}-lista`}
         onChange={(e) => {
           onChange(e.target.value)
           setAbierto(true)
         }}
         onFocus={() => setAbierto(true)}
-        onBlur={() => setTimeout(() => setAbierto(false), 150)}
-        className="mt-1 block min-h-11 w-full border-0 border-b border-metal bg-transparent px-0 text-lg outline-none focus:border-acento focus-visible:outline-none"
+        onBlur={() => setTimeout(cerrar, 150)}
+        className={ESTILO_INPUT}
       />
       {error ? (
         <p className="mt-1 text-sm text-acento-texto">{error}</p>
       ) : (
-        q && <p className="mt-1 text-sm font-light text-suave">{exacta ? `Ya la tenés: ${exacta.nombre}` : 'Banda nueva: se agrega al guardar'}</p>
+        q && (
+          <p className="mt-1 text-sm font-light text-suave">
+            {exacta ? `Ya la tenés: ${exacta.nombre}` : enlazada ? 'Banda nueva, de MusicBrainz: se agrega al guardar' : 'Banda nueva: se agrega al guardar'}
+          </p>
+        )
       )}
-      {abierto && sugerencias.length > 0 && (
-        <ul id={`${id}-lista`} role="listbox" className="absolute inset-x-0 top-full z-30 mt-1 border border-metal bg-superficie-solida">
+      {hayLista && (
+        <Desplegable id={`${id}-lista`}>
+          {sugerencias.length > 0 && buscarMb && <Grupo>En tu catálogo</Grupo>}
           {sugerencias.map((b) => (
-            <li key={b.id} role="option" aria-selected="false">
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
+            <Opcion
+              key={b.id}
+              onClick={() => {
+                onChange(b.nombre)
+                cerrar()
+              }}
+            >
+              {b.nombre}
+            </Opcion>
+          ))}
+          {buscarMb && (
+            <>
+              <Grupo>En MusicBrainz</Grupo>
+              {artistas.map((a) => (
+                <Opcion
+                  key={a.id}
+                  onClick={() => {
+                    onChange(a.nombre)
+                    onElegirMb?.(a)
+                    cerrar()
+                  }}
+                >
+                  <span className="min-w-0 flex-1 truncate">{a.nombre}</span>
+                  <span className="max-w-[45%] truncate text-sm font-light text-suave">{detalleArtista(a)}</span>
+                </Opcion>
+              ))}
+              {mb.cargando && !artistas.length && <Aviso>Buscando…</Aviso>}
+              {mb.error && <Aviso>MusicBrainz no responde. Podés escribirla igual.</Aviso>}
+              {mb.datos && !artistas.length && <Aviso>No aparece en MusicBrainz.</Aviso>}
+              <Opcion
+                nueva
                 onClick={() => {
-                  onChange(b.nombre)
-                  setAbierto(false)
+                  onElegirMb?.(null)
+                  cerrar()
                 }}
-                className="flex min-h-12 w-full items-center border-b border-metal/40 px-3 text-left last:border-0"
               >
-                {b.nombre}
-              </button>
+                + Usar «{valor.trim()}» tal cual
+              </Opcion>
+            </>
+          )}
+        </Desplegable>
+      )}
+    </div>
+  )
+}
+
+// Disco: con banda enlazada (artista), lista sus discos agrupados y filtra por lo escrito; si no, busca por banda y título.
+// onElegir recibe el disco de MusicBrainz, o null para "usar lo que escribí".
+export function CampoDisco({ valor, onChange, onElegir, banda, artista, conMusicbrainz = false, error }) {
+  const id = useId()
+  const [abierto, setAbierto] = useState(false)
+  const q = normalizar(valor)
+
+  const delArtista = useConsultaMb(conMusicbrainz && artista ? artista : null, (signal) => musicbrainz.discosDeArtista(artista, { signal }))
+  const buscar = conMusicbrainz && !artista && abierto && normalizar(banda).length >= 2 && q.length >= 2
+  const busqueda = useConsultaMb(buscar ? `${normalizar(banda)}|${q}` : null, (signal) => musicbrainz.buscarDiscos(banda, valor, { signal }), {
+    pausa: 500,
+  })
+
+  const fuente = artista ? delArtista : busqueda
+  const grupos = useMemo(
+    () => (artista ? agruparDiscos(delArtista.datos ?? [], valor) : agruparDiscos(busqueda.datos ?? busqueda.ultimos ?? [])),
+    [artista, delArtista.datos, busqueda.datos, busqueda.ultimos, valor],
+  )
+
+  const cerrar = () => setAbierto(false)
+  const conLista = conMusicbrainz && (artista || buscar)
+  const hayLista = abierto && conLista
+
+  return (
+    <div className="relative">
+      <label htmlFor={id} className="etiqueta text-xs text-suave">
+        Disco
+      </label>
+      <input
+        id={id}
+        value={valor}
+        autoComplete="off"
+        autoCapitalize="words"
+        role="combobox"
+        aria-expanded={hayLista}
+        aria-controls={`${id}-lista`}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setAbierto(true)
+        }}
+        onFocus={() => setAbierto(true)}
+        onBlur={() => setTimeout(cerrar, 150)}
+        className={ESTILO_INPUT}
+      />
+      {error && <p className="mt-1 text-sm text-acento-texto">{error}</p>}
+      {hayLista && (
+        <Desplegable id={`${id}-lista`}>
+          {grupos.map((g) => (
+            <li key={g.clave}>
+              <ul>
+                <Grupo>{g.titulo}</Grupo>
+                {g.discos.map((d) => (
+                  <Opcion
+                    key={d.id}
+                    onClick={() => {
+                      onElegir(d)
+                      cerrar()
+                    }}
+                  >
+                    <span className="min-w-0 flex-1">{d.titulo}</span>
+                    {d.anio && <span className="text-sm font-light text-suave">{d.anio}</span>}
+                  </Opcion>
+                ))}
+              </ul>
             </li>
           ))}
-        </ul>
+          {fuente.cargando && !grupos.length && <Aviso>Buscando en MusicBrainz…</Aviso>}
+          {fuente.error && <Aviso>MusicBrainz no responde. Podés escribirlo igual.</Aviso>}
+          {fuente.datos && !grupos.length && <Aviso>{q ? 'No aparece en MusicBrainz.' : 'MusicBrainz no tiene discos de esta banda.'}</Aviso>}
+          {valor.trim() && (
+            <Opcion
+              nueva
+              onClick={() => {
+                onElegir(null)
+                cerrar()
+              }}
+            >
+              + Usar lo que escribí
+            </Opcion>
+          )}
+        </Desplegable>
       )}
     </div>
   )
