@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react'
+import { useId, useLayoutEffect, useRef } from 'react'
 import { volver } from '../lib/router.js'
 import { IconoAtras } from './Iconos.jsx'
 
@@ -120,46 +120,51 @@ export function Banner({ children, tono = 'suave' }) {
   )
 }
 
-function useEscape(alCerrar) {
-  useEffect(() => {
-    const f = (e) => e.key === 'Escape' && alCerrar?.()
-    addEventListener('keydown', f)
-    return () => removeEventListener('keydown', f)
-  }, [alCerrar])
+// Capa modal sobre <dialog>: Escape y el atrás de Android la cierran sin tocar el historial.
+// La pantalla decide si está abierta (la monta o la desmonta); el <dialog> solo avisa cuando se cierra solo.
+// Si alCerrar no la cierra (por ejemplo, mientras se borra), la capa sigue abierta.
+export function Capa({ etiqueta, alCerrar, className = '', children }) {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    // Sin close() en la limpieza: en StrictMode dispararía un close que cerraría la capa recién montada.
+    if (!ref.current.open) ref.current.showModal()
+  }, [])
+  return (
+    <dialog
+      ref={ref}
+      aria-label={etiqueta}
+      onCancel={(e) => {
+        e.preventDefault()
+        alCerrar?.()
+      }}
+      onClose={() => alCerrar?.()}
+      // Tocar el propio <dialog> (y no su contenido) es tocar fuera.
+      onClick={(e) => e.target === e.currentTarget && alCerrar?.()}
+      className={className}
+    >
+      {children}
+    </dialog>
+  )
 }
 
 export function Dialogo({ titulo, children, acciones, alCerrar }) {
-  useEscape(alCerrar)
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={alCerrar}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={titulo}
-        className="w-full max-w-sm border border-metal bg-superficie-solida p-5"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Capa etiqueta={titulo} alCerrar={alCerrar} className="place-items-center p-4 backdrop:bg-black/70 open:grid">
+      <div className="w-full max-w-sm border border-metal bg-superficie-solida p-5">
         <h2 className="etiqueta text-lg tracking-[0.08em]">{titulo}</h2>
         <div className="mt-2 font-light text-suave">{children}</div>
         <div className="mt-5 flex flex-wrap justify-end gap-2">{acciones}</div>
       </div>
-    </div>
+    </Capa>
   )
 }
 
 // Hoja inferior con opciones (por ejemplo, el orden). Con grupos, varias listas con su título: [{ titulo, opciones, valor, onElegir }].
 export function Hoja({ titulo, opciones, valor, onElegir, alCerrar, grupos }) {
-  useEscape(alCerrar)
   const listas = grupos ?? [{ titulo, opciones, valor, onElegir }]
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={alCerrar}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={titulo}
-        className="max-h-[85vh] w-full overflow-y-auto border-t border-metal bg-superficie-solida pb-[env(safe-area-inset-bottom)]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Capa etiqueta={titulo} alCerrar={alCerrar} className="flex-col justify-end backdrop:bg-black/60 open:flex">
+      <div className="max-h-[85vh] w-full overflow-y-auto border-t border-metal bg-superficie-solida pb-[env(safe-area-inset-bottom)]">
         {listas.map((lista) => (
           <div key={lista.titulo}>
             <p className="etiqueta px-5 pt-4 pb-2 text-xs text-suave">{lista.titulo}</p>
@@ -179,7 +184,7 @@ export function Hoja({ titulo, opciones, valor, onElegir, alCerrar, grupos }) {
           </div>
         ))}
       </div>
-    </div>
+    </Capa>
   )
 }
 

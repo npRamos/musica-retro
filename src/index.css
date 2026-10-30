@@ -130,6 +130,24 @@ body::after {
     font: inherit;
     color: inherit;
   }
+
+  /* Las capas (<dialog> modal) ocupan toda la pantalla; cada una pone su fondo y su contenido. */
+  dialog {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+  }
+}
+
+/* Con una capa abierta, la pantalla de atrás no scrollea. */
+html:has(dialog[open]) {
+  overflow: hidden;
 }
 
 @layer utilities {

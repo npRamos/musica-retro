@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { IconoCerrar } from './Iconos.jsx'
 import { Imagen, Tapa } from './Portadas.jsx'
+import { Capa } from './ui.jsx'
 
-// Tapa y contratapa deslizables; al tocar una imagen se abre a pantalla completa (con zoom del sistema).
+// Tapa y contratapa deslizables; al tocar una imagen se abre en una capa sobre el detalle.
 export default function Carrusel({ disco }) {
   const pista = useRef(null)
   const [actual, setActual] = useState(0)
@@ -69,33 +70,38 @@ export default function Carrusel({ disco }) {
   )
 }
 
-// Pantalla completa. El botón atrás del celular la cierra en lugar de salir del disco.
+// Capa sobre el detalle: la imagen entera, y al tocarla, al doble con scroll. Tocar fuera, la ✕ o atrás la cierran.
 function Visor({ cara, titulo, alCerrar }) {
   const { urls } = useCatalogo()
-  useEffect(() => {
-    history.pushState({ app: true, visor: true }, '', location.href)
-    const alVolver = () => alCerrar()
-    const alTeclear = (e) => e.key === 'Escape' && history.back()
-    addEventListener('popstate', alVolver)
-    addEventListener('keydown', alTeclear)
-    return () => {
-      removeEventListener('popstate', alVolver)
-      removeEventListener('keydown', alTeclear)
-    }
-  }, [alCerrar])
+  const [ampliada, setAmpliada] = useState(false)
+  const nombre = `${cara.nombre} de ${titulo}`
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={`${cara.nombre} de ${titulo}`} className="fixed inset-0 z-50 overflow-auto bg-black">
-      <img src={urls[cara.ruta]} alt={`${cara.nombre} de ${titulo}`} crossOrigin="anonymous" className="mx-auto block h-auto w-full max-w-3xl" />
-      <p className="px-4 py-3 text-center text-sm font-light text-white/60">Pellizcá para hacer zoom</p>
+    <Capa
+      etiqueta={nombre}
+      alCerrar={alCerrar}
+      className={`px-3 pt-[calc(4.5rem+env(safe-area-inset-top))] pb-[calc(3rem+env(safe-area-inset-bottom))] backdrop:bg-black/85 open:flex ${
+        ampliada ? 'items-start justify-start' : 'items-center justify-center'
+      }`}
+    >
       <button
         type="button"
         aria-label="Cerrar"
-        onClick={() => history.back()}
+        onClick={alCerrar}
         className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] right-3 grid size-11 place-items-center rounded-full border border-white/40 bg-black/60 text-white"
       >
         <IconoCerrar />
       </button>
-    </div>
+      <img
+        src={urls[cara.ruta]}
+        alt={nombre}
+        crossOrigin="anonymous"
+        onClick={() => setAmpliada(!ampliada)}
+        className={ampliada ? 'w-[200%] max-w-none shrink-0 cursor-zoom-out' : 'max-h-full max-w-full cursor-zoom-in'}
+      />
+      <p className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm font-light text-white/60">
+        {ampliada ? 'Tocá la imagen para verla entera' : 'Tocá la imagen para ampliar'}
+      </p>
+    </Capa>
   )
 }
