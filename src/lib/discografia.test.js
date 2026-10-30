@@ -9,9 +9,11 @@ import {
   elegirArtista,
   elegirDisco,
   elegirEdicion,
+  elegirGeneros,
   elegirLogo,
   simplificarDisco,
   simplificarEdicion,
+  simplificarGenero,
   tituloMedio,
 } from './discografia.js'
 
@@ -164,5 +166,49 @@ describe('elegirLogo', () => {
   it('sin logo', () => {
     expect(elegirLogo(undefined)).toBeNull()
     expect(elegirLogo([decl('x.png', 'deprecated')])).toBeNull()
+  })
+})
+
+describe('elegirGeneros', () => {
+  // genres de artist/<mbid>?inc=genres (30/10/2026), en el orden en que vienen (alfabético)
+  const megadeth = [
+    { name: 'hard rock', count: 1 },
+    { name: 'heavy metal', count: 19 },
+    { name: 'metal', count: 9 },
+    { name: 'rock', count: 2 },
+    { name: 'speed metal', count: 10 },
+    { name: 'thrash metal', count: 42 },
+  ].map(simplificarGenero)
+  const laRenga = [
+    { name: 'blues', count: 1 },
+    { name: 'blues rock', count: 1 },
+    { name: 'hard rock', count: 2 },
+  ].map(simplificarGenero)
+
+  it('propone los que tienen al menos el 20% de los votos del primero, hasta 3', () => {
+    expect(elegirGeneros(megadeth)).toEqual({
+      propuestos: ['thrash metal', 'heavy metal', 'speed metal'],
+      todos: ['thrash metal', 'heavy metal', 'speed metal', 'metal', 'rock', 'hard rock'],
+    })
+  })
+  it('con pocos votos alcanza con uno; los empates van por nombre', () => {
+    expect(elegirGeneros(laRenga).propuestos).toEqual(['hard rock', 'blues', 'blues rock'])
+  })
+  it('sin géneros no propone ninguno', () => {
+    expect(elegirGeneros([])).toEqual({ propuestos: [], todos: [] })
+    expect(elegirGeneros(undefined)).toEqual({ propuestos: [], todos: [] })
+  })
+  it('descarta los que no tienen votos positivos', () => {
+    const generos = [
+      { nombre: 'punk', votos: 0 },
+      { nombre: 'pop', votos: -2 },
+      { nombre: 'rock', votos: 3 },
+    ]
+    expect(elegirGeneros(generos)).toEqual({ propuestos: ['rock'], todos: ['rock'] })
+    expect(elegirGeneros([{ nombre: 'pop', votos: -1 }])).toEqual({ propuestos: [], todos: [] })
+  })
+  it('la lista completa llega hasta 8', () => {
+    const muchos = Array.from({ length: 10 }, (_, i) => ({ nombre: `g${i}`, votos: 10 - i }))
+    expect(elegirGeneros(muchos).todos).toHaveLength(8)
   })
 })

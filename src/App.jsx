@@ -8,6 +8,7 @@ import Ajustes from './pantallas/Ajustes.jsx'
 import Banda from './pantallas/Banda.jsx'
 import { CambiarClave, NuevaClave } from './pantallas/Clave.jsx'
 import Completar from './pantallas/Completar.jsx'
+import CompletarGeneros from './pantallas/CompletarGeneros.jsx'
 import Disco from './pantallas/Disco.jsx'
 import EditarBanda from './pantallas/EditarBanda.jsx'
 import FormDisco from './pantallas/FormDisco.jsx'
@@ -97,6 +98,8 @@ function Rutas({ mail }) {
     pantalla = <Disco key={segunda} id={segunda} />
   } else if (primera === 'completar') {
     pantalla = <Completar />
+  } else if (primera === 'generos') {
+    pantalla = <CompletarGeneros />
   } else if (primera === 'agregar') {
     const inicial = { banda: consulta.get('banda') ?? '', titulo: consulta.get('titulo') ?? '', formato: consulta.get('formato') }
     pantalla = <FormDisco key={consulta.toString()} inicial={inicial} />

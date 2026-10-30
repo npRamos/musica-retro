@@ -1,4 +1,4 @@
-import { IconoBuscar, IconoEditar, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
+import { IconoBuscar, IconoEditar, IconoEtiqueta, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { CompartirCatalogo } from '../componentes/Compartir.jsx'
 import { Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
@@ -11,8 +11,9 @@ const ACENTOS = [
 ]
 
 export default function Ajustes({ mail }) {
-  const { discos, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion } = useCatalogo()
+  const { bandas, discos, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion } = useCatalogo()
   const pendientes = discos.filter((d) => d.mb_estado === 'pendiente').length
+  const sinGeneros = bandas.filter((b) => b.generos_estado === 'pendiente').length
   const [prefs, cambiar] = usePreferencias()
 
   return (
@@ -75,6 +76,23 @@ export default function Ajustes({ mail }) {
                 Completar pendientes
                 <span className="block text-sm font-light text-suave">
                   {pendientes ? `${pendientes} ${pendientes === 1 ? 'disco' : 'discos'} sin datos de MusicBrainz` : 'Todos completos'}
+                </span>
+              </span>
+              <IconoSiguiente className="size-4 text-suave" />
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              disabled={!online || !sinGeneros}
+              onClick={() => navegar('generos')}
+              className="flex min-h-14 w-full items-center gap-3 border-b border-metal/40 text-left disabled:opacity-40"
+            >
+              <IconoEtiqueta />
+              <span className="flex-1">
+                Completar géneros
+                <span className="block text-sm font-light text-suave">
+                  {sinGeneros ? `${sinGeneros} ${sinGeneros === 1 ? 'banda' : 'bandas'} sin géneros revisados` : 'Todas revisadas'}
                 </span>
               </span>
               <IconoSiguiente className="size-4 text-suave" />

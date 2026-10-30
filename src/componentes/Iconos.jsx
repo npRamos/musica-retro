@@ -136,6 +136,13 @@ export const IconoCerrar = (p) => (
   </Icono>
 )
 
+export const IconoEtiqueta = (p) => (
+  <Icono {...p}>
+    <path d="M4 4h7.5l8.5 8.5-7.5 7.5L4 11.5z" />
+    <circle cx="8.5" cy="8.5" r="1.3" />
+  </Icono>
+)
+
 export const IconoImportar = (p) => (
   <Icono {...p}>
     <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5" />

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AccionesTexto } from '../componentes/Compartir.jsx'
+import { FilaGeneros } from '../componentes/Generos.jsx'
 import { Boton, BotonCirculo, Dialogo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
 import { IconoCompartir, IconoEditar, IconoGrilla, IconoLista, IconoMas, IconoOrden } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaDisco } from '../componentes/Tarjetas.jsx'
@@ -54,6 +55,7 @@ export default function Banda({ id, formato }) {
         }
       />
       <main className="pb-28">
+        <FilaGeneros generos={banda.generos} className="px-4 pt-4" />
         {suyos.length ? (
           <Contenedor>
             {suyos.map((d) => (

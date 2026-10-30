@@ -11,7 +11,7 @@ const ESTILO_INPUT =
   'mt-1 block min-h-11 w-full border-0 border-b border-metal bg-transparent px-0 text-lg outline-none focus:border-acento focus-visible:outline-none'
 
 // Lista desplegable bajo un campo. Los botones no roban el foco (mousedown) para que el blur no la cierre antes del clic.
-function Desplegable({ id, children }) {
+export function Desplegable({ id, children }) {
   return (
     <ul id={id} role="listbox" className="absolute inset-x-0 top-full z-30 mt-1 max-h-80 overflow-y-auto border border-metal bg-superficie-solida">
       {children}
@@ -19,11 +19,11 @@ function Desplegable({ id, children }) {
   )
 }
 
-function Grupo({ children }) {
+export function Grupo({ children }) {
   return <li className="etiqueta border-b border-metal/40 px-3 pt-3 pb-1 text-xs text-acento-texto">{children}</li>
 }
 
-function Opcion({ onClick, children, nueva = false }) {
+export function Opcion({ onClick, children, nueva = false }) {
   return (
     <li role="option" aria-selected="false">
       <button
@@ -38,7 +38,7 @@ function Opcion({ onClick, children, nueva = false }) {
   )
 }
 
-function Aviso({ children }) {
+export function Aviso({ children }) {
   return <li className="border-b border-metal/40 px-3 py-3 text-sm font-light text-suave">{children}</li>
 }
 

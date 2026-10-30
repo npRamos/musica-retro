@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { borrar, borrarImagenesCacheadas, guardar, leer, pedirAlmacenamientoPersistente, precargarImagenes } from './almacen.js'
+import { elegirGeneros } from './discografia.js'
 import { esErrorDeRed } from './errores.js'
+import { generosDelCatalogo, resolverGenero } from './generos.js'
 import { borrarImagenes, firmarImagenes, procesarImagen, procesarLogo, subirImagen } from './imagen.js'
 import { musicbrainz } from './musicbrainz.js'
 import { supabase } from './supabase.js'
@@ -19,6 +21,7 @@ export function CatalogoProvider({ sesion, children }) {
   const [miembro, setMiembro] = useState(null)
   const enCurso = useRef(null)
   const logosVistos = useRef(new Set()) // bandas cuyo logo ya se buscó en esta sesión
+  const generosVistos = useRef(new Set()) // bandas cuyos géneros ya se buscaron en esta sesión
 
   const sincronizar = useCallback(async () => {
     if (enCurso.current) return enCurso.current
@@ -26,7 +29,7 @@ export function CatalogoProvider({ sesion, children }) {
       setSincronizando(true)
       try {
         const [bandasRes, discosRes, miembroRes] = await Promise.all([
-          supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid, logo_path, logo_invertir, logo_buscado_en'),
+          supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid, logo_path, logo_invertir, logo_buscado_en, generos, generos_estado'),
           supabase
             .from('discos')
             .select(
@@ -108,6 +111,7 @@ export function CatalogoProvider({ sesion, children }) {
     if (resultado.estado === 'creado' && contratapa) await ponerImagen(resultado.disco, 'contratapa_path', contratapa)
     if (resultado.estado === 'creado') await sincronizar()
     buscarLogoSiFalta(resultado.banda, resultado.banda?.mbid)
+    buscarGenerosSiFalta(resultado.banda, resultado.banda?.mbid)
     return resultado
   }
 
@@ -118,6 +122,7 @@ export function CatalogoProvider({ sesion, children }) {
       await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
       const banda = bandasPorId.get(disco.banda_id)
       buscarLogoSiFalta(banda, banda?.mbid ?? datos.banda_mbid)
+      buscarGenerosSiFalta(banda, banda?.mbid ?? datos.banda_mbid)
     }
     if (imagen && !disco.tapa_path) await ponerImagen(disco, 'tapa_path', imagen)
     if (contratapa && !disco.contratapa_path) await ponerImagen(disco, 'contratapa_path', contratapa)
@@ -160,6 +165,7 @@ export function CatalogoProvider({ sesion, children }) {
     await rpc('completar_disco', { p_disco: disco.id, p_datos: datos })
     const banda = bandasPorId.get(disco.banda_id)
     buscarLogoSiFalta(banda, banda?.mbid ?? datos.banda_mbid)
+    buscarGenerosSiFalta(banda, banda?.mbid ?? datos.banda_mbid)
     if (imagen && (!disco.tapa_path || reemplazar.tapa)) await ponerImagen(disco, 'tapa_path', imagen)
     if (contratapa && (!disco.contratapa_path || reemplazar.contratapa)) await ponerImagen(disco, 'contratapa_path', contratapa)
     if (recargar) await sincronizar()
@@ -242,6 +248,46 @@ export function CatalogoProvider({ sesion, children }) {
     })()
   }
 
+  // Géneros revisados a mano (Editar banda o "Completar géneros"): la banda queda lista, aunque no tenga ninguno.
+  const cambiarGenerosBanda = async (banda, generos, { recargar = true } = {}) => {
+    const { error: err } = await supabase.from('bandas').update({ generos, generos_estado: 'listo' }).eq('id', banda.id)
+    if (err) throw err
+    if (recargar) await sincronizar()
+  }
+
+  // Enlaza la banda a un artista de MusicBrainz sin tocar sus discos, y busca su logo si le falta.
+  // Los géneros no: se enlaza desde "Completar géneros", que es donde se revisan (y Saltar la deja pendiente).
+  const enlazarBanda = async (banda, mbid, { recargar = true } = {}) => {
+    const { error: err } = await supabase.from('bandas').update({ mbid }).eq('id', banda.id)
+    if (err) throw err
+    buscarLogoSiFalta(banda, mbid)
+    if (recargar) await sincronizar()
+  }
+
+  // Al quedar enlazada, una banda con los géneros sin revisar toma los propuestos por MusicBrainz, una vez,
+  // en segundo plano y sin avisar. Sin propuestos sigue pendiente (para "Completar géneros"); una falla no marca
+  // nada. El filtro por estado en el update evita pisar una edición hecha mientras tanto.
+  const buscarGenerosSiFalta = (banda, mbid) => {
+    if (!banda || !mbid || banda.generos_estado === 'listo' || generosVistos.current.has(banda.id)) return
+    generosVistos.current.add(banda.id)
+    ;(async () => {
+      try {
+        const { propuestos } = elegirGeneros(await musicbrainz.generosDeArtista(mbid))
+        if (!propuestos.length) return
+        const catalogo = generosDelCatalogo(datos.bandas)
+        const { error: err } = await supabase
+          .from('bandas')
+          .update({ generos: propuestos.map((g) => resolverGenero(g, catalogo)), generos_estado: 'listo' })
+          .eq('id', banda.id)
+          .eq('generos_estado', 'pendiente')
+        if (err) throw err
+        await sincronizar()
+      } catch {
+        generosVistos.current.delete(banda.id)
+      }
+    })()
+  }
+
   const importar = async (items, duplicados) => {
     const resumen = await rpc('importar_discos', {
       p_items: items.map(({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url }) => ({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url })),
@@ -278,6 +324,8 @@ export function CatalogoProvider({ sesion, children }) {
     cambiarImagenBanda,
     cambiarLogoBanda,
     buscarLogo,
+    cambiarGenerosBanda,
+    enlazarBanda,
     importar,
     cerrarSesion,
   }

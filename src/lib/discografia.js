@@ -116,6 +116,20 @@ export function elegirLogo(declaraciones = []) {
   return elegida ? elegida.mainsnak.datavalue.value : null
 }
 
+// ─── Géneros ────────────────────────────────────────────────────────────
+export const simplificarGenero = (g) => ({ nombre: g.name, votos: g.count ?? 0 })
+
+// Sin votos positivos se descartan. Propuestos: los que tienen al menos el 20% de los votos del primero
+// (mínimo 1), hasta 3. Todos: hasta 8, para activar otros a mano. Los dos, del más votado al menos votado.
+export function elegirGeneros(generos = []) {
+  const votados = generos.filter((g) => g.votos > 0).sort((a, b) => b.votos - a.votos || comparar(a.nombre, b.nombre))
+  const umbral = Math.max(1, (votados[0]?.votos ?? 0) * 0.2)
+  return {
+    propuestos: votados.filter((g) => g.votos >= umbral).slice(0, 3).map((g) => g.nombre),
+    todos: votados.slice(0, 8).map((g) => g.nombre),
+  }
+}
+
 // ─── Candidatos para completar ──────────────────────────────────────────
 export const elegirArtista = (artistas, nombre) =>
   artistas.find((a) => a.score >= 90 && normalizar(a.nombre) === normalizar(nombre)) ?? null

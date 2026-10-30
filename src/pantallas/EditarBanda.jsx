@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SelectorImagen } from '../componentes/Formulario.jsx'
+import { EditorGeneros } from '../componentes/Generos.jsx'
 import { IconoFormato, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Imagen } from '../componentes/Portadas.jsx'
 import { Boton, Campo, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { elegirGeneros } from '../lib/discografia.js'
 import { mensajeError } from '../lib/errores.js'
+import { mismoGenero, mismosGeneros } from '../lib/generos.js'
 import { procesarLogo } from '../lib/imagen.js'
+import { musicbrainz } from '../lib/musicbrainz.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar, subir } from '../lib/router.js'
 
@@ -18,6 +22,7 @@ export default function EditarBanda({ id }) {
   const [nombre, setNombre] = useState(banda?.nombre ?? '')
   const [imagen, setImagen] = useState(undefined)
   const [logo, setLogo] = useState(undefined) // { blob, invertir } nuevo | null (quitar) | undefined (sin cambios)
+  const [generos, setGeneros] = useState(banda?.generos ?? [])
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const [conflicto, setConflicto] = useState(null)
@@ -44,6 +49,8 @@ export default function EditarBanda({ id }) {
     try {
       if (imagen !== undefined) await catalogo.cambiarImagenBanda(banda, imagen)
       if (logo !== undefined) await catalogo.cambiarLogoBanda(banda, logo)
+      // Solo si cambiaron: así guardar otra cosa no da por revisados unos géneros pendientes.
+      if (!mismosGeneros(generos, banda.generos ?? [])) await catalogo.cambiarGenerosBanda(banda, generos)
       if (nombre.trim() !== banda.nombre) {
         const r = await catalogo.renombrarBanda(banda, nombre)
         if (r.estado === 'conflicto') {
@@ -85,6 +92,7 @@ export default function EditarBanda({ id }) {
           autoComplete="off"
           ayuda="Se guarda exactamente como lo escribas."
         />
+        <SelectorGeneros banda={banda} valor={generos} onChange={setGeneros} deshabilitado={guardando} />
         <SelectorImagen
           etiqueta="Imagen de la banda"
           actual={banda.imagen_path ? <Imagen ruta={banda.imagen_path} /> : null}
@@ -134,6 +142,42 @@ export default function EditarBanda({ id }) {
         </Dialogo>
       )}
     </>
+  )
+}
+
+// Géneros: cualquier banda se edita a mano; una enlazada además puede traer los de MusicBrainz,
+// que se suman como sugerencias para activar sin reemplazar los marcados.
+function SelectorGeneros({ banda, valor, onChange, deshabilitado }) {
+  const { online } = useCatalogo()
+  const [traidos, setTraidos] = useState(null)
+  const [trayendo, setTrayendo] = useState(false)
+  const [aviso, setAviso] = useState(null)
+
+  const traer = async () => {
+    setTrayendo(true)
+    setAviso(null)
+    try {
+      const { todos } = elegirGeneros(await musicbrainz.generosDeArtista(banda.mbid))
+      setTraidos(todos)
+      if (!todos.length) setAviso('MusicBrainz no tiene géneros para esta banda.')
+      else if (todos.every((g) => valor.some((m) => mismoGenero(m, g)))) setAviso('Ya tiene los géneros de MusicBrainz.')
+    } catch {
+      setAviso('MusicBrainz no responde. Probá de nuevo.')
+    } finally {
+      setTrayendo(false)
+    }
+  }
+
+  return (
+    <div>
+      <EditorGeneros valor={valor} onChange={onChange} deMusicbrainz={traidos} deshabilitado={deshabilitado} />
+      {banda.mbid && traidos === null && (
+        <Boton variante="secundario" className="mt-4" disabled={deshabilitado || trayendo || !online} onClick={traer}>
+          {trayendo ? 'Trayendo…' : 'Traer de MusicBrainz'}
+        </Boton>
+      )}
+      {aviso && <p className="mt-2 text-sm font-light text-suave">{aviso}</p>}
+    </div>
   )
 }
 

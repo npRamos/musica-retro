@@ -7,6 +7,7 @@ import {
   simplificarArtista,
   simplificarDisco,
   simplificarEdicion,
+  simplificarGenero,
 } from './discografia.js'
 import { normalizar } from './texto.js'
 
@@ -178,6 +179,12 @@ export function crearCliente({ fetch: pedirHttp = (...a) => fetch(...a), espera 
         bajar(images.find((i) => i.back || i.types?.includes('Back'))),
       ])
       return { tapa, contratapa }
+    },
+
+    // Géneros votados del artista: [{ nombre, votos }] (la búsqueda de artistas no los trae).
+    async generosDeArtista(mbid, { signal } = {}) {
+      const artista = await pedir(`artist/${mbid}`, { inc: 'genres' }, signal)
+      return (artista.genres ?? []).map(simplificarGenero)
     },
 
     // Logo de un artista: MusicBrainz (relación con Wikidata) → Wikidata P154 → miniatura de Commons de ~600 px

@@ -198,4 +198,56 @@ describe('consultas', () => {
     expect(await mb.logoDeArtista('sumo')).toBeNull()
     expect(await mb.logoDeArtista('sin-wikidata')).toBeNull()
   })
+
+  it('géneros del artista con sus votos', async () => {
+    const { fetch, llamadas } = simular((url) => {
+      // Formas recortadas de las respuestas reales de artist/<mbid>?inc=genres (30/10/2026)
+      if (url.includes('/artist/a9044915-8be3-4c7e-b11f-9e2d2ea0a91e?'))
+        return json({
+          id: 'a9044915-8be3-4c7e-b11f-9e2d2ea0a91e',
+          name: 'Megadeth',
+          country: 'US',
+          genres: [
+            { id: '51cb9f91-e6a2-41bf-891f-e78e3f1e52ab', name: 'hard rock', count: 1, disambiguation: '' },
+            { name: 'heavy metal', count: 19, disambiguation: '' },
+            { name: 'metal', count: 9, disambiguation: '' },
+            { name: 'rock', count: 2, disambiguation: '' },
+            { name: 'speed metal', count: 10, disambiguation: '' },
+            { name: 'thrash metal', count: 42, disambiguation: '' },
+          ],
+        })
+      if (url.includes('/artist/560449c4-cdc1-46ef-b759-f64abf73ba61?'))
+        return json({
+          id: '560449c4-cdc1-46ef-b759-f64abf73ba61',
+          name: 'La Renga',
+          country: 'AR',
+          genres: [
+            { id: 'fe12b346-a10e-450f-bf81-fa20894b5ea2', name: 'blues', count: 1, disambiguation: '' },
+            { name: 'blues rock', count: 1, disambiguation: '' },
+            { name: 'hard rock', count: 2, disambiguation: '' },
+          ],
+        })
+      if (url.includes('/artist/sin-generos?')) return json({ id: 'sin-generos', name: 'Nadie', genres: [] })
+      throw new Error(`inesperado ${url}`)
+    })
+    const mb = crearCliente({ fetch, espera: 0 })
+    const megadeth = await mb.generosDeArtista('a9044915-8be3-4c7e-b11f-9e2d2ea0a91e')
+    expect(megadeth).toHaveLength(6)
+    expect(megadeth.at(-1)).toEqual({ nombre: 'thrash metal', votos: 42 })
+    expect(llamadas[0].url).toBe('https://musicbrainz.org/ws/2/artist/a9044915-8be3-4c7e-b11f-9e2d2ea0a91e?inc=genres&fmt=json')
+    expect(await mb.generosDeArtista('560449c4-cdc1-46ef-b759-f64abf73ba61')).toEqual([
+      { nombre: 'blues', votos: 1 },
+      { nombre: 'blues rock', votos: 1 },
+      { nombre: 'hard rock', votos: 2 },
+    ])
+    expect(await mb.generosDeArtista('sin-generos')).toEqual([])
+  })
+
+  it('géneros: un 503 se reintenta y otro error avisa que no responde', async () => {
+    let veces = 0
+    const { fetch } = simular(() => (++veces === 1 ? json({}, 503) : json({}, 500)))
+    const mb = crearCliente({ fetch, espera: 0, reintento: 10 })
+    await expect(mb.generosDeArtista('x')).rejects.toBeInstanceOf(ErrorMusicBrainz)
+    expect(veces).toBe(2)
+  })
 })
