@@ -26,6 +26,6 @@
 
 ## 5. Verificación
 
-- [ ] 5.1 Probar en el celular: fluidez, tapas negras en tema oscuro y claro, disco sin tapa, bombo de 1 y 2, saltar, silenciar, movimiento reducido, volver del detalle
-- [ ] 5.2 Ajustar tiempos y volumen con lo que se vea en el celular
-- [ ] 5.3 Sincronizar las specs y archivar el change
+- [x] 5.1 Probar en el celular: fluidez, tapas negras en tema oscuro y claro, disco sin tapa, bombo de 1 y 2, saltar, silenciar, movimiento reducido, volver del detalle
+- [x] 5.2 Ajustar tiempos y volumen con lo que se vea en el celular
+- [x] 5.3 Sincronizar las specs y archivar el change
