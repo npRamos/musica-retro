@@ -166,3 +166,10 @@ html:has(dialog[open]) {
     transform: translateY(6px);
   }
 }
+
+/* Disco del sorteo girando (vinilo a 33⅓: 1,8 s por vuelta). */
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

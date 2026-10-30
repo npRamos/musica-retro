@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useReducer, useState } from 'react'
+import { useMemo, useReducer, useState } from 'react'
+import Batea from '../componentes/Batea.jsx'
 import { FilaGeneros } from '../componentes/Generos.jsx'
-import { IconoDado, IconoSiguiente, IconoSpotify } from '../componentes/Iconos.jsx'
-import { Tapa } from '../componentes/Portadas.jsx'
+import { IconoDado, IconoSiguiente, IconoSilencio, IconoSonido, IconoSpotify } from '../componentes/Iconos.jsx'
 import { BadgeFormato } from '../componentes/Tarjetas.jsx'
-import { Boton, Encabezado, Segmentado } from '../componentes/ui.jsx'
+import { Boton, BotonCirculo, Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { mismoGenero } from '../lib/generos.js'
 import { usePreferencias } from '../lib/preferencias.js'
+import { prepararSonido } from '../lib/sonido.js'
 import { navegar } from '../lib/router.js'
 import { FORMATOS_SORTEO, armarBombo, claveFiltros, contarGeneros, empezarDeNuevo, rondaDe, sacar } from '../lib/sorteo.js'
 
@@ -18,7 +19,7 @@ const contarDiscos = (n) => `${n} ${n === 1 ? 'disco' : 'discos'}`
 
 export default function Sorteo() {
   const { discos, bandasPorId } = useCatalogo()
-  const [{ sorteoFormato: formato, sorteoGeneros }, cambiar] = usePreferencias()
+  const [{ sorteoFormato: formato, sorteoGeneros, sorteoSonido }, cambiar] = usePreferencias()
   const [, refrescar] = useReducer((n) => n + 1, 0)
   const [revelando, setRevelando] = useState(false)
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
@@ -33,6 +34,7 @@ export default function Sorteo() {
   const actual = bombo.find((b) => b.clave === ronda.actual) ?? null
 
   const sortear = () => {
+    if (sorteoSonido) prepararSonido()
     if (sacar(bombo, filtros)) setRevelando(true)
     setFiltrosAbiertos(false)
     refrescar()
@@ -50,7 +52,16 @@ export default function Sorteo() {
 
   return (
     <>
-      <Encabezado titulo="Sorteo" subtitulo="¿Qué escuchamos hoy?" atras="" />
+      <Encabezado
+        titulo="Sorteo"
+        subtitulo="¿Qué escuchamos hoy?"
+        atras=""
+        acciones={
+          <BotonCirculo etiqueta={sorteoSonido ? 'Silenciar' : 'Activar el sonido'} className="border-transparent" onClick={() => cambiar('sorteoSonido', !sorteoSonido)}>
+            {sorteoSonido ? <IconoSonido /> : <IconoSilencio />}
+          </BotonCirculo>
+        }
+      />
       <main className="mx-auto max-w-md px-5 pt-5 pb-16">
         {verFiltros ? (
           <section className="space-y-5">
@@ -113,9 +124,9 @@ export default function Sorteo() {
               </Boton>
             </div>
           ) : actual ? (
-            <Revelacion bombo={bombo} elegida={actual} activa={revelando} alTerminar={() => setRevelando(false)}>
+            <Batea key={actual.clave} bombo={bombo} elegida={actual} activa={revelando} sonar={sorteoSonido} alTerminar={() => setRevelando(false)}>
               <Resultado bola={actual} banda={bandasPorId.get(actual.banda_id)} ocupado={revelando} onOtro={sortear} />
-            </Revelacion>
+            </Batea>
           ) : (
             <Boton className="min-h-14 w-full text-base" disabled={!bombo.length} onClick={sortear}>
               <IconoDado /> Sortear
@@ -131,7 +142,6 @@ function Resultado({ bola, banda, ocupado, onOtro }) {
   const [disco] = bola.discos
   return (
     <article>
-      <Tapa disco={disco} className="mx-auto w-full max-w-72" />
       <p className="etiqueta mt-4 text-sm tracking-[0.08em] text-suave">{banda?.nombre}</p>
       <h2 className="mt-1 text-2xl leading-tight font-semibold">{disco.titulo}</h2>
       {disco.anio && <p className="mt-1 font-light text-suave">{disco.anio}</p>}
@@ -160,22 +170,5 @@ function Resultado({ bola, banda, ocupado, onOtro }) {
         </Boton>
       </div>
     </article>
-  )
-}
-
-const reducirMovimiento = () => matchMedia('(prefers-reduced-motion: reduce)').matches
-
-// Transición del resultado. El contrato (bombo y bola elegida de antemano, alTerminar cuando se ve la elegida)
-// es el que va a usar la batea; por ahora es un fundido breve, y sin transición si se pide reducir el movimiento.
-function Revelacion({ elegida, activa, alTerminar, children }) {
-  const sinMovimiento = activa && reducirMovimiento()
-  useEffect(() => {
-    if (sinMovimiento) alTerminar()
-  }, [sinMovimiento, elegida.clave]) // eslint-disable-line react-hooks/exhaustive-deps
-  // El envoltorio queda siempre, para que el resultado no se vuelva a montar al terminar.
-  return (
-    <div key={elegida.clave} className={activa && !sinMovimiento ? 'animate-[aparecer_250ms_ease-out]' : ''} onAnimationEnd={alTerminar}>
-      {children}
-    </div>
   )
 }

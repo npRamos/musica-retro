@@ -96,6 +96,20 @@ export const IconoDado = (p) => (
   </Icono>
 )
 
+export const IconoSonido = (p) => (
+  <Icono {...p}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+    <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+  </Icono>
+)
+
+export const IconoSilencio = (p) => (
+  <Icono {...p}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+    <path d="M15.5 9.5l5 5M20.5 9.5l-5 5" />
+  </Icono>
+)
+
 export const IconoAjustes = (p) => (
   <Icono {...p}>
     <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />

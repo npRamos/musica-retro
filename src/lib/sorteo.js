@@ -87,3 +87,31 @@ export function empezarDeNuevo(filtros) {
   r.actual = null
   r.agotada = false
 }
+
+// ─── Batea ──────────────────────────────────────────────────────────────
+
+// El disco que se ve de una bola: el que tiene tapa (el vinilo primero); si ninguno tiene, el primero.
+export const discoVisible = (bola) => bola.discos.find((d) => d.tapa_path) ?? bola.discos[0]
+
+// Tapas que pasan por la batea: al azar del bombo (primero las que tienen tapa, que se ven mejor), sin repetir
+// dos seguidas, y siempre termina en la elegida. Con un solo disco, solo la elegida. No cambia las chances:
+// la elegida ya salió antes de animar.
+export function secuenciaBatea(bombo, elegida, azar = azarSeguro, largo = 16) {
+  if (bombo.length <= 1) return [elegida]
+  const conTapa = bombo.filter((b) => b.discos.some((d) => d.tapa_path))
+  const fuente = conTapa.length >= 2 ? conTapa : bombo
+  // Se arma de atrás para adelante: cada una distinta de la que le sigue, empezando por la elegida.
+  const previas = []
+  let siguiente = elegida
+  while (previas.length < largo - 1) {
+    const candidatas = fuente.filter((b) => b !== siguiente)
+    siguiente = candidatas[azar(candidatas.length)]
+    previas.push(siguiente)
+  }
+  return [...previas.reverse(), elegida]
+}
+
+// Duración de cada caída: rápidas al principio y cada vez más lentas (de 60 a 400 ms).
+export function tiemposBatea(caidas) {
+  return Array.from({ length: caidas }, (_, i) => Math.round(60 + 340 * (caidas === 1 ? 1 : i / (caidas - 1)) ** 2.2))
+}

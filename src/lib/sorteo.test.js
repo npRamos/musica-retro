@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { armarBombo, claveFiltros, contarGeneros, elegir, empezarDeNuevo, rondaDe, sacar } from './sorteo.js'
+import { armarBombo, claveFiltros, contarGeneros, discoVisible, elegir, empezarDeNuevo, rondaDe, sacar, secuenciaBatea, tiemposBatea } from './sorteo.js'
 
 const bandas = [
   { id: 'meg', nombre: 'Megadeth', generos: ['thrash metal', 'heavy metal', 'speed metal'] },
@@ -112,5 +112,52 @@ describe('ronda', () => {
 
   it('la clave no depende del orden ni de cómo están escritos los géneros', () => {
     expect(claveFiltros('todos', ['Thrash Metal', 'pop rock'])).toBe(claveFiltros('todos', ['pop rock', 'thrash metal']))
+  })
+})
+
+describe('batea', () => {
+  const conTapas = discos.map((d) => (d.id === '5' ? d : { ...d, tapa_path: `tapas/${d.id}.webp` }))
+  const bombo = armarBombo(conTapas, bandasPorId)
+  const elegida = bombo.find((b) => b.discos[0].titulo === 'Llegando los Monos') // la única sin tapa
+
+  it('termina siempre en la elegida y tiene el largo pedido', () => {
+    const secuencia = secuenciaBatea(bombo, elegida, undefined, 16)
+    expect(secuencia).toHaveLength(16)
+    expect(secuencia.at(-1)).toBe(elegida)
+  })
+
+  it('nunca repite dos seguidas', () => {
+    for (let vez = 0; vez < 20; vez++) {
+      const secuencia = secuenciaBatea(bombo, elegida)
+      secuencia.slice(1).forEach((b, i) => expect(b).not.toBe(secuencia[i]))
+    }
+  })
+
+  it('antes de la elegida pasan las que tienen tapa', () => {
+    expect(secuenciaBatea(bombo, elegida).slice(0, -1).every((b) => b.discos.some((d) => d.tapa_path))).toBe(true)
+  })
+
+  it('con dos discos alterna, y con uno solo va directo a la elegida', () => {
+    const dos = armarBombo(conTapas, bandasPorId, { formato: 'cd' })
+    const secuencia = secuenciaBatea(dos, dos[0], undefined, 5)
+    expect(secuencia).toEqual([dos[0], dos[1], dos[0], dos[1], dos[0]])
+    expect(secuenciaBatea([elegida], elegida)).toEqual([elegida])
+  })
+
+  it('muestra el disco con tapa, el vinilo primero', () => {
+    const signos = bombo.find((b) => b.discos[0].titulo === 'Signos')
+    expect(discoVisible(signos).formato).toBe('vinilo')
+    expect(discoVisible(elegida).id).toBe('5')
+  })
+
+  it('las caídas frenan y suman entre 2,2 y 3 segundos', () => {
+    const tiempos = tiemposBatea(15)
+    expect(tiempos[0]).toBe(60)
+    expect(tiempos.at(-1)).toBe(400)
+    tiempos.slice(1).forEach((t, i) => expect(t).toBeGreaterThanOrEqual(tiempos[i]))
+    const total = tiempos.reduce((a, b) => a + b, 0)
+    expect(total).toBeGreaterThan(2200)
+    expect(total).toBeLessThan(3000)
+    expect(tiemposBatea(0)).toEqual([])
   })
 })
