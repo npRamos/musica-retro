@@ -45,3 +45,8 @@
 - [x] 8.1 `npm test` y `npm run build` sin errores
 - [ ] 8.2 Probar en el celular: alta con banda nueva de MusicBrainz (géneros automáticos), recorrer "Completar géneros" con una banda enlazada, una sin enlazar y una que no está, editar géneros, ver la banda sin conexión
 - [ ] 8.3 Sincronizar las specs y archivar el change
+
+## 9. Agrupar y ordenar por género
+
+- [x] 9.1 `catalogo.js`: orden `genero` (primer género de la banda, sin géneros al final) en `ordenarBandas` y `ordenarDiscos`; la pantalla de banda no lo ofrece; `agruparPorGenero` en secciones alfabéticas con "Sin género" al final; tests
+- [x] 9.2 `Inicio`: "Por género" en Mostrar, con secciones (nombre y cantidad) y la banda en cada uno de sus géneros

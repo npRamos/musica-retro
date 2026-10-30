@@ -158,3 +158,11 @@ html:has(dialog[open]) {
     font-weight: 600;
   }
 }
+
+/* Resultado del sorteo: aparece con un fundido breve. */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

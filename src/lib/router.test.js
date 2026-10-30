@@ -15,6 +15,9 @@ describe('claveDe', () => {
   it('distingue la edición de la banda de la banda', () => {
     expect(claveDe('banda/7/editar')).toBe('banda/7/editar')
   })
+  it('el sorteo es su propia pantalla, hija del inicio', () => {
+    expect(claveDe('sorteo')).toBe('sorteo')
+  })
   it('ignora la consulta y la barra inicial', () => {
     expect(claveDe('agregar?banda=Sumo&formato=cd')).toBe('agregar')
     expect(claveDe('/disco/3')).toBe('disco/3')

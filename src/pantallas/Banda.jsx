@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { AccionesTexto } from '../componentes/Compartir.jsx'
 import { FilaGeneros } from '../componentes/Generos.jsx'
-import { Boton, BotonCirculo, Dialogo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
-import { IconoCompartir, IconoEditar, IconoGrilla, IconoLista, IconoMas, IconoOrden } from '../componentes/Iconos.jsx'
+import { BarraLista, Boton, BotonCirculo, Dialogo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
+import { IconoCompartir, IconoEditar, IconoMas } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaDisco } from '../componentes/Tarjetas.jsx'
 import { NOMBRE_FORMATO, ORDENES_BANDA, ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
@@ -34,28 +34,25 @@ export default function Banda({ id, formato }) {
       <Encabezado
         titulo={banda.nombre}
         display={false}
-        subtitulo={`${NOMBRE_FORMATO[formato]} · ${suyos.length} ${suyos.length === 1 ? 'disco' : 'discos'}`}
+        subtitulo={NOMBRE_FORMATO[formato]}
         atras={SLUG_FORMATO[formato]}
         acciones={
-          <>
-            <BotonCirculo etiqueta={`Orden: ${ORDENES_BANDA[orden]}`} className="border-transparent" onClick={() => setEligiendoOrden(true)}>
-              <IconoOrden />
-            </BotonCirculo>
-            <BotonCirculo
-              etiqueta={vista === 'grilla' ? 'Ver como lista' : 'Ver como cuadrícula'}
-              className="border-transparent"
-              onClick={() => cambiar('vista', vista === 'grilla' ? 'lista' : 'grilla')}
-            >
-              {vista === 'grilla' ? <IconoLista /> : <IconoGrilla />}
-            </BotonCirculo>
-            <BotonCirculo etiqueta="Editar banda" className="border-transparent" disabled={!online} onClick={() => navegar(`banda/${id}/editar`)}>
-              <IconoEditar />
-            </BotonCirculo>
-          </>
+          <BotonCirculo etiqueta="Editar banda" className="border-transparent" disabled={!online} onClick={() => navegar(`banda/${id}/editar`)}>
+            <IconoEditar />
+          </BotonCirculo>
         }
       />
       <main className="pb-28">
         <FilaGeneros generos={banda.generos} className="px-4 pt-4" />
+        {suyos.length > 0 && (
+          <BarraLista
+            cantidad={`${suyos.length} ${suyos.length === 1 ? 'disco' : 'discos'}`}
+            orden={ORDENES_BANDA[orden]}
+            onOrden={() => setEligiendoOrden(true)}
+            vista={vista}
+            onVista={() => cambiar('vista', vista === 'grilla' ? 'lista' : 'grilla')}
+          />
+        )}
         {suyos.length ? (
           <Contenedor>
             {suyos.map((d) => (

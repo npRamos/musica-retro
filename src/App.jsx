@@ -15,6 +15,7 @@ import FormDisco from './pantallas/FormDisco.jsx'
 import Importar from './pantallas/Importar.jsx'
 import Inicio from './pantallas/Inicio.jsx'
 import Login from './pantallas/Login.jsx'
+import Sorteo from './pantallas/Sorteo.jsx'
 
 export default function App() {
   const [sesion, setSesion] = useState(undefined)
@@ -98,6 +99,8 @@ function Rutas({ mail }) {
     pantalla = <Disco key={segunda} id={segunda} />
   } else if (primera === 'completar') {
     pantalla = <Completar />
+  } else if (primera === 'sorteo') {
+    pantalla = <Sorteo />
   } else if (primera === 'generos') {
     pantalla = <CompletarGeneros />
   } else if (primera === 'agregar') {

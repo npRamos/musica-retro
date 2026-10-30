@@ -1,6 +1,6 @@
 import { useId, useLayoutEffect, useRef } from 'react'
 import { volver } from '../lib/router.js'
-import { IconoAtras } from './Iconos.jsx'
+import { IconoAtras, IconoGrilla, IconoLista, IconoSiguiente } from './Iconos.jsx'
 
 const VARIANTES = {
   primario: 'bg-acento text-sobre-acento shadow-[3px_3px_0_0_var(--metal)] active:translate-x-px active:translate-y-px active:shadow-[2px_2px_0_0_var(--metal)]',
@@ -67,6 +67,24 @@ export function Encabezado({ titulo, subtitulo, atras, display = true, acciones 
         {acciones}
       </div>
     </header>
+  )
+}
+
+// Controles de la lista, al principio de la lista y sin quedar fijos: el encabezado es para las acciones de la pantalla.
+// A la izquierda, cuánto se ve y el orden actual (abre sus opciones); a la derecha, cuadrícula o lista.
+export function BarraLista({ cantidad, orden, onOrden, vista, onVista }) {
+  return (
+    <div className="flex min-h-12 items-center gap-2 border-b border-metal/40 pr-2 pl-4">
+      <button type="button" onClick={onOrden} className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left">
+        <span className="etiqueta truncate text-xs">
+          <span className="text-suave">{cantidad} ·</span> {orden}
+        </span>
+        <IconoSiguiente className="size-4 shrink-0 rotate-90 text-suave" />
+      </button>
+      <BotonCirculo etiqueta={vista === 'grilla' ? 'Ver como lista' : 'Ver como cuadrícula'} className="border-transparent" onClick={onVista}>
+        {vista === 'grilla' ? <IconoLista /> : <IconoGrilla />}
+      </BotonCirculo>
+    </div>
   )
 }
 

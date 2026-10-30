@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandasDeFormato, buscar, esLinkSpotifyValido, fechaLocal, leerAnio, linkSpotify, mediodiaLocal, ordenarBandas, ordenarDiscos } from './catalogo.js'
+import { agruparPorGenero, bandasDeFormato, buscar, esLinkSpotifyValido, fechaLocal, leerAnio, linkSpotify, mediodiaLocal, ordenarBandas, ordenarDiscos } from './catalogo.js'
 
 const bandas = [
   { id: 'b1', nombre: 'Soda Stereo' },
@@ -112,5 +112,37 @@ describe('fecha de carga', () => {
     expect(fechaLocal(iso)).toBe('2019-03-15')
     expect(fechaLocal(new Date(2026, 9, 28, 23, 59))).toBe('2026-10-28')
     expect(fechaLocal(new Date(2026, 0, 1, 0, 1))).toBe('2026-01-01')
+  })
+})
+
+describe('géneros', () => {
+  const banda = (id, nombre, generos) => ({ banda: { id, nombre, generos } })
+  const items = [
+    banda('meg', 'Megadeth', ['thrash metal', 'heavy metal']),
+    banda('sum', 'Sumo', []),
+    banda('ren', 'La Renga', ['hard rock']),
+    banda('ant', 'Anthrax', ['thrash metal']),
+  ]
+
+  it('ordena las bandas por su primer género y el nombre, sin género al final', () => {
+    expect(ordenarBandas(items, 'genero').map((i) => i.banda.nombre)).toEqual(['La Renga', 'Anthrax', 'Megadeth', 'Sumo'])
+  })
+
+  it('ordena los discos por el primer género de su banda y después como A → Z', () => {
+    const bandasPorId = new Map(items.map((i) => [i.banda.id, i.banda]))
+    const discos = [
+      { id: 'peace', banda_id: 'meg', titulo: 'Peace Sells', anio: 1986 },
+      { id: 'monos', banda_id: 'sum', titulo: 'Llegando los Monos', anio: 1986 },
+      { id: 'rust', banda_id: 'meg', titulo: 'Rust in Peace', anio: 1990 },
+      { id: 'pesados', banda_id: 'ren', titulo: 'Despedazado por mil partes', anio: 1996 },
+    ]
+    expect(ordenarDiscos(discos, 'genero', bandasPorId).map((d) => d.id)).toEqual(['pesados', 'peace', 'rust', 'monos'])
+  })
+
+  it('agrupa por género en orden alfabético, con la banda en cada uno de sus géneros y Sin género al final', () => {
+    const secciones = agruparPorGenero(items)
+    expect(secciones.map((s) => s.genero)).toEqual(['hard rock', 'heavy metal', 'thrash metal', null])
+    expect(secciones[2].items.map((i) => i.banda.nombre)).toEqual(['Megadeth', 'Anthrax'])
+    expect(secciones[3].items.map((i) => i.banda.nombre)).toEqual(['Sumo'])
   })
 })

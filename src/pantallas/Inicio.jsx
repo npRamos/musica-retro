@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { BotonCirculo, Boton, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
-import { IconoAjustes, IconoBuscar, IconoCerrar, IconoGrilla, IconoLista, IconoMas, IconoOrden, IconoSiguiente } from '../componentes/Iconos.jsx'
+import { BarraLista, BotonCirculo, Boton, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
+import { IconoAjustes, IconoBuscar, IconoCerrar, IconoDado, IconoMas, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaBanda, TarjetaDisco } from '../componentes/Tarjetas.jsx'
-import { FORMATOS, NOMBRE_FORMATO, NOMBRE_FORMATO_SINGULAR, ORDENES, bandasDeFormato, buscar, contarPorFormato, ordenarBandas, ordenarDiscos, otroFormato } from '../lib/catalogo.js'
+import { AGRUPACIONES, FORMATOS, NOMBRE_FORMATO, NOMBRE_FORMATO_SINGULAR, ORDENES, agruparPorGenero, bandasDeFormato, buscar, contarPorFormato, ordenarBandas, ordenarDiscos, otroFormato } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
+
+const contar = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`
 
 export default function Inicio({ formato, busqueda, setBusqueda }) {
   const { bandas, discos, bandasPorId, online, actualizadoEn } = useCatalogo()
@@ -19,6 +21,11 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
     () => (agrupar === 'discos' ? ordenarDiscos(discos.filter((d) => d.formato === formato), orden, bandasPorId) : []),
     [agrupar, discos, formato, orden, bandasPorId],
   )
+  // Por género, cada sección ya es un género: adentro, el orden por género se lee como A → Z.
+  const secciones = useMemo(
+    () => (agrupar === 'generos' ? agruparPorGenero(orden === 'genero' ? ordenarBandas(items, 'az') : items) : []),
+    [agrupar, items, orden],
+  )
   const resultados = useMemo(() => {
     const r = buscar(discos, bandasPorId, busqueda, formato)
     return { ...r, enFormato: ordenarDiscos(r.enFormato, orden, bandasPorId) }
@@ -30,17 +37,24 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
   }
   const Contenedor = vista === 'lista' ? Lista : Grilla
   const buscando = busqueda.trim() !== ''
+  // La barra cuenta lo que se ve: resultados, discos sueltos o bandas.
+  const cantidad = buscando
+    ? contar(resultados.enFormato.length, 'resultado', 'resultados')
+    : agrupar === 'discos' && sueltos.length > 0
+      ? contar(sueltos.length, 'disco', 'discos')
+      : contar(items.length, 'banda', 'bandas')
+  const hayLista = buscando || items.length > 0
+  const tarjetaBanda = (item) => (
+    <TarjetaBanda key={item.banda.id} item={item} formato={formato} vista={vista} onClick={() => navegar(`${SLUG_FORMATO[formato]}/banda/${item.banda.id}`)} />
+  )
 
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-metal/50 bg-fondo/92 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 px-4 pt-3">
           <h1 className="font-display min-w-0 flex-1 truncate text-[2.1rem] leading-none">Música Retro</h1>
-          <BotonCirculo etiqueta={`Orden y vista: ${ORDENES[orden]}`} onClick={() => setEligiendoOrden(true)}>
-            <IconoOrden />
-          </BotonCirculo>
-          <BotonCirculo etiqueta={vista === 'grilla' ? 'Ver como lista' : 'Ver como cuadrícula'} onClick={() => cambiar('vista', vista === 'grilla' ? 'lista' : 'grilla')}>
-            {vista === 'grilla' ? <IconoLista /> : <IconoGrilla />}
+          <BotonCirculo etiqueta="Sortear un disco" onClick={() => navegar('sorteo')}>
+            <IconoDado />
           </BotonCirculo>
           <BotonCirculo etiqueta="Ajustes" onClick={() => navegar('ajustes')}>
             <IconoAjustes />
@@ -88,6 +102,15 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
       )}
 
       <main className="pb-28">
+        {hayLista && (
+          <BarraLista
+            cantidad={cantidad}
+            orden={ORDENES[orden]}
+            onOrden={() => setEligiendoOrden(true)}
+            vista={vista}
+            onVista={() => cambiar('vista', vista === 'grilla' ? 'lista' : 'grilla')}
+          />
+        )}
         {buscando ? (
           <>
             {resultados.enOtro > 0 && (
@@ -130,18 +153,17 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
               <TarjetaDisco key={d.id} disco={d} banda={bandasPorId.get(d.banda_id)} vista={vista} mostrarBanda onClick={() => navegar(`disco/${d.id}`)} />
             ))}
           </Contenedor>
+        ) : agrupar === 'generos' && secciones.length > 0 ? (
+          secciones.map((s) => (
+            <section key={s.genero ?? ''} aria-label={s.genero ?? 'Sin género'}>
+              <h2 className="etiqueta px-4 pt-5 text-sm tracking-[0.1em]">
+                {s.genero ?? 'Sin género'} <span className="font-light text-suave">{s.items.length}</span>
+              </h2>
+              <Contenedor>{s.items.map(tarjetaBanda)}</Contenedor>
+            </section>
+          ))
         ) : items.length > 0 ? (
-          <Contenedor>
-            {items.map((item) => (
-              <TarjetaBanda
-                key={item.banda.id}
-                item={item}
-                formato={formato}
-                vista={vista}
-                onClick={() => navegar(`${SLUG_FORMATO[formato]}/banda/${item.banda.id}`)}
-              />
-            ))}
-          </Contenedor>
+          <Contenedor>{items.map(tarjetaBanda)}</Contenedor>
         ) : (
           <Vacio titulo={`Todavía no hay ${NOMBRE_FORMATO[formato].toLowerCase()}`}>
             <p>Agregá el primero con el botón + o importá una lista.</p>
@@ -158,15 +180,12 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
 
       {eligiendoOrden && (
         <Hoja
-          titulo="Orden y vista"
+          titulo="Mostrar y ordenar"
           grupos={[
             {
               titulo: 'Mostrar',
               valor: agrupar,
-              opciones: [
-                { valor: 'bandas', texto: 'Por banda' },
-                { valor: 'discos', texto: 'Todos los discos' },
-              ],
+              opciones: Object.entries(AGRUPACIONES).map(([valor, texto]) => ({ valor, texto })),
               onElegir: (v) => {
                 cambiar('agrupar', v)
                 setEligiendoOrden(false)

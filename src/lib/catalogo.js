@@ -3,11 +3,20 @@ import { normalizar } from './texto.js'
 export const FORMATOS = ['vinilo', 'cd']
 export const NOMBRE_FORMATO = { vinilo: 'Vinilos', cd: 'CDs' }
 export const NOMBRE_FORMATO_SINGULAR = { vinilo: 'vinilo', cd: 'CD' }
-export const ORDENES = { az: 'A → Z', za: 'Z → A', reciente: 'Última compra' }
-// Dentro de una banda se suma la discografía por año (el orden por defecto ahí).
-export const ORDENES_BANDA = { anio: 'Por año', ...ORDENES }
+export const ORDENES = { az: 'A → Z', za: 'Z → A', reciente: 'Última compra', genero: 'Género' }
+// Dentro de una banda se suma la discografía por año (el orden por defecto ahí); por género no, porque es uno solo.
+export const ORDENES_BANDA = { anio: 'Por año', az: ORDENES.az, za: ORDENES.za, reciente: ORDENES.reciente }
+// Cómo se muestran las pestañas: por banda, por género (secciones) o todos los discos sueltos.
+export const AGRUPACIONES = { bandas: 'Por banda', generos: 'Por género', discos: 'Todos los discos' }
 
 const comparar = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true })
+
+// Por género: por el primero de la banda (el más votado, o el primero que se eligió); sin géneros, al final.
+const generoPrincipal = (banda) => banda?.generos?.[0] ?? null
+function porGenero(a, b) {
+  if (!a || !b) return (a ? 0 : 1) - (b ? 0 : 1)
+  return comparar(a, b)
+}
 
 export const otroFormato = (formato) => (formato === 'vinilo' ? 'cd' : 'vinilo')
 
@@ -41,6 +50,7 @@ export function bandasDeFormato(bandas, discos, formato) {
 
 export function ordenarBandas(items, orden) {
   const copia = [...items]
+  if (orden === 'genero') return copia.sort((a, b) => porGenero(generoPrincipal(a.banda), generoPrincipal(b.banda)) || comparar(a.banda.nombre, b.banda.nombre))
   if (orden === 'reciente') return copia.sort((a, b) => (b.ultima > a.ultima ? 1 : b.ultima < a.ultima ? -1 : comparar(a.banda.nombre, b.banda.nombre)))
   copia.sort((a, b) => comparar(a.banda.nombre, b.banda.nombre))
   return orden === 'za' ? copia.reverse() : copia
@@ -55,9 +65,28 @@ export function ordenarDiscos(discos, orden, bandasPorId) {
   if (orden === 'anio') return copia.sort((a, b) => porAnio(a, b) || comparar(nombre(a), nombre(b)))
   // Con bandas (todos los discos, búsqueda): por banda y, dentro de cada una, como discografía.
   const banda = (d) => bandasPorId?.get(d.banda_id)?.nombre ?? ''
-  if (bandasPorId) copia.sort((a, b) => comparar(banda(a), banda(b)) || porAnio(a, b) || comparar(a.titulo, b.titulo))
+  const genero = (d) => (orden === 'genero' ? generoPrincipal(bandasPorId?.get(d.banda_id)) : null)
+  if (bandasPorId) copia.sort((a, b) => porGenero(genero(a), genero(b)) || comparar(banda(a), banda(b)) || porAnio(a, b) || comparar(a.titulo, b.titulo))
   else copia.sort((a, b) => comparar(a.titulo, b.titulo))
   return orden === 'za' ? copia.reverse() : copia
+}
+
+// Secciones por género, en orden alfabético y "Sin género" (genero: null) al final. Una banda con varios
+// géneros aparece en cada uno; dentro de cada sección se respeta el orden de items.
+export function agruparPorGenero(items) {
+  const secciones = new Map()
+  const sinGenero = []
+  for (const item of items) {
+    const generos = item.banda.generos ?? []
+    if (!generos.length) sinGenero.push(item)
+    for (const g of generos) {
+      const clave = normalizar(g)
+      if (!secciones.has(clave)) secciones.set(clave, { genero: g, items: [] })
+      secciones.get(clave).items.push(item)
+    }
+  }
+  const lista = [...secciones.values()].sort((a, b) => comparar(a.genero, b.genero))
+  return sinGenero.length ? [...lista, { genero: null, items: sinGenero }] : lista
 }
 
 // Discos que coinciden por título o banda en el formato activo, y cuántos hay en el otro.

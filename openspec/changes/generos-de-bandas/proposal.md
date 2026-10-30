@@ -10,6 +10,7 @@ A veces no sabemos qué escuchar de lo que tenemos. Por eso viene un sorteo de d
 - **Editar géneros:** en Editar banda, chips editables (máximo 3), con autocompletado que sugiere primero los géneros ya usados en el catálogo, y "Traer de MusicBrainz" si la banda está enlazada.
 - **Mostrar géneros:** como chips en la pantalla de la banda, también sin conexión.
 - **Unir bandas** conserva los géneros.
+- **Agrupar y ordenar por género:** en las pestañas, "Por género" muestra las bandas en secciones por género (una banda aparece en cada uno de sus géneros, y las que no tienen van a "Sin género"), y el orden "Género" ordena por el primer género de cada banda.
 
 ## Capabilities
 
@@ -18,7 +19,7 @@ A veces no sabemos qué escuchar de lo que tenemos. Por eso viene un sorteo de d
 
 ### Modified Capabilities
 - `catalogo`: "Corrección de bandas": unir dos bandas conserva sus géneros.
-- `consulta`: "Pantalla de banda": muestra los géneros de la banda.
+- `consulta`: "Pantalla de banda" muestra los géneros de la banda; "Orden elegible" suma el orden por género; "Agrupar por banda o ver todos los discos" suma las secciones por género.
 
 ## Impact
 

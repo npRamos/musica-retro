@@ -20,7 +20,7 @@ export function FilaGeneros({ generos, className = '' }) {
   return (
     <ul aria-label="Géneros" className={`flex flex-wrap gap-2 ${className}`}>
       {generos.map((g) => (
-        <li key={g} className="etiqueta border border-metal/70 px-2.5 py-1 text-xs text-suave">
+        <li key={g} className="etiqueta rounded-full border border-metal/70 px-3 py-1 text-xs text-suave">
           {g}
         </li>
       ))}
@@ -62,7 +62,7 @@ export function EditorGeneros({ valor, onChange, deMusicbrainz, deshabilitado = 
       {valor.length ? (
         <ul className="mt-2 flex flex-wrap gap-2">
           {valor.map((g) => (
-            <li key={g} className="etiqueta inline-flex min-h-11 items-center border border-acento pl-3 text-sm text-acento-texto">
+            <li key={g} className="etiqueta inline-flex min-h-11 items-center rounded-full border border-acento pl-4 text-sm text-acento-texto">
               {g}
               <button
                 type="button"
@@ -90,7 +90,7 @@ export function EditorGeneros({ valor, onChange, deMusicbrainz, deshabilitado = 
                   type="button"
                   disabled={deshabilitado || lleno}
                   onClick={() => agregar(g)}
-                  className="etiqueta inline-flex min-h-11 items-center gap-1.5 border border-metal/70 px-3 text-sm text-suave active:border-acento disabled:opacity-40"
+                  className="etiqueta inline-flex min-h-11 items-center gap-1.5 rounded-full border border-metal/70 px-4 text-sm text-suave active:border-acento disabled:opacity-40"
                 >
                   <IconoMas className="size-4" />
                   {g}
