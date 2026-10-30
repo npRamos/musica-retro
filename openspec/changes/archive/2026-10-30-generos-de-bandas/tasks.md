@@ -2,7 +2,7 @@
 
 - [x] 1.1 Migration `20261101000000_generos.sql`: `bandas.generos text[] not null default '{}'` con `check (cardinality(generos) <= 3)` y `bandas.generos_estado` (`pendiente` | `listo`, por defecto `pendiente`)
 - [x] 1.2 `fusionar_bandas` a partir de la versión de `20261030000000_logos.sql`: el destino conserva sus géneros si está `listo`; si no, hereda géneros y estado del origen
-- [ ] 1.3 Probar la migration en un Postgres descartable (incluida la unión con géneros) y aplicarla en Supabase
+- [x] 1.3 Probar la migration en un Postgres descartable (incluida la unión con géneros) y aplicarla en Supabase
 
 ## 2. Reglas de géneros
 
@@ -43,8 +43,8 @@
 ## 8. Verificación
 
 - [x] 8.1 `npm test` y `npm run build` sin errores
-- [ ] 8.2 Probar en el celular: alta con banda nueva de MusicBrainz (géneros automáticos), recorrer "Completar géneros" con una banda enlazada, una sin enlazar y una que no está, editar géneros, ver la banda sin conexión
-- [ ] 8.3 Sincronizar las specs y archivar el change
+- [x] 8.2 Probar en el celular: alta con banda nueva de MusicBrainz (géneros automáticos), recorrer "Completar géneros" con una banda enlazada, una sin enlazar y una que no está, editar géneros, ver la banda sin conexión
+- [x] 8.3 Sincronizar las specs y archivar el change
 
 ## 9. Agrupar y ordenar por género
 

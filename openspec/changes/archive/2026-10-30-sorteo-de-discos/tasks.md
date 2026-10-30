@@ -26,10 +26,10 @@
 - [x] 4.1 `BarraLista` en `ui.jsx`: botón "cantidad · orden ▾" y `BotonCirculo` de vista, no fija, áreas táctiles ≥ 44px
 - [x] 4.2 `Inicio`: encabezado con título, "Sortear un disco" y Ajustes; barra con "N bandas" / "N discos" / "N resultados", que abre la hoja Mostrar y Ordenar existente; aviso de otro formato debajo de la barra
 - [x] 4.3 `Banda`: encabezado con "Editar banda" y subtítulo con el formato; barra con "N discos · orden ▾" (hoja Ordenar existente) y vista
-- [ ] 4.4 Verificar en 360px que "Música Retro" se lee completo y que no hay scroll horizontal
+- [x] 4.4 Verificar en 360px que "Música Retro" se lee completo y que no hay scroll horizontal
 
 ## 5. Verificación
 
 - [x] 5.1 `npm test` y `npm run build` sin errores
-- [ ] 5.2 Probar en el celular: sortear con y sin filtros, "Otro" hasta agotar, ver el disco y volver, Spotify, sin conexión, atrás desde el sorteo
-- [ ] 5.3 Sincronizar las specs y archivar el change (después de archivar `generos-de-bandas`)
+- [x] 5.2 Probar en el celular: sortear con y sin filtros, "Otro" hasta agotar, ver el disco y volver, Spotify, sin conexión, atrás desde el sorteo
+- [x] 5.3 Sincronizar las specs y archivar el change (después de archivar `generos-de-bandas`)
