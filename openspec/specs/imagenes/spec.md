@@ -19,7 +19,7 @@ El sistema SHALL permitir asignar una tapa a un disco, al darlo de alta o al edi
 - **THEN** el sistema descarta la imagen y permite elegir o sacar otra
 
 ### Requirement: Contratapa del disco
-Además de la tapa, el sistema SHALL permitir asignar una contratapa a cada disco (para ver la lista de temas), con las mismas opciones de cámara o galería. La contratapa MUST NOT recortarse: conserva su proporción y se guarda con hasta 1200 píxeles en el lado mayor, para que los temas se puedan leer.
+Además de la tapa, el sistema SHALL permitir asignar una contratapa a cada disco (para ver la lista de temas), con las mismas opciones de cámara o galería. La contratapa MUST NOT recortarse: conserva su proporción y se guarda con hasta 1200 píxeles en el lado mayor, para que los temas se puedan leer. Al tocar la tapa o la contratapa en el detalle, el sistema SHALL mostrarla entera en una capa sobre el detalle oscurecido. Tocar la imagen MUST alternar entre verla entera y ampliada al doble, con desplazamiento dentro de la capa.
 
 #### Scenario: Cargar contratapa de un CD
 - **WHEN** la usuaria saca una foto de la contratapa rectangular de un CD
@@ -27,7 +27,15 @@ Además de la tapa, el sistema SHALL permitir asignar una contratapa a cada disc
 
 #### Scenario: Leer los temas
 - **WHEN** la usuaria toca la contratapa en el detalle
-- **THEN** se abre a pantalla completa y se puede ampliar con dos dedos
+- **THEN** se abre en una capa sobre el detalle, entera y centrada, con un botón para cerrarla
+
+#### Scenario: Ampliar la contratapa
+- **WHEN** la usuaria toca la contratapa abierta en la capa
+- **THEN** la imagen se amplía al doble y se puede desplazar para leer los temas; otro toque la vuelve a mostrar entera
+
+#### Scenario: Cerrar la imagen con la ✕
+- **WHEN** la usuaria toca la ✕ con la tapa abierta en la capa
+- **THEN** la capa se cierra y sigue en el detalle del disco, en el mismo lugar
 
 ### Requirement: Imagen de banda
 El sistema SHALL permitir asignar, reemplazar o quitar una imagen propia de una banda desde la edición de la banda, con las mismas opciones de cámara o galería.

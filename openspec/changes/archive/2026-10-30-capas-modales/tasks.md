@@ -23,5 +23,5 @@
 
 - [x] 4.1 `npm run build` y `npm test` sin errores
 - [x] 4.2 Escritorio: la ✕, tocar fuera y Escape cierran el visor, el diálogo y la hoja; el historial no cambia (atrás después de cerrar vuelve a la banda)
-- [ ] 4.3 Chrome Android (navegador y app instalada): atrás cierra el visor, "¿Borrar este disco?" y la hoja de orden sin salir de la pantalla; un segundo atrás vuelve a la banda
+- [x] 4.3 Chrome Android (navegador y app instalada): atrás cierra el visor, "¿Borrar este disco?" y la hoja de orden sin salir de la pantalla; un segundo atrás vuelve a la banda
 - [x] 4.4 Contratapa: ampliar y desplazar para leer los temas; volver a verla entera

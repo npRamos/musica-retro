@@ -23,4 +23,4 @@
 
 - [x] 4.1 `npm run build` y `npm test` sin errores
 - [x] 4.2 Escritorio: recorrer cada escenario de "Navegación jerárquica" mirando `history.length` y `history.state.pila` (sin pantallas repetidas)
-- [ ] 4.3 Chrome Android (navegador y app instalada): banda → disco → editar → guardar → atrás → banda → atrás → inicio; completar desde la edición; unir bandas; borrar el último disco
+- [x] 4.3 Chrome Android (navegador y app instalada): banda → disco → editar → guardar → atrás → banda → atrás → inicio; completar desde la edición; unir bandas; borrar el último disco
