@@ -10,7 +10,7 @@ import { coincideFormato, describirEdicion, elegirEdicion } from '../lib/discogr
 import { mensajeError } from '../lib/errores.js'
 import { OPCIONES_CONTRATAPA, imagenesDeMusicbrainz } from '../lib/imagen.js'
 import { datosParaGuardar, musicbrainz } from '../lib/musicbrainz.js'
-import { navegar } from '../lib/router.js'
+import { navegar, subir } from '../lib/router.js'
 import { formatearTitulo, normalizar } from '../lib/texto.js'
 import { useConsultaMb } from '../lib/useConsultaMb.js'
 
@@ -133,7 +133,7 @@ export default function FormDisco({ disco, inicial = {} }) {
           contratapa,
         })
         if (r.estado === 'conflicto') setConflicto(r.existente)
-        else navegar(`disco/${disco.id}`, { reemplazar: true })
+        else subir(`disco/${disco.id}`)
       } else {
         const r = await catalogo.agregarDisco({
           banda,

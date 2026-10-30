@@ -7,7 +7,7 @@ import { agruparDiscos, coincideFormato, describirEdicion } from '../lib/discogr
 import { mensajeError } from '../lib/errores.js'
 import { imagenesDeMusicbrainz } from '../lib/imagen.js'
 import { datosParaGuardar, musicbrainz } from '../lib/musicbrainz.js'
-import { navegar, volver } from '../lib/router.js'
+import { subir, volver } from '../lib/router.js'
 import { useConsultaMb } from '../lib/useConsultaMb.js'
 
 // Imágenes ya bajadas y procesadas por edición: el disco siguiente se prepara mientras se decide el actual.
@@ -63,7 +63,7 @@ export default function Completar({ id }) {
 
   const siguiente = (resultado) => {
     if (resultado !== 'salteado') cambios.current = true
-    if (id) navegar(`disco/${id}`, { reemplazar: true })
+    if (id) subir(`disco/${id}`)
     else setIndice((i) => i + 1)
   }
 

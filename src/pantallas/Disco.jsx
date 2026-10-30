@@ -7,7 +7,7 @@ import { BadgeFormato } from '../componentes/Tarjetas.jsx'
 import { linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { mensajeError } from '../lib/errores.js'
-import { SLUG_FORMATO, navegar, volver } from '../lib/router.js'
+import { SLUG_FORMATO, navegar, subir } from '../lib/router.js'
 
 export default function Disco({ id }) {
   const { discos, discosPorId, bandasPorId, online, borrarDisco } = useCatalogo()
@@ -33,8 +33,7 @@ export default function Disco({ id }) {
     const quedanEnBanda = discos.some((d) => d.id !== disco.id && d.banda_id === disco.banda_id && d.formato === disco.formato)
     try {
       await borrarDisco(disco)
-      if (quedanEnBanda) volver(rutaBanda)
-      else navegar(SLUG_FORMATO[disco.formato], { reemplazar: true })
+      subir(quedanEnBanda ? rutaBanda : SLUG_FORMATO[disco.formato])
     } catch (e) {
       setError(mensajeError(e, 'borrar'))
       setBorrando(false)
@@ -48,7 +47,7 @@ export default function Disco({ id }) {
       <main className="mx-auto max-w-md px-4 pt-4 pb-16">
         <Carrusel disco={disco} />
         <h2 className="mt-5 text-3xl leading-tight font-semibold">{disco.titulo}</h2>
-        <button type="button" onClick={() => navegar(rutaBanda)} className="etiqueta mt-1 min-h-11 text-left text-lg tracking-[0.08em] text-acento-texto">
+        <button type="button" onClick={() => subir(rutaBanda)} className="etiqueta mt-1 min-h-11 text-left text-lg tracking-[0.08em] text-acento-texto">
           {banda?.nombre}
         </button>
 

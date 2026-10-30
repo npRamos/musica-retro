@@ -8,7 +8,7 @@ import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { mensajeError } from '../lib/errores.js'
 import { procesarLogo } from '../lib/imagen.js'
 import { usePreferencias } from '../lib/preferencias.js'
-import { SLUG_FORMATO, navegar } from '../lib/router.js'
+import { SLUG_FORMATO, navegar, subir } from '../lib/router.js'
 
 export default function EditarBanda({ id }) {
   const catalogo = useCatalogo()
@@ -33,7 +33,8 @@ export default function EditarBanda({ id }) {
   }
 
   const formatoDestino = suyos.some((d) => d.formato === formato) ? formato : (suyos[0]?.formato ?? formato)
-  const irABanda = (bandaId) => navegar(`${SLUG_FORMATO[formatoDestino]}/banda/${bandaId}`, { reemplazar: true })
+  // Vuelve a la banda que se estaba editando; al unir, esa entrada pasa a ser la de la otra banda.
+  const irABanda = (bandaId) => subir(`${SLUG_FORMATO[formatoDestino]}/banda/${bandaId}`, { en: `banda/${id}` })
 
   const guardar = async (e) => {
     e.preventDefault()
