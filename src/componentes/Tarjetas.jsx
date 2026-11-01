@@ -12,11 +12,12 @@ export function Lista({ children }) {
   return <ul className="px-4 py-2">{children}</ul>
 }
 
-export function TarjetaBanda({ item, formato, vista, onClick }) {
+// marca: la del índice al costado, solo en el primer elemento de cada tramo.
+export function TarjetaBanda({ item, formato, vista, marca, onClick }) {
   const { banda, cantidad, tapas } = item
   if (vista === 'lista') {
     return (
-      <li>
+      <li data-marca={marca}>
         <button type="button" onClick={onClick} className="flex min-h-16 w-full items-center gap-3 border-b border-metal/40 py-2 text-left">
           <div className="w-12 shrink-0">
             <PortadaBanda banda={banda} tapas={tapas.slice(0, 1)} formato={formato} chica />
@@ -29,7 +30,7 @@ export function TarjetaBanda({ item, formato, vista, onClick }) {
     )
   }
   return (
-    <li>
+    <li data-marca={marca}>
       <button type="button" onClick={onClick} className="block w-full text-left">
         <PortadaBanda banda={banda} tapas={tapas} formato={formato} />
         <p className="etiqueta mt-2 truncate text-base tracking-[0.06em]">{banda.nombre}</p>
@@ -45,10 +46,10 @@ function Copias({ copias }) {
 
 const Anio = ({ anio }) => (anio ? <span className="text-suave">{anio} ·</span> : null)
 
-export function TarjetaDisco({ disco, banda, vista, mostrarBanda = false, onClick }) {
+export function TarjetaDisco({ disco, banda, vista, mostrarBanda = false, marca, onClick }) {
   if (vista === 'lista') {
     return (
-      <li>
+      <li data-marca={marca}>
         <button type="button" onClick={onClick} className="flex min-h-16 w-full items-center gap-3 border-b border-metal/40 py-2 text-left">
           <Tapa disco={disco} className="w-12 shrink-0" />
           <span className="min-w-0 flex-1">
@@ -64,7 +65,7 @@ export function TarjetaDisco({ disco, banda, vista, mostrarBanda = false, onClic
     )
   }
   return (
-    <li>
+    <li data-marca={marca}>
       <button type="button" onClick={onClick} className="block w-full text-left">
         <Tapa disco={disco} />
         <p className="mt-2 line-clamp-2 leading-tight font-medium">{disco.titulo}</p>

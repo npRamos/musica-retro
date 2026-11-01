@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { BarraLista, BotonCirculo, Boton, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
+import Indice from '../componentes/Indice.jsx'
 import { IconoAjustes, IconoBuscar, IconoCerrar, IconoDado, IconoMas, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaBanda, TarjetaDisco } from '../componentes/Tarjetas.jsx'
 import { AGRUPACIONES, FORMATOS, NOMBRE_FORMATO, NOMBRE_FORMATO_SINGULAR, ORDENES, agruparPorGenero, bandasDeFormato, buscar, contarPorFormato, ordenarBandas, ordenarDiscos, otroFormato } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { criterioDe, marcaDe, primerasMarcas } from '../lib/indice.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
@@ -13,6 +15,8 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
   const { bandas, discos, bandasPorId, online, actualizadoEn } = useCatalogo()
   const [prefs, cambiar] = usePreferencias()
   const [eligiendoOrden, setEligiendoOrden] = useState(false)
+  const encabezado = useRef(null)
+  const contenido = useRef(null)
   const { vista, orden, agrupar } = prefs
 
   const cuenta = useMemo(() => contarPorFormato(discos), [discos])
@@ -25,6 +29,16 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
   const secciones = useMemo(
     () => (agrupar === 'generos' ? agruparPorGenero(orden === 'genero' ? ordenarBandas(items, 'az') : items) : []),
     [agrupar, items, orden],
+  )
+  // Marcas del índice al costado: solo en el primer elemento de cada tramo (por género agrupado, los títulos).
+  const criterio = criterioDe(orden, agrupar)
+  const marcasBandas = useMemo(
+    () => (criterio ? primerasMarcas(items.map((i) => marcaDe(i.banda, i.ultima, criterio))) : []),
+    [items, criterio],
+  )
+  const marcasSueltos = useMemo(
+    () => (criterio ? primerasMarcas(sueltos.map((d) => marcaDe(bandasPorId.get(d.banda_id), d.fecha_carga, criterio))) : []),
+    [sueltos, bandasPorId, criterio],
   )
   const resultados = useMemo(() => {
     const r = buscar(discos, bandasPorId, busqueda, formato)
@@ -44,13 +58,20 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
       ? contar(sueltos.length, 'disco', 'discos')
       : contar(items.length, 'banda', 'bandas')
   const hayLista = buscando || items.length > 0
-  const tarjetaBanda = (item) => (
-    <TarjetaBanda key={item.banda.id} item={item} formato={formato} vista={vista} onClick={() => navegar(`${SLUG_FORMATO[formato]}/banda/${item.banda.id}`)} />
+  const tarjetaBanda = (item, marca) => (
+    <TarjetaBanda
+      key={item.banda.id}
+      item={item}
+      formato={formato}
+      vista={vista}
+      marca={marca}
+      onClick={() => navegar(`${SLUG_FORMATO[formato]}/banda/${item.banda.id}`)}
+    />
   )
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-metal/50 bg-fondo/92 pt-[env(safe-area-inset-top)]">
+      <header ref={encabezado} className="sticky top-0 z-20 border-b border-metal/50 bg-fondo/92 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 px-4 pt-3">
           <h1 className="font-display min-w-0 flex-1 truncate text-[2.1rem] leading-none">Música Retro</h1>
           <BotonCirculo etiqueta="Sortear un disco" onClick={() => navegar('sorteo')}>
@@ -101,7 +122,7 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
         </p>
       )}
 
-      <main className="pb-28">
+      <main ref={contenido} className="pb-28">
         {hayLista && (
           <BarraLista
             cantidad={cantidad}
@@ -149,21 +170,29 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
           </>
         ) : agrupar === 'discos' && sueltos.length > 0 ? (
           <Contenedor>
-            {sueltos.map((d) => (
-              <TarjetaDisco key={d.id} disco={d} banda={bandasPorId.get(d.banda_id)} vista={vista} mostrarBanda onClick={() => navegar(`disco/${d.id}`)} />
+            {sueltos.map((d, i) => (
+              <TarjetaDisco
+                key={d.id}
+                disco={d}
+                banda={bandasPorId.get(d.banda_id)}
+                vista={vista}
+                mostrarBanda
+                marca={marcasSueltos[i]}
+                onClick={() => navegar(`disco/${d.id}`)}
+              />
             ))}
           </Contenedor>
         ) : agrupar === 'generos' && secciones.length > 0 ? (
           secciones.map((s) => (
             <section key={s.genero ?? ''} aria-label={s.genero ?? 'Sin género'}>
-              <h2 className="etiqueta px-4 pt-5 text-sm tracking-[0.1em]">
+              <h2 data-marca={s.genero ?? 'Sin género'} className="etiqueta px-4 pt-5 text-sm tracking-[0.1em]">
                 {s.genero ?? 'Sin género'} <span className="font-light text-suave">{s.items.length}</span>
               </h2>
-              <Contenedor>{s.items.map(tarjetaBanda)}</Contenedor>
+              <Contenedor>{s.items.map((item) => tarjetaBanda(item))}</Contenedor>
             </section>
           ))
         ) : items.length > 0 ? (
-          <Contenedor>{items.map(tarjetaBanda)}</Contenedor>
+          <Contenedor>{items.map((item, i) => tarjetaBanda(item, marcasBandas[i]))}</Contenedor>
         ) : (
           <Vacio titulo={`Todavía no hay ${NOMBRE_FORMATO[formato].toLowerCase()}`}>
             <p>Agregá el primero con el botón + o importá una lista.</p>
@@ -173,6 +202,8 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
           </Vacio>
         )}
       </main>
+
+      {!buscando && <Indice contenido={contenido} encabezado={encabezado} version={`${formato}|${agrupar}|${orden}|${vista}|${items.length}|${sueltos.length}`} />}
 
       <Fab etiqueta={online ? 'Agregar disco' : 'Sin conexión'} disabled={!online} onClick={() => navegar(`agregar?formato=${formato}`)}>
         <IconoMas className="size-7" />
