@@ -6,10 +6,12 @@ import { supabase } from './supabase.js'
 // orden: grilla de bandas y búsqueda; ordenBanda: discos dentro de una banda (discografía por año).
 // agrupar: las pestañas muestran bandas ('bandas'), bandas en secciones por género ('generos') o todos los discos sueltos ('discos').
 // sorteoFormato y sorteoGeneros: los últimos filtros del sorteo; sorteoSonido: si la batea suena.
-// indice: el índice al costado de la lista con marcas ('completo'), solo la manija ('manija') o nada ('no').
-const POR_DEFECTO = { tema: 'sistema', acento: 'violeta', vista: 'grilla', agrupar: 'bandas', orden: 'az', ordenBanda: 'anio', formato: 'vinilo', sorteoFormato: 'todos', sorteoGeneros: [], sorteoSonido: true, indice: 'completo' }
+// indice: si se muestra el índice al costado de las listas largas (manija y marcas).
+const POR_DEFECTO = { tema: 'sistema', acento: 'violeta', vista: 'grilla', agrupar: 'bandas', orden: 'az', ordenBanda: 'anio', formato: 'vinilo', sorteoFormato: 'todos', sorteoGeneros: [], sorteoSonido: true, indice: true }
 const oyentes = new Set()
 let estado = { ...POR_DEFECTO, ...leer('preferencias', {}) }
+// indice fue 'completo' | 'manija' | 'no' por un día: pasa a sí o no.
+if (typeof estado.indice === 'string') estado.indice = estado.indice !== 'no'
 
 function aplicarAlDocumento() {
   const raiz = document.documentElement

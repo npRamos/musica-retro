@@ -203,11 +203,10 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
         )}
       </main>
 
-      {!buscando && prefs.indice !== 'no' && (
+      {!buscando && prefs.indice && (
         <Indice
           contenido={contenido}
           encabezado={encabezado}
-          conMarcas={prefs.indice === 'completo'}
           version={`${formato}|${agrupar}|${orden}|${vista}|${items.length}|${sueltos.length}`}
         />
       )}

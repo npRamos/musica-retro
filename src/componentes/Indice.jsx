@@ -5,7 +5,6 @@ import { ralear } from '../lib/indice.js'
 // manija que se arrastra (con una burbuja de dónde se está) y marcas que se tocan para saltar.
 // Las marcas son los elementos con data-marca dentro de `contenido`: se miden en la pantalla, así sirve igual
 // en grilla o lista y con cualquier ancho. La barra mapea todo el scroll de la página.
-// conMarcas = false (desde Ajustes): solo la manija, con la burbuja al arrastrar.
 
 const PANTALLAS = 3 // solo con listas de más de tantas pantallas de alto
 const ESCONDER = 1500
@@ -15,7 +14,7 @@ const DEBAJO = 64 // la barra arranca debajo de la barra de la lista (orden y vi
 
 const recortar = (n) => Math.min(1, Math.max(0, n))
 
-export default function Indice({ contenido, encabezado, conMarcas = true, version }) {
+export default function Indice({ contenido, encabezado, version }) {
   const barra = useRef(null)
   const [medidas, setMedidas] = useState(null) // { marcas: [{ texto, top }], arriba, maximo, alto }
   const [scroll, setScroll] = useState(0)
@@ -80,7 +79,7 @@ export default function Indice({ contenido, encabezado, conMarcas = true, versio
   const posicion = (top) => recortar(maximo > 0 ? top / maximo : 0) * recorrido
   const actual = marcas.findLast((m) => m.top <= scroll + 1) ?? marcas[0]
   const visibles =
-    conMarcas && new Set(marcas.map((m) => m.texto)).size >= 2
+    new Set(marcas.map((m) => m.texto)).size >= 2
       ? ralear(
           marcas.map((m) => ({ ...m, y: posicion(m.top) })),
           SEPARACION,

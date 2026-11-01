@@ -55,12 +55,11 @@ export default function Ajustes({ mail }) {
             valor={prefs.indice}
             onChange={(v) => cambiar('indice', v)}
             opciones={[
-              { valor: 'completo', texto: 'Con letras' },
-              { valor: 'manija', texto: 'Solo manija' },
-              { valor: 'no', texto: 'No' },
+              { valor: true, texto: 'Mostrar' },
+              { valor: false, texto: 'No mostrar' },
             ]}
           />
-          <p className="mt-2 text-sm font-light text-suave">Al costado de las listas largas: letras, géneros o meses para saltar, y una manija para arrastrar.</p>
+          <p className="mt-2 text-sm font-light text-suave">Al costado de las listas largas: letras, géneros o meses para saltar, con una manija para arrastrar.</p>
         </div>
 
         <CompartirCatalogo />
