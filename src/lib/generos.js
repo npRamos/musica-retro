@@ -1,9 +1,11 @@
 import { normalizar } from './texto.js'
 
-// Géneros de una banda: hasta 3, con el nombre tal como viene de MusicBrainz o como se escribió.
+// Géneros de una banda: hasta el máximo del catálogo, con el nombre tal como viene de MusicBrainz o como se escribió.
 // Dos géneros son el mismo si normalizar() los iguala ("Thrash  Metal" = "thrash metal").
 
-export const MAXIMO_GENEROS = 3
+// El máximo se elige en Ajustes, igual para todo el catálogo (public.ajustes_catalogo).
+export const GENEROS_POR_DEFECTO = 3
+export const RANGO_GENEROS = { minimo: 1, maximo: 5 }
 
 const comparar = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true })
 
@@ -32,9 +34,10 @@ export function resolverGenero(texto, catalogo) {
   return catalogo.find((g) => mismoGenero(g.nombre, limpio))?.nombre ?? limpio
 }
 
-// Suma un género al final. Devuelve la misma lista si está vacío, ya lo tiene o llegó al máximo.
-export function agregarGenero(generos, genero) {
-  if (!genero || generos.length >= MAXIMO_GENEROS || generos.some((g) => mismoGenero(g, genero))) return generos
+// Suma un género al final. Devuelve la misma lista si está vacío, ya lo tiene o llegó al máximo
+// (o lo pasa: bajar el máximo no le quita géneros a nadie).
+export function agregarGenero(generos, genero, maximo = GENEROS_POR_DEFECTO) {
+  if (!genero || generos.length >= maximo || generos.some((g) => mismoGenero(g, genero))) return generos
   return [...generos, genero]
 }
 

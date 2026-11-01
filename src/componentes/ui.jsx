@@ -106,9 +106,9 @@ export function Campo({ etiqueta, ayuda, error, className = '', ...props }) {
 }
 
 // Selector segmentado (formato, tema, acento…)
-export function Segmentado({ etiqueta, opciones, valor, onChange }) {
+export function Segmentado({ etiqueta, opciones, valor, onChange, deshabilitado = false }) {
   return (
-    <fieldset>
+    <fieldset disabled={deshabilitado} className="disabled:opacity-60">
       <legend className="etiqueta text-xs text-suave">{etiqueta}</legend>
       <div className="mt-2 flex border border-metal">
         {opciones.map((o) => (

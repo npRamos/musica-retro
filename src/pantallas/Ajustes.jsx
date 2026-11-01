@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { IconoBuscar, IconoEditar, IconoEtiqueta, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { CompartirCatalogo } from '../componentes/Compartir.jsx'
 import { Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { mensajeError } from '../lib/errores.js'
+import { RANGO_GENEROS } from '../lib/generos.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { navegar } from '../lib/router.js'
 
@@ -11,7 +14,8 @@ const ACENTOS = [
 ]
 
 export default function Ajustes({ mail }) {
-  const { bandas, discos, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion } = useCatalogo()
+  const { bandas, discos, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion, maximoGeneros, ajusteGenerosLeido, cambiarMaximoGeneros } =
+    useCatalogo()
   const pendientes = discos.filter((d) => d.mb_estado === 'pendiente').length
   const sinGeneros = bandas.filter((b) => b.generos_estado === 'pendiente').length
   const [prefs, cambiar] = usePreferencias()
@@ -61,6 +65,13 @@ export default function Ajustes({ mail }) {
           />
           <p className="mt-2 text-sm font-light text-suave">Al costado de las listas largas: letras, géneros o meses para saltar, con una manija para arrastrar.</p>
         </div>
+
+        <GenerosPorBanda
+          valor={maximoGeneros}
+          onChange={cambiarMaximoGeneros}
+          deshabilitado={!online || !ajusteGenerosLeido}
+          aviso={!ajusteGenerosLeido ? 'Falta actualizar la base para poder cambiarlo.' : !online ? 'Sin conexión: se cambia con conexión.' : null}
+        />
 
         <CompartirCatalogo />
 
@@ -155,5 +166,37 @@ export default function Ajustes({ mail }) {
         </ul>
       </main>
     </>
+  )
+}
+
+// Máximo de géneros por banda: del catálogo, lo ven todos los miembros.
+function GenerosPorBanda({ valor, onChange, deshabilitado, aviso }) {
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState(null)
+  const opciones = Array.from({ length: RANGO_GENEROS.maximo - RANGO_GENEROS.minimo + 1 }, (_, i) => {
+    const n = RANGO_GENEROS.minimo + i
+    return { valor: n, texto: String(n) }
+  })
+
+  const cambiar = async (n) => {
+    if (n === valor) return
+    setGuardando(true)
+    setError(null)
+    try {
+      await onChange(n)
+    } catch (e) {
+      setError(mensajeError(e, 'cambiar el máximo'))
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div>
+      <Segmentado etiqueta="Géneros por banda" valor={valor} onChange={cambiar} opciones={opciones} deshabilitado={deshabilitado || guardando} />
+      <p className={`mt-2 text-sm ${error ? 'text-acento-texto' : 'font-light text-suave'}`}>
+        {error ?? aviso ?? 'Para todo el catálogo. Bajarlo no borra los géneros que ya tienen las bandas.'}
+      </p>
+    </div>
   )
 }

@@ -1,7 +1,6 @@
 import { useId, useMemo, useState } from 'react'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import {
-  MAXIMO_GENEROS,
   agregarGenero,
   generosDelCatalogo,
   limpiarGenero,
@@ -32,13 +31,15 @@ export function FilaGeneros({ generos, className = '' }) {
 // deMusicbrainz: los de MusicBrainz para esta banda, si se trajeron; los no marcados se pueden activar.
 // El campo sugiere primero los del catálogo (con cuántas bandas los usan), después los de MusicBrainz,
 // y siempre el texto escrito. Todo lo que se agrega toma la forma que ya usa el catálogo.
+// El máximo es el del catálogo; una banda que lo pasa (porque se bajó) conserva sus géneros y no suma más.
 export function EditorGeneros({ valor, onChange, deMusicbrainz, deshabilitado = false, etiqueta = 'Géneros' }) {
-  const { bandas } = useCatalogo()
+  const { bandas, maximoGeneros } = useCatalogo()
   const id = useId()
   const [texto, setTexto] = useState('')
   const [abierto, setAbierto] = useState(false)
   const catalogo = useMemo(() => generosDelCatalogo(bandas), [bandas])
-  const lleno = valor.length >= MAXIMO_GENEROS
+  const lleno = valor.length >= maximoGeneros
+  const pasado = valor.length > maximoGeneros
 
   const marcado = (g) => valor.some((m) => mismoGenero(m, g))
   const activables = (deMusicbrainz ?? []).map((g) => resolverGenero(g, catalogo)).filter((g) => !marcado(g))
@@ -49,7 +50,7 @@ export function EditorGeneros({ valor, onChange, deMusicbrainz, deshabilitado = 
   const nuevo = escrito && !marcado(escrito) ? escrito : ''
 
   const agregar = (genero) => {
-    onChange(agregarGenero(valor, resolverGenero(genero, catalogo)))
+    onChange(agregarGenero(valor, resolverGenero(genero, catalogo), maximoGeneros))
     setTexto('')
     setAbierto(false)
   }
@@ -109,7 +110,7 @@ export function EditorGeneros({ valor, onChange, deMusicbrainz, deshabilitado = 
           id={id}
           value={texto}
           disabled={deshabilitado || lleno}
-          placeholder={lleno ? 'Máximo 3' : undefined}
+          placeholder={lleno ? `Máximo ${maximoGeneros}` : undefined}
           autoComplete="off"
           role="combobox"
           aria-expanded={hayLista}
@@ -128,7 +129,13 @@ export function EditorGeneros({ valor, onChange, deMusicbrainz, deshabilitado = 
           }}
           className="mt-1 block min-h-11 w-full border-0 border-b border-metal bg-transparent px-0 text-lg outline-none placeholder:text-suave/60 focus:border-acento focus-visible:outline-none disabled:opacity-60"
         />
-        {lleno && <p className="mt-1 text-sm font-light text-suave">Máximo 3. Quitá uno para agregar otro.</p>}
+        {lleno && (
+          <p className="mt-1 text-sm font-light text-suave">
+            {pasado
+              ? `Tiene más géneros que el máximo del catálogo (${maximoGeneros}). Quitá alguno para agregar otro.`
+              : `Máximo ${maximoGeneros}. Quitá uno para agregar otro.`}
+          </p>
+        )}
         {hayLista && (
           <Desplegable id={`${id}-lista`}>
             {delCatalogo.length > 0 && <Grupo>En tu catálogo</Grupo>}

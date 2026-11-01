@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { borrar, borrarImagenesCacheadas, guardar, leer, pedirAlmacenamientoPersistente, precargarImagenes } from './almacen.js'
 import { elegirGeneros } from './discografia.js'
 import { esErrorDeRed } from './errores.js'
-import { generosDelCatalogo, resolverGenero } from './generos.js'
+import { GENEROS_POR_DEFECTO, generosDelCatalogo, resolverGenero } from './generos.js'
 import { borrarImagenes, firmarImagenes, procesarImagen, procesarLogo, subirImagen } from './imagen.js'
 import { musicbrainz } from './musicbrainz.js'
 import { supabase } from './supabase.js'
@@ -10,7 +10,8 @@ import { formatearTitulo, normalizar } from './texto.js'
 
 const Contexto = createContext(null)
 const CLAVE_CACHE = 'catalogo'
-const VACIO = { bandas: [], discos: [], urls: {}, actualizadoEn: null }
+// maximoGeneros: null mientras no se pudo leer (sin migrar, por ejemplo); se usa el valor por defecto.
+const VACIO = { bandas: [], discos: [], urls: {}, maximoGeneros: null, actualizadoEn: null }
 
 export function CatalogoProvider({ sesion, children }) {
   const uid = sesion.user.id
@@ -28,7 +29,7 @@ export function CatalogoProvider({ sesion, children }) {
     enCurso.current = (async () => {
       setSincronizando(true)
       try {
-        const [bandasRes, discosRes, miembroRes] = await Promise.all([
+        const [bandasRes, discosRes, miembroRes, ajustesRes] = await Promise.all([
           supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid, logo_path, logo_invertir, logo_buscado_en, generos, generos_estado'),
           supabase
             .from('discos')
@@ -36,13 +37,16 @@ export function CatalogoProvider({ sesion, children }) {
               'id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path, contratapa_path, anio, temas, mb_estado, mb_release_group, mb_release',
             ),
           supabase.rpc('es_miembro'),
+          supabase.from('ajustes_catalogo').select('maximo_generos').maybeSingle(),
         ])
         if (bandasRes.error) throw bandasRes.error
         if (discosRes.error) throw discosRes.error
         if (!miembroRes.error) setMiembro(miembroRes.data === true)
         const rutas = [...bandasRes.data.flatMap((b) => [b.imagen_path, b.logo_path]), ...discosRes.data.flatMap((d) => [d.tapa_path, d.contratapa_path])].filter(Boolean)
         const urls = await firmarImagenes(rutas)
-        const nuevos = { bandas: bandasRes.data, discos: discosRes.data, urls, actualizadoEn: new Date().toISOString() }
+        // Si los ajustes no se pueden leer (la tabla todavía no existe), sigue con el valor por defecto.
+        const maximoGeneros = ajustesRes.error ? null : (ajustesRes.data?.maximo_generos ?? null)
+        const nuevos = { bandas: bandasRes.data, discos: discosRes.data, urls, maximoGeneros, actualizadoEn: new Date().toISOString() }
         setDatos(nuevos)
         guardar(CLAVE_CACHE, nuevos)
         setOnline(true)
@@ -77,6 +81,7 @@ export function CatalogoProvider({ sesion, children }) {
     }
   }, [sincronizar])
 
+  const maximoGeneros = datos.maximoGeneros ?? GENEROS_POR_DEFECTO
   const bandasPorId = useMemo(() => new Map(datos.bandas.map((b) => [b.id, b])), [datos.bandas])
   const discosPorId = useMemo(() => new Map(datos.discos.map((d) => [d.id, d])), [datos.discos])
 
@@ -281,7 +286,7 @@ export function CatalogoProvider({ sesion, children }) {
     generosVistos.current.add(banda.id)
     ;(async () => {
       try {
-        const { propuestos } = elegirGeneros(await musicbrainz.generosDeArtista(mbid))
+        const { propuestos } = elegirGeneros(await musicbrainz.generosDeArtista(mbid), maximoGeneros)
         if (!propuestos.length) return
         const catalogo = generosDelCatalogo(datos.bandas)
         const { error: err } = await supabase
@@ -295,6 +300,13 @@ export function CatalogoProvider({ sesion, children }) {
         generosVistos.current.delete(banda.id)
       }
     })()
+  }
+
+  // Máximo de géneros por banda, del catálogo (lo ven todos los miembros). Bajarlo no le quita géneros a nadie.
+  const cambiarMaximoGeneros = async (maximo) => {
+    const { error: err } = await supabase.from('ajustes_catalogo').update({ maximo_generos: maximo }).eq('id', true)
+    if (err) throw err
+    await sincronizar()
   }
 
   const importar = async (items, duplicados) => {
@@ -336,6 +348,9 @@ export function CatalogoProvider({ sesion, children }) {
     cambiarGenerosBanda,
     enlazarBanda,
     buscarGenerosSiFalta,
+    maximoGeneros,
+    ajusteGenerosLeido: datos.maximoGeneros != null,
+    cambiarMaximoGeneros,
     importar,
     cerrarSesion,
   }

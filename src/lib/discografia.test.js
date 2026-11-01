@@ -230,6 +230,12 @@ describe('elegirGeneros', () => {
       todos: ['thrash metal', 'heavy metal', 'speed metal', 'metal', 'rock', 'hard rock'],
     })
   })
+  it('propone hasta el máximo del catálogo, siempre con el umbral', () => {
+    expect(elegirGeneros(megadeth, 1).propuestos).toEqual(['thrash metal'])
+    // Con 5, "rock" (2 votos) no llega al 20% de 42: quedan 4.
+    expect(elegirGeneros(megadeth, 5).propuestos).toEqual(['thrash metal', 'heavy metal', 'speed metal', 'metal'])
+    expect(elegirGeneros(megadeth, 5).todos).toHaveLength(6)
+  })
   it('con pocos votos alcanza con uno; los empates van por nombre', () => {
     expect(elegirGeneros(laRenga).propuestos).toEqual(['hard rock', 'blues', 'blues rock'])
   })

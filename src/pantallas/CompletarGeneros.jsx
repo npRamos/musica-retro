@@ -256,16 +256,16 @@ function PasoArtista({ banda, ocupado, onElegir, onNoEsta, onSaltar }) {
 
 // Géneros de MusicBrainz: los propuestos ya marcados y el resto para activar. Sin enlace, solo a mano.
 function PasoGeneros({ banda, mbid, ocupado, onGuardar, onSaltar }) {
-  const { bandas } = useCatalogo()
+  const { bandas, maximoGeneros } = useCatalogo()
   const [intento, setIntento] = useState(0)
   const [marcados, setMarcados] = useState(null) // null: todavía no se tocó
   const consulta = useConsultaMb(mbid ? `${mbid}:${intento}` : null, (signal) => musicbrainz.generosDeArtista(mbid, { signal }))
   const catalogo = useMemo(() => generosDelCatalogo(bandas), [bandas])
   const mb = useMemo(() => {
-    const { propuestos, todos } = elegirGeneros(consulta.datos ?? [])
+    const { propuestos, todos } = elegirGeneros(consulta.datos ?? [], maximoGeneros)
     const resolver = (g) => resolverGenero(g, catalogo)
     return { propuestos: propuestos.map(resolver), todos: todos.map(resolver) }
-  }, [consulta.datos, catalogo])
+  }, [consulta.datos, catalogo, maximoGeneros])
   const valor = marcados ?? (banda.generos?.length ? banda.generos : mb.propuestos)
 
   return (

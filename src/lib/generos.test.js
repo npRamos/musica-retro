@@ -50,10 +50,20 @@ describe('agregar y quitar', () => {
     expect(agregarGenero(['heavy metal'], 'Heavy Metal')).toEqual(['heavy metal'])
     expect(agregarGenero(['heavy metal'], 'speed metal')).toEqual(['heavy metal', 'speed metal'])
   })
-  it('máximo 3, y nada vacío', () => {
+  it('máximo 3 por defecto, y nada vacío', () => {
     const tres = ['a', 'b', 'c']
     expect(agregarGenero(tres, 'd')).toBe(tres)
     expect(agregarGenero([], '')).toEqual([])
+  })
+  it('respeta el máximo del catálogo', () => {
+    expect(agregarGenero([], 'a', 1)).toEqual(['a'])
+    expect(agregarGenero(['a'], 'b', 1)).toEqual(['a'])
+    expect(agregarGenero(['a', 'b', 'c', 'd'], 'e', 5)).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(agregarGenero(['a', 'b', 'c', 'd', 'e'], 'f', 5)).toEqual(['a', 'b', 'c', 'd', 'e'])
+  })
+  it('una banda que pasa el máximo (porque se bajó) conserva sus géneros y no suma más', () => {
+    const tres = ['a', 'b', 'c']
+    expect(agregarGenero(tres, 'd', 2)).toBe(tres)
   })
   it('quita sin importar cómo está escrito', () => {
     expect(quitarGenero(['hard rock', 'blues'], 'Blues')).toEqual(['hard rock'])
