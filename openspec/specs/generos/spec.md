@@ -38,7 +38,7 @@ Para una banda enlazada, el sistema SHALL obtener de MusicBrainz los géneros de
 - **THEN** el sistema no propone ninguno
 
 ### Requirement: Géneros automáticos al enlazar
-Cuando una banda queda enlazada a MusicBrainz al dar de alta un disco, completar un disco o completar pendientes, y sus géneros todavía no fueron revisados, el sistema SHALL traer los géneros propuestos y guardarlos sin preguntar, dándolos por revisados. Si MusicBrainz no tiene géneros o no responde, la banda MUST quedar sin revisar y el alta o el completado MUST NOT bloquearse ni mostrar error. El sistema MUST NOT reemplazar géneros ya revisados o editados.
+Cuando una banda queda enlazada a MusicBrainz al dar de alta un disco, completar un disco, completar pendientes o editar la banda, y sus géneros todavía no fueron revisados, el sistema SHALL traer los géneros propuestos y guardarlos sin preguntar, dándolos por revisados. Si MusicBrainz no tiene géneros o no responde, la banda MUST quedar sin revisar y el alta, el completado o la edición MUST NOT bloquearse ni mostrar error. El sistema MUST NOT reemplazar géneros ya revisados o editados.
 
 #### Scenario: Alta de una banda nueva
 - **WHEN** la usuaria agrega un disco eligiendo de MusicBrainz la banda "Megadeth", que no estaba en el catálogo
@@ -55,6 +55,10 @@ Cuando una banda queda enlazada a MusicBrainz al dar de alta un disco, completar
 #### Scenario: MusicBrainz no responde
 - **WHEN** MusicBrainz no responde al buscar los géneros durante un alta
 - **THEN** el disco se guarda igual y la banda sigue apareciendo en "Completar géneros"
+
+#### Scenario: Enlazar desde la edición de la banda
+- **WHEN** la usuaria edita "Megadeth", que no tiene géneros revisados, elige su artista de MusicBrainz y guarda sin tocar los géneros
+- **THEN** la banda queda con "thrash metal", "heavy metal" y "speed metal"
 
 ### Requirement: Completar géneros
 El sistema SHALL ofrecer un modo "Completar géneros", accesible desde Ajustes con la cantidad de bandas sin géneros revisados, que las recorre de a una en orden alfabético. Para una banda no enlazada, MUST proponer primero un artista de MusicBrainz (con país y desambiguación) con las acciones "Sí", "Otra", "No está" y "Saltar"; "Sí" MUST enlazar la banda a ese artista. Después MUST mostrar los géneros de MusicBrainz (los propuestos ya marcados y el resto activables), permitir agregar géneros a mano y ofrecer "Guardar" y "Saltar". Al guardar, la banda MUST quedar con los géneros marcados y darse por revisada, aunque no tenga ninguno. Una banda salteada MUST seguir pendiente. El modo SHALL poder dejarse en cualquier momento y retomarse con las bandas que quedan, y MUST requerir conexión.

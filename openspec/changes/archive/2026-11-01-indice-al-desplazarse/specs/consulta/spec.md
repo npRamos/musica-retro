@@ -17,7 +17,7 @@ Interacción:
 
 El índice MUST NOT aparecer al buscar, en la pantalla de una banda ni con listas cortas.
 
-En Ajustes, la usuaria SHALL poder elegir cómo se ve el índice: con letras (manija y marcas, por defecto), solo la manija (con la burbuja al arrastrar) o no mostrarlo. La elección MUST guardarse en el dispositivo, como el resto de las preferencias de vista.
+En Ajustes, la usuaria SHALL poder elegir si se muestra el índice (por defecto) o no. La elección MUST guardarse en el dispositivo, como el resto de las preferencias de vista.
 
 #### Scenario: Aparece al desplazarse
 - **WHEN** la usuaria tiene 120 bandas en vinilo, A → Z, y desplaza la lista
@@ -51,12 +51,8 @@ En Ajustes, la usuaria SHALL poder elegir cómo se ve el índice: con letras (ma
 - **WHEN** la usuaria vuelve al principio de la lista y el índice todavía está visible
 - **THEN** el cambio entre cuadrícula y lista se puede tocar sin esperar a que el índice se esconda
 
-#### Scenario: Solo la manija
-- **WHEN** la usuaria eligió "Solo manija" en Ajustes y desplaza una lista larga
-- **THEN** aparece la manija sin las marcas, y al arrastrarla la burbuja muestra dónde está
-
 #### Scenario: Sin índice
-- **WHEN** la usuaria eligió "No" en Ajustes y desplaza una lista larga
+- **WHEN** la usuaria eligió "No mostrar" en Ajustes y desplaza una lista larga
 - **THEN** el índice no aparece
 
 #### Scenario: Lista corta

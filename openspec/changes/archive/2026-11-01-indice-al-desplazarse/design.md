@@ -75,10 +75,9 @@
 
 ### Preferencia en Ajustes
 
-A alguien le puede resultar incómodo. Por eso se suma la preferencia `indice` (por dispositivo, como la vista y el orden), que se elige en Ajustes con un `Segmentado` de tres opciones:
-- "Con letras" (`completo`, por defecto);
-- "Solo manija" (`manija`): sin marcas, pero con la burbuja al arrastrar, que solo aparece mientras se arrastra;
-- "No": el índice no se monta.
+A alguien le puede resultar incómodo. Por eso se suma la preferencia `indice` (sí/no, por dispositivo, como la vista y el orden), que se elige en Ajustes con un `Segmentado`: "Mostrar" (por defecto) o "No mostrar". Con "No mostrar" el índice no se monta.
+
+Se probó una tercera opción, "Solo manija", y se descartó porque sin las marcas no aportaba. Un valor viejo guardado como texto se convierte al leer las preferencias: "no" pasa a no, cualquier otro a sí.
 
 ## Risks / Trade-offs
 

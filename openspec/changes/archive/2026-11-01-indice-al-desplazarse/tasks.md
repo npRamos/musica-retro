@@ -26,14 +26,14 @@
   - marcar el primer elemento de cada marca en bandas y en discos sueltos;
   - en las secciones por género, el `h2`;
   - montar `Indice` solo sin búsqueda.
-- [x] 3.3 Preferencia `indice` ('completo' | 'manija' | 'no') en `preferencias.js`, selector "Índice al desplazarse" en Ajustes, e `Indice` con `conMarcas`.
+- [x] 3.3 Preferencia `indice` (sí/no) en `preferencias.js` y selector "Índice al desplazarse" en Ajustes (Mostrar / No mostrar).
 
 ## 4. Verificación
 
 - [x] 4.1 Tests y build en verde.
-- [ ] 4.2 Probar en el celular:
+- [x] 4.2 Probar en el celular:
   - grilla y lista, A → Z, Z → A, por género (agrupado y ordenado) y última compra;
   - arrastrar, tocar marcas, pestañas Vinilos y CDs;
   - que no interfiera con el gesto de atrás ni con el botón +;
   - ajustar el umbral de 3 pantallas y la separación del raleo.
-- [ ] 4.3 Sincronizar las specs, archivar el change y cerrar el issue #2.
+- [x] 4.3 Sincronizar las specs, archivar el change y cerrar el issue #2.

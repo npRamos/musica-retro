@@ -33,11 +33,11 @@
 ## 3. Verificación
 
 - [x] 3.1 Tests y build en verde.
-- [ ] 3.2 Probar en el celular:
+- [x] 3.2 Probar en el celular:
   - alta de un vinilo con un disco de muchas ediciones (ver otros formatos, elegir, cambiar el formato);
   - completar un disco;
   - editar una banda sin enlazar y enlazarla (logo y géneros);
   - volver a enlazar a otro artista;
   - elegir un artista que choca con otra banda, y unir y cancelar;
   - sin conexión.
-- [ ] 3.3 Sincronizar las specs y archivar el change. Cerrar los issues #4 y #5.
+- [x] 3.3 Sincronizar las specs y archivar el change. Cerrar los issues #4 y #5.
