@@ -1,11 +1,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { NOMBRE_FORMATO_SINGULAR } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
-import { agruparDiscos } from '../lib/discografia.js'
+import { agruparDiscos, describirEdicion, ordenarEdiciones } from '../lib/discografia.js'
 import { musicbrainz } from '../lib/musicbrainz.js'
 import { normalizar } from '../lib/texto.js'
 import { useConsultaMb } from '../lib/useConsultaMb.js'
 import { IconoCamara, IconoGaleria } from './Iconos.jsx'
-import { Boton } from './ui.jsx'
+import { Boton, Hoja } from './ui.jsx'
 
 const ESTILO_INPUT =
   'mt-1 block min-h-11 w-full border-0 border-b border-metal bg-transparent px-0 text-lg outline-none focus:border-acento focus-visible:outline-none'
@@ -44,24 +45,42 @@ export function Aviso({ children }) {
 
 const detalleArtista = (a) => [a.pais, a.desambiguacion].filter(Boolean).join(' · ')
 
+// Al editar una banda: si choca con otra, el enlace que se hace al guardar o el que ya tiene.
+function ayudaEdicion(banda, exacta, elegido, actual) {
+  if (exacta) return `Ya existe «${exacta.nombre}»: al guardar te ofrece unirlas`
+  if (elegido && elegido.id !== banda.mbid) return `Se enlaza a «${elegido.nombre}» al guardar`
+  if (!banda.mbid) return 'Sin enlazar a MusicBrainz'
+  return actual ? `Enlazada a MusicBrainz: ${[`«${actual.nombre}»`, detalleArtista(actual)].filter(Boolean).join(' · ')}` : 'Enlazada a MusicBrainz'
+}
+
 // Banda: primero las del catálogo; después, si conMusicbrainz, artistas de MusicBrainz (con pausa al escribir).
 // Si no coincide ninguna, se creará al guardar. onElegirMb recibe el artista elegido, o null para "usar tal cual".
-export function CampoBanda({ valor, onChange, onElegirMb, enlazada = false, conMusicbrainz = false, error, autoFocus }) {
+// Con banda (al editarla): no se sugiere a sí misma, busca en MusicBrainz aunque el texto sea su propio nombre,
+// marca su artista actual y la ayuda muestra el enlace: el que tiene o el del artista elegido, que se hace al guardar.
+export function CampoBanda({ valor, onChange, onElegirMb, enlazada = false, conMusicbrainz = false, error, autoFocus, banda, elegido }) {
   const { bandas } = useCatalogo()
   const id = useId()
   const [abierto, setAbierto] = useState(false)
   const q = normalizar(valor)
-  const exacta = bandas.find((b) => b.nombre_norm === q)
+  const otras = useMemo(() => (banda ? bandas.filter((b) => b.id !== banda.id) : bandas), [bandas, banda])
+  const exacta = otras.find((b) => b.nombre_norm === q)
   const sugerencias = useMemo(
-    () => (q ? bandas.filter((b) => b.nombre_norm.includes(q) && b.nombre_norm !== q).slice(0, 6) : []),
-    [bandas, q],
+    () => (q ? otras.filter((b) => b.nombre_norm.includes(q) && b.nombre_norm !== q).slice(0, 6) : []),
+    [otras, q],
   )
 
   const buscarMb = conMusicbrainz && abierto && q.length >= 2 && !exacta
   const mb = useConsultaMb(buscarMb ? q : null, (signal) => musicbrainz.buscarArtistas(valor, { signal }), { pausa: 500 })
-  // Un artista ya enlazado a una banda del catálogo se muestra solo como esa banda.
-  const enlazados = useMemo(() => new Set(bandas.map((b) => b.mbid).filter(Boolean)), [bandas])
+  // Un artista ya enlazado a otra banda del catálogo se muestra solo como esa banda.
+  const enlazados = useMemo(() => new Set(otras.map((b) => b.mbid).filter(Boolean)), [otras])
   const artistas = (mb.datos ?? mb.ultimos ?? []).filter((a) => !enlazados.has(a.id)).slice(0, 5)
+
+  // Al editar, el nombre y el país del artista enlazado (si se lo volvió a elegir, ya se tienen).
+  const consultaActual = useConsultaMb(conMusicbrainz && banda?.mbid ? banda.mbid : null, (signal) => musicbrainz.artista(banda.mbid, { signal }))
+  const actual = consultaActual.datos ?? (elegido && elegido.id === banda?.mbid ? elegido : null)
+  const ayuda = banda
+    ? ayudaEdicion(banda, exacta, elegido, actual)
+    : q && (exacta ? `Ya la tenés: ${exacta.nombre}` : enlazada ? 'Banda nueva, de MusicBrainz: se agrega al guardar' : 'Banda nueva: se agrega al guardar')
 
   const cerrar = () => setAbierto(false)
   const hayLista = abierto && (sugerencias.length > 0 || buscarMb)
@@ -69,7 +88,7 @@ export function CampoBanda({ valor, onChange, onElegirMb, enlazada = false, conM
   return (
     <div className="relative">
       <label htmlFor={id} className="etiqueta text-xs text-suave">
-        Banda
+        {banda ? 'Nombre' : 'Banda'}
       </label>
       <input
         id={id}
@@ -88,15 +107,7 @@ export function CampoBanda({ valor, onChange, onElegirMb, enlazada = false, conM
         onBlur={() => setTimeout(cerrar, 150)}
         className={ESTILO_INPUT}
       />
-      {error ? (
-        <p className="mt-1 text-sm text-acento-texto">{error}</p>
-      ) : (
-        q && (
-          <p className="mt-1 text-sm font-light text-suave">
-            {exacta ? `Ya la tenés: ${exacta.nombre}` : enlazada ? 'Banda nueva, de MusicBrainz: se agrega al guardar' : 'Banda nueva: se agrega al guardar'}
-          </p>
-        )
-      )}
+      {error ? <p className="mt-1 text-sm text-acento-texto">{error}</p> : ayuda && <p className="mt-1 text-sm font-light text-suave">{ayuda}</p>}
       {hayLista && (
         <Desplegable id={`${id}-lista`}>
           {sugerencias.length > 0 && buscarMb && <Grupo>En tu catálogo</Grupo>}
@@ -124,6 +135,7 @@ export function CampoBanda({ valor, onChange, onElegirMb, enlazada = false, conM
                   }}
                 >
                   <span className="min-w-0 flex-1 truncate">{a.nombre}</span>
+                  {a.id === banda?.mbid && <span className="etiqueta text-xs text-acento-texto">Actual</span>}
                   <span className="max-w-[45%] truncate text-sm font-light text-suave">{detalleArtista(a)}</span>
                 </Opcion>
               ))}
@@ -231,6 +243,30 @@ export function CampoDisco({ valor, onChange, onElegir, banda, artista, conMusic
       )}
     </div>
   )
+}
+
+const VER_OTROS = 'ver-otros'
+
+// Selector de edición: primero las del formato del disco, en el orden de la elección automática, y las de otros
+// formatos detrás de "Ver otros formatos". Si no hay del formato, o no hay formato, todas juntas.
+// Si la elegida es de otro formato, abre con las otras a la vista. valor: id elegido o 'ninguna'.
+export function HojaEdiciones({ ediciones, formato, valor, onElegir, alCerrar, ninguna }) {
+  const { delFormato, otras } = useMemo(() => ordenarEdiciones(ediciones, formato), [ediciones, formato])
+  const [conOtras, setConOtras] = useState(() => otras.some((e) => e.id === valor))
+  const principales = delFormato.length ? delFormato : otras
+  const restantes = delFormato.length ? otras : []
+  const titulo = formato && delFormato.length ? `En ${NOMBRE_FORMATO_SINGULAR[formato]}` : 'Ediciones'
+
+  const opcion = (e) => ({ valor: e.id, texto: `${describirEdicion(e)}${e.tapa ? '' : ' · sin tapa'}` })
+  const final = { valor: 'ninguna', texto: ninguna }
+  const verOtros = { valor: VER_OTROS, texto: <span className="text-acento-texto">Ver otros formatos ({restantes.length})</span> }
+  const grupo = (tituloGrupo, opciones) => ({ titulo: tituloGrupo, opciones, valor, onElegir: (v) => (v === VER_OTROS ? setConOtras(true) : onElegir(v)) })
+  const grupos =
+    conOtras && restantes.length
+      ? [grupo(titulo, principales.map(opcion)), grupo('Otros formatos', [...restantes.map(opcion), final])]
+      : [grupo(titulo, [...principales.map(opcion), ...(restantes.length ? [verOtros] : []), final])]
+
+  return <Hoja titulo="Edición" grupos={grupos} alCerrar={alCerrar} />
 }
 
 // Foto desde la cámara o la galería, con vista previa. valor: Blob nuevo | null (quitar) | undefined (sin cambios)

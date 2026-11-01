@@ -241,6 +241,15 @@ describe('consultas', () => {
       { nombre: 'hard rock', votos: 2 },
     ])
     expect(await mb.generosDeArtista('sin-generos')).toEqual([])
+    // El artista enlazado sale del mismo pedido, ya en caché.
+    expect(await mb.artista('a9044915-8be3-4c7e-b11f-9e2d2ea0a91e')).toEqual({
+      id: 'a9044915-8be3-4c7e-b11f-9e2d2ea0a91e',
+      nombre: 'Megadeth',
+      pais: 'US',
+      desambiguacion: null,
+      score: 100,
+    })
+    expect(llamadas).toHaveLength(3)
   })
 
   it('géneros: un 503 se reintenta y otro error avisa que no responde', async () => {

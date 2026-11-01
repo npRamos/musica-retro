@@ -11,6 +11,7 @@ import {
   elegirEdicion,
   elegirGeneros,
   elegirLogo,
+  ordenarEdiciones,
   simplificarDisco,
   simplificarEdicion,
   simplificarGenero,
@@ -95,6 +96,44 @@ describe('elegirEdicion', () => {
   })
   it('sin ediciones', () => {
     expect(elegirEdicion([], 'cd')).toEqual({ edicion: null, coincide: false })
+  })
+  it('sin formato: la mejor de todas, sin coincidencia', () => {
+    expect(elegirEdicion(signos, null)).toEqual({ edicion: signos[4], coincide: false })
+  })
+  it('es la primera de la lista ordenada', () => {
+    for (const formato of ['cd', 'vinilo', null]) {
+      const { delFormato, otras } = ordenarEdiciones(signos, formato)
+      expect(elegirEdicion(signos, formato).edicion).toBe(delFormato[0] ?? otras[0])
+    }
+  })
+})
+
+describe('ordenarEdiciones', () => {
+  const ids = (lista) => lista.map((e) => e.id)
+  it('separa las del formato y ordena cada lista: tapa, contratapa, Argentina y la más vieja', () => {
+    const { delFormato, otras } = ordenarEdiciones(signos, 'cd')
+    expect(ids(delFormato)).toEqual(['cd-ar-86', 'cd-ar-07', 'cd-ar-91', 'cd-us-90', 'cd-ar-07-sin'])
+    expect(ids(otras)).toEqual(['digital-07', 'vinilo-ar-86'])
+  })
+  it('vinilo: el vinilo solo y el resto en otras', () => {
+    const { delFormato, otras } = ordenarEdiciones(signos, 'vinilo')
+    expect(ids(delFormato)).toEqual(['vinilo-ar-86'])
+    expect(otras).toHaveLength(6)
+  })
+  it('sin ediciones del formato: todas quedan en otras', () => {
+    const { delFormato, otras } = ordenarEdiciones(signos.filter((e) => e.id !== 'vinilo-ar-86'), 'vinilo')
+    expect(delFormato).toEqual([])
+    expect(ids(otras)).toEqual(['cd-ar-86', 'cd-ar-07', 'digital-07', 'cd-ar-91', 'cd-us-90', 'cd-ar-07-sin'])
+  })
+  it('sin formato no separa', () => {
+    const { delFormato, otras } = ordenarEdiciones(signos, null)
+    expect(ids(delFormato)).toEqual(['cd-ar-86', 'cd-ar-07', 'digital-07', 'vinilo-ar-86', 'cd-ar-91', 'cd-us-90', 'cd-ar-07-sin'])
+    expect(otras).toEqual([])
+  })
+  it('no modifica la lista recibida', () => {
+    const copia = [...signos]
+    ordenarEdiciones(signos, 'cd')
+    expect(signos).toEqual(copia)
   })
 })
 

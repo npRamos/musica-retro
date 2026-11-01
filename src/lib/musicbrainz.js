@@ -187,6 +187,11 @@ export function crearCliente({ fetch: pedirHttp = (...a) => fetch(...a), espera 
       return (artista.genres ?? []).map(simplificarGenero)
     },
 
+    // Nombre y país de un artista enlazado. Es el mismo pedido que el de los géneros: comparten la caché.
+    async artista(mbid, { signal } = {}) {
+      return simplificarArtista(await pedir(`artist/${mbid}`, { inc: 'genres' }, signal))
+    },
+
     // Logo de un artista: MusicBrainz (relación con Wikidata) → Wikidata P154 → miniatura de Commons de ~600 px
     // (PNG aunque el original sea SVG). null si no hay. Solo el pedido a MusicBrainz pasa por la cola.
     async logoDeArtista(mbid, { signal } = {}) {

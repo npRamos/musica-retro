@@ -264,11 +264,13 @@ export function CatalogoProvider({ sesion, children }) {
 
   // Enlaza la banda a un artista de MusicBrainz sin tocar sus discos, y busca su logo si le falta.
   // Los géneros no: se enlaza desde "Completar géneros", que es donde se revisan (y Saltar la deja pendiente).
+  // Devuelve la banda como quedó en la base: la que se recibe puede no reflejar un cambio recién hecho (logo, unión).
   const enlazarBanda = async (banda, mbid, { recargar = true } = {}) => {
-    const { error: err } = await supabase.from('bandas').update({ mbid }).eq('id', banda.id)
+    const { data, error: err } = await supabase.from('bandas').update({ mbid }).eq('id', banda.id).select().single()
     if (err) throw err
-    buscarLogoSiFalta(banda, mbid)
+    buscarLogoSiFalta(data, mbid)
     if (recargar) await sincronizar()
+    return data
   }
 
   // Al quedar enlazada, una banda con los géneros sin revisar toma los propuestos por MusicBrainz, una vez,
@@ -333,6 +335,7 @@ export function CatalogoProvider({ sesion, children }) {
     buscarLogo,
     cambiarGenerosBanda,
     enlazarBanda,
+    buscarGenerosSiFalta,
     importar,
     cerrarSesion,
   }

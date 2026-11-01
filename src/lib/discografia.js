@@ -66,16 +66,24 @@ export function simplificarEdicion(r) {
 
 export const coincideFormato = (edicion, formato) => edicion.formatos.some((f) => ES_FORMATO[formato]?.(f))
 
-// Formato coincidente, con tapa, con contratapa, argentina y la más vieja, en ese orden de prioridad.
-export function elegirEdicion(ediciones, formato) {
-  if (!ediciones.length) return { edicion: null, coincide: false }
-  const clave = (e) => [coincideFormato(e, formato) ? 0 : 1, e.tapa ? 0 : 1, e.contratapa ? 0 : 1, e.pais === 'AR' ? 0 : 1, e.fecha || '9999']
-  const edicion = [...ediciones].sort((a, b) => {
+// Las del formato y las otras, cada lista con tapa, con contratapa, argentina y la más vieja, en ese orden de prioridad.
+// Sin formato no hay nada que separar: todas van a delFormato.
+export function ordenarEdiciones(ediciones, formato) {
+  const clave = (e) => [e.tapa ? 0 : 1, e.contratapa ? 0 : 1, e.pais === 'AR' ? 0 : 1, e.fecha || '9999']
+  const ordenadas = [...ediciones].sort((a, b) => {
     const [ka, kb] = [clave(a), clave(b)]
     for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] < kb[i] ? -1 : 1
     return 0
-  })[0]
-  return { edicion, coincide: coincideFormato(edicion, formato) }
+  })
+  if (!formato) return { delFormato: ordenadas, otras: [] }
+  return { delFormato: ordenadas.filter((e) => coincideFormato(e, formato)), otras: ordenadas.filter((e) => !coincideFormato(e, formato)) }
+}
+
+// La primera del formato o, si no hay, la mejor de las otras.
+export function elegirEdicion(ediciones, formato) {
+  const { delFormato, otras } = ordenarEdiciones(ediciones, formato)
+  const edicion = delFormato[0] ?? otras[0] ?? null
+  return { edicion, coincide: Boolean(edicion) && coincideFormato(edicion, formato) }
 }
 
 // "CD · AR · 1986", "2×12" Vinilo · 1990"

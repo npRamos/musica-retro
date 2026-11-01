@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CampoBanda, CampoDisco, Copias, SelectorImagen } from '../componentes/Formulario.jsx'
+import { CampoBanda, CampoDisco, Copias, HojaEdiciones, SelectorImagen } from '../componentes/Formulario.jsx'
 import { IconoCd, IconoVinilo } from '../componentes/Iconos.jsx'
 import { Imagen } from '../componentes/Portadas.jsx'
 import { TemasPlegables } from '../componentes/Temas.jsx'
-import { Boton, Campo, Dialogo, Encabezado, Hoja, Segmentado } from '../componentes/ui.jsx'
+import { Boton, Campo, Dialogo, Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { NOMBRE_FORMATO_SINGULAR, esLinkSpotifyValido, fechaLocal, leerAnio, mediodiaLocal } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { coincideFormato, describirEdicion, elegirEdicion } from '../lib/discografia.js'
@@ -82,6 +82,13 @@ export default function FormDisco({ disco, inicial = {} }) {
   const cambiarBanda = (texto) => {
     setBanda(texto)
     if (discoMb) elegirDisco(null)
+  }
+
+  // Una edición elegida a mano que no es del formato nuevo vuelve a la automática. "Ninguna" se respeta.
+  const cambiarFormato = (f) => {
+    setFormato(f)
+    const manual = ediciones.datos?.find((e) => e.id === edicionManual)
+    if (manual && !coincideFormato(manual, f)) setEdicionManual(null)
   }
 
   // Escribir otro título suelta el disco elegido.
@@ -184,7 +191,7 @@ export default function FormDisco({ disco, inicial = {} }) {
           autoFocus={!editando && !inicial.banda}
         />
         <div>
-          <Segmentado etiqueta="Formato" opciones={OPCIONES_FORMATO} valor={formato} onChange={setFormato} />
+          <Segmentado etiqueta="Formato" opciones={OPCIONES_FORMATO} valor={formato} onChange={cambiarFormato} />
           {errores.formato && <p className="mt-1 text-sm text-acento-texto">{errores.formato}</p>}
         </div>
         {conMusicbrainz ? (
@@ -291,13 +298,11 @@ export default function FormDisco({ disco, inicial = {} }) {
       </form>
 
       {eligiendoEdicion && (
-        <Hoja
-          titulo="Edición"
+        <HojaEdiciones
+          ediciones={ediciones.datos ?? []}
+          formato={formato}
           valor={edicion?.id ?? 'ninguna'}
-          opciones={[
-            ...(ediciones.datos ?? []).map((e) => ({ valor: e.id, texto: `${describirEdicion(e)}${e.tapa ? '' : ' · sin tapa'}` })),
-            { valor: 'ninguna', texto: 'Ninguna (solo banda y título)' },
-          ]}
+          ninguna="Ninguna (solo banda y título)"
           onElegir={(v) => {
             setEdicionManual(v)
             setEligiendoEdicion(false)

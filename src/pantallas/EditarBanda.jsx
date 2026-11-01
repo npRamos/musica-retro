@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { SelectorImagen } from '../componentes/Formulario.jsx'
+import { CampoBanda, SelectorImagen } from '../componentes/Formulario.jsx'
 import { EditorGeneros } from '../componentes/Generos.jsx'
 import { IconoFormato, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Imagen } from '../componentes/Portadas.jsx'
-import { Boton, Campo, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
+import { Boton, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { ordenarDiscos } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { elegirGeneros } from '../lib/discografia.js'
@@ -13,6 +13,7 @@ import { procesarLogo } from '../lib/imagen.js'
 import { musicbrainz } from '../lib/musicbrainz.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar, subir } from '../lib/router.js'
+import { normalizar } from '../lib/texto.js'
 
 export default function EditarBanda({ id }) {
   const catalogo = useCatalogo()
@@ -20,6 +21,7 @@ export default function EditarBanda({ id }) {
   const [{ formato }] = usePreferencias()
   const banda = bandasPorId.get(id)
   const [nombre, setNombre] = useState(banda?.nombre ?? '')
+  const [artistaMb, setArtistaMb] = useState(null) // artista de MusicBrainz elegido en el nombre
   const [imagen, setImagen] = useState(undefined)
   const [logo, setLogo] = useState(undefined) // { blob, invertir } nuevo | null (quitar) | undefined (sin cambios)
   const [generos, setGeneros] = useState(banda?.generos ?? [])
@@ -37,9 +39,20 @@ export default function EditarBanda({ id }) {
     )
   }
 
+  // El artista elegido vale mientras el nombre siga siendo el suyo; escribir otra cosa lo suelta.
+  const artistaElegido = artistaMb && normalizar(artistaMb.nombre) === normalizar(nombre) ? artistaMb : null
+  const mbid = artistaElegido?.id ?? banda.mbid
+
   const formatoDestino = suyos.some((d) => d.formato === formato) ? formato : (suyos[0]?.formato ?? formato)
   // Vuelve a la banda que se estaba editando; al unir, esa entrada pasa a ser la de la otra banda.
   const irABanda = (bandaId) => subir(`${SLUG_FORMATO[formatoDestino]}/banda/${bandaId}`, { en: `banda/${id}` })
+
+  // Enlaza al artista elegido y, si sus géneros siguen sin revisar, trae los de MusicBrainz.
+  // enlazarBanda devuelve la banda como quedó: así no se pisan un logo o unos géneros recién puestos.
+  const enlazar = async (destino) => {
+    const enlazada = await catalogo.enlazarBanda(destino, artistaElegido.id)
+    catalogo.buscarGenerosSiFalta(enlazada, artistaElegido.id)
+  }
 
   const guardar = async (e) => {
     e.preventDefault()
@@ -58,6 +71,8 @@ export default function EditarBanda({ id }) {
           return
         }
       }
+      // Después de renombrar: con conflicto no se llega acá, así cancelar la unión no deja la banda enlazada.
+      if (artistaElegido && artistaElegido.id !== banda.mbid) await enlazar(banda)
       irABanda(banda.id)
     } catch (e) {
       setError(mensajeError(e))
@@ -70,6 +85,8 @@ export default function EditarBanda({ id }) {
     setGuardando(true)
     try {
       await catalogo.fusionarBandas(banda, conflicto)
+      // La que queda toma el artista elegido si no estaba enlazada.
+      if (artistaElegido && !conflicto.mbid) await enlazar(conflicto)
       irABanda(conflicto.id)
     } catch (e) {
       setError(mensajeError(e, 'unir las bandas'))
@@ -85,14 +102,9 @@ export default function EditarBanda({ id }) {
     <>
       <Encabezado titulo="Editar banda" atras={`${SLUG_FORMATO[formatoDestino]}/banda/${id}`} />
       <form onSubmit={guardar} className="mx-auto max-w-md space-y-7 px-5 pt-6 pb-16" noValidate>
-        <Campo
-          etiqueta="Nombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          autoComplete="off"
-          ayuda="Se guarda exactamente como lo escribas."
-        />
-        <SelectorGeneros banda={banda} valor={generos} onChange={setGeneros} deshabilitado={guardando} />
+        <CampoBanda valor={nombre} onChange={setNombre} onElegirMb={setArtistaMb} banda={banda} elegido={artistaElegido} conMusicbrainz={online} />
+        {/* Otro artista descarta los géneros que se trajeron del anterior. */}
+        <SelectorGeneros key={mbid} mbid={mbid} valor={generos} onChange={setGeneros} deshabilitado={guardando} />
         <SelectorImagen
           etiqueta="Imagen de la banda"
           actual={banda.imagen_path ? <Imagen ruta={banda.imagen_path} /> : null}
@@ -100,7 +112,7 @@ export default function EditarBanda({ id }) {
           onChange={setImagen}
           deshabilitado={guardando}
         />
-        <SelectorLogo banda={banda} valor={logo} onChange={setLogo} deshabilitado={guardando} />
+        <SelectorLogo banda={banda} mbid={mbid} valor={logo} onChange={setLogo} deshabilitado={guardando} />
         {error && <p className="text-sm text-acento-texto">{error}</p>}
         <Boton type="submit" className="w-full" disabled={guardando || !online}>
           {!online ? 'Sin conexión' : guardando ? 'Guardando…' : 'Guardar'}
@@ -145,9 +157,9 @@ export default function EditarBanda({ id }) {
   )
 }
 
-// Géneros: cualquier banda se edita a mano; una enlazada además puede traer los de MusicBrainz,
-// que se suman como sugerencias para activar sin reemplazar los marcados.
-function SelectorGeneros({ banda, valor, onChange, deshabilitado }) {
+// Géneros: cualquier banda se edita a mano; una enlazada (o con el artista recién elegido) además puede traer
+// los de MusicBrainz, que se suman como sugerencias para activar sin reemplazar los marcados.
+function SelectorGeneros({ mbid, valor, onChange, deshabilitado }) {
   const { online } = useCatalogo()
   const [traidos, setTraidos] = useState(null)
   const [trayendo, setTrayendo] = useState(false)
@@ -157,7 +169,7 @@ function SelectorGeneros({ banda, valor, onChange, deshabilitado }) {
     setTrayendo(true)
     setAviso(null)
     try {
-      const { todos } = elegirGeneros(await musicbrainz.generosDeArtista(banda.mbid))
+      const { todos } = elegirGeneros(await musicbrainz.generosDeArtista(mbid))
       setTraidos(todos)
       if (!todos.length) setAviso('MusicBrainz no tiene géneros para esta banda.')
       else if (todos.every((g) => valor.some((m) => mismoGenero(m, g)))) setAviso('Ya tiene los géneros de MusicBrainz.')
@@ -171,7 +183,7 @@ function SelectorGeneros({ banda, valor, onChange, deshabilitado }) {
   return (
     <div>
       <EditorGeneros valor={valor} onChange={onChange} deMusicbrainz={traidos} deshabilitado={deshabilitado} />
-      {banda.mbid && traidos === null && (
+      {mbid && traidos === null && (
         <Boton variante="secundario" className="mt-4" disabled={deshabilitado || trayendo || !online} onClick={traer}>
           {trayendo ? 'Trayendo…' : 'Traer de MusicBrainz'}
         </Boton>
@@ -181,8 +193,9 @@ function SelectorGeneros({ banda, valor, onChange, deshabilitado }) {
   )
 }
 
-// Logo: vista previa sobre fondo oscuro (como en la tarjeta), buscar en Wikidata, elegir un archivo o quitar.
-function SelectorLogo({ banda, valor, onChange, deshabilitado }) {
+// Logo: vista previa sobre fondo oscuro (como en la tarjeta), buscar en Wikidata (con el artista enlazado
+// o el recién elegido), elegir un archivo o quitar.
+function SelectorLogo({ banda, mbid, valor, onChange, deshabilitado }) {
   const { buscarLogo, online } = useCatalogo()
   const archivo = useRef(null)
   const [trabajando, setTrabajando] = useState(false)
@@ -225,8 +238,8 @@ function SelectorLogo({ banda, valor, onChange, deshabilitado }) {
           {trabajando && <p className="absolute inset-0 grid place-items-center bg-black/70 text-xs text-[#ebe5f0]">Buscando…</p>}
         </div>
         <div className="flex flex-col gap-2">
-          {banda.mbid && (
-            <Boton variante="secundario" disabled={deshabilitado || trabajando || !online} onClick={() => correr(() => buscarLogo(banda.mbid), 'Wikidata no tiene el logo de esta banda.')}>
+          {mbid && (
+            <Boton variante="secundario" disabled={deshabilitado || trabajando || !online} onClick={() => correr(() => buscarLogo(mbid), 'Wikidata no tiene el logo de esta banda.')}>
               Buscar en Wikidata
             </Boton>
           )}

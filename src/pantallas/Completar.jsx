@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { HojaEdiciones } from '../componentes/Formulario.jsx'
 import { TemasPlegables } from '../componentes/Temas.jsx'
-import { Boton, Encabezado, Hoja, Vacio } from '../componentes/ui.jsx'
+import { Boton, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { NOMBRE_FORMATO_SINGULAR } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { agruparDiscos, coincideFormato, describirEdicion } from '../lib/discografia.js'
@@ -273,13 +274,11 @@ function Candidato({ disco, banda, enCola, onListo }) {
       )}
 
       {eligiendoEdicion && c && (
-        <Hoja
-          titulo="Edición"
+        <HojaEdiciones
+          ediciones={c.ediciones}
+          formato={disco.formato}
           valor={edicion?.id ?? 'ninguna'}
-          opciones={[
-            ...c.ediciones.map((e) => ({ valor: e.id, texto: `${describirEdicion(e)}${e.tapa ? '' : ' · sin tapa'}` })),
-            { valor: 'ninguna', texto: 'Ninguna (solo año)' },
-          ]}
+          ninguna="Ninguna (solo año)"
           onElegir={(v) => {
             setEdicionManual(v)
             setEligiendoEdicion(false)
