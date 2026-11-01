@@ -38,7 +38,7 @@ El sistema SHALL sugerir bandas existentes mientras la usuaria escribe. Si no el
 - **THEN** el sistema asocia el disco a "Soda Stereo" y no crea una banda nueva
 
 ### Requirement: Normalización para comparar
-El sistema MUST considerar iguales dos nombres de banda, o dos títulos, que solo difieren en mayúsculas, tildes, espacios sobrantes o comillas tipográficas (’ ‘ “ ” frente a ' ").
+El sistema MUST considerar iguales dos nombres de banda, o dos títulos, que solo difieren en mayúsculas, tildes, espacios sobrantes, comillas tipográficas (’ ‘ “ ” frente a ' "), guiones tipográficos (‐ – — frente a -) o puntos suspensivos (… frente a ...). La app y la base MUST normalizar igual. Si al guardar la base encuentra una banda que la app no reconoció, el sistema MUST usar esa banda en vez de fallar.
 
 #### Scenario: Comparación normalizada
 - **WHEN** se compara "Él Mató a un Policía Motorizado" con "el mato a un policia motorizado"
@@ -47,6 +47,10 @@ El sistema MUST considerar iguales dos nombres de banda, o dos títulos, que sol
 #### Scenario: Comillas tipográficas
 - **WHEN** se compara "Don’t Stop" (de MusicBrainz) con "Don't Stop" (escrito a mano)
 - **THEN** el sistema los considera el mismo título
+
+#### Scenario: Guion tipográfico
+- **WHEN** se edita un disco de "blink‐182" (con el guion de MusicBrainz) y se guarda sin cambiar la banda
+- **THEN** el disco se guarda en la misma banda, sin error
 
 ### Requirement: Formato tipo título al crear
 Al crear una banda o un disco (alta o importación), el sistema SHALL guardar el nombre y el título en formato tipo título: mayúscula inicial en cada palabra y conectores (de, la, los, y, the, of…) en minúscula salvo al inicio. El sistema MUST respetar las palabras escritas enteras en mayúsculas, salvo que todo el texto tenga varias palabras y esté en mayúsculas. Los nombres de banda elegidos de MusicBrainz MUST guardarse tal como vienen; los títulos de disco elegidos de MusicBrainz SHALL pasar por el mismo formato tipo título.

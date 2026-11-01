@@ -11,6 +11,13 @@ describe('normalizar', () => {
     expect(normalizar('Don’t Stop')).toBe(normalizar("Don't Stop"))
     expect(normalizar('“Hola”')).toBe('"hola"')
   })
+  it('iguala lo que unaccent iguala en la base: guiones tipográficos, puntos suspensivos y letras como æ', () => {
+    expect(normalizar('blink‐182')).toBe('blink-182')
+    expect(normalizar('Guns — Roses')).toBe('guns - roses')
+    expect(normalizar('Hasta…')).toBe('hasta...')
+    expect(normalizar('Ænima')).toBe('aenima')
+    expect(normalizar('Motörhead')).toBe('motorhead')
+  })
 })
 
 describe('formatearTitulo', () => {

@@ -130,10 +130,17 @@ export function CatalogoProvider({ sesion, children }) {
   }
 
   // Busca la banda por nombre normalizado o la crea (con formato tipo título).
+  // Si la base dice que ya existe (normalizó distinto que acá), usa esa en vez de fallar.
   const bandaPorNombre = async (nombre) => {
     const existente = datos.bandas.find((b) => b.nombre_norm === normalizar(nombre))
     if (existente) return existente
     const { data, error: err } = await supabase.from('bandas').insert({ nombre: formatearTitulo(nombre) }).select().single()
+    if (err?.code === '23505') {
+      const norm = await rpc('normalizar', { t: nombre })
+      const { data: enLaBase, error: errBusqueda } = await supabase.from('bandas').select().eq('nombre_norm', norm).single()
+      if (errBusqueda) throw errBusqueda
+      return enLaBase
+    }
     if (err) throw err
     return data
   }

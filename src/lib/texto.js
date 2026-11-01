@@ -1,11 +1,19 @@
+// Lo que unaccent (en la base) reemplaza y NFD no descompone: guiones tipográficos (MusicBrainz escribe "blink‐182"),
+// comillas y puntos suspensivos, y letras como æ o ß.
+const EQUIVALENTES = {
+  '‐': '-', '‑': '-', '‒': '-', '–': '-', '—': '-', '―': '-',
+  '‘': "'", '’': "'", '‛': "'", '′': "'", '“': '"', '”': '"', '‟': '"', '″': '"', '…': '...',
+  æ: 'ae', œ: 'oe', ß: 'ss', ø: 'o', ł: 'l', đ: 'd',
+}
+const REEMPLAZABLES = new RegExp(`[${Object.keys(EQUIVALENTES).join('')}]`, 'g')
+
 // Minúsculas, sin tildes, comillas rectas, espacios colapsados. Espejo de public.normalizar() en la base.
 export function normalizar(texto = '') {
   return texto
-    .replace(/[’‘]/g, "'")
-    .replace(/[“”]/g, '"')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
+    .replace(REEMPLAZABLES, (c) => EQUIVALENTES[c])
     .replace(/\s+/g, ' ')
     .trim()
 }
