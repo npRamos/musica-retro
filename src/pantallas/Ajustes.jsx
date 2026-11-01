@@ -49,6 +49,20 @@ export default function Ajustes({ mail }) {
           </div>
         </fieldset>
 
+        <div>
+          <Segmentado
+            etiqueta="Índice al desplazarse"
+            valor={prefs.indice}
+            onChange={(v) => cambiar('indice', v)}
+            opciones={[
+              { valor: 'completo', texto: 'Con letras' },
+              { valor: 'manija', texto: 'Solo manija' },
+              { valor: 'no', texto: 'No' },
+            ]}
+          />
+          <p className="mt-2 text-sm font-light text-suave">Al costado de las listas largas: letras, géneros o meses para saltar, y una manija para arrastrar.</p>
+        </div>
+
         <CompartirCatalogo />
 
         <ul className="border-t border-metal/40">

@@ -44,7 +44,7 @@
 
 ### Geometría: la barra mapea todo el scroll
 
-- **La barra:** va desde debajo del encabezado pegado (se mide su alto) hasta arriba del botón +. Un punto de la barra corresponde a `fracción × (scrollHeight − innerHeight)`.
+- **La barra:** va desde 64 px debajo del encabezado pegado (se mide su alto), para no tapar la barra de la lista (orden y vista), hasta arriba del botón +. Un punto de la barra corresponde a `fracción × (scrollHeight − innerHeight)`.
 - **Cada marca:** se ubica en `(offsetTop − altoEncabezado) / máximoScroll`, recortado a [0, 1].
 - **La manija:** está donde está el scroll actual.
 - **La burbuja:** muestra la última marca cuyo `offsetTop` quedó por encima del borde inferior del encabezado.
@@ -55,22 +55,30 @@
 - **Arrastrar la manija:** con `pointerdown` + `setPointerCapture` y `pointermove`, el scroll pasa a `window.scrollTo({ top })` instantáneo. La burbuja aparece a la izquierda de la manija, con la marca actual en letra grande (fuente de títulos), y desaparece al soltar.
 - **Tocar una marca:** salta con `scrollTo` a la posición del elemento menos el alto del encabezado, para que no quede tapado.
 - **Tocar la barra fuera de la manija y de las marcas:** no hace nada. Así un toque sin querer, cerca del borde, no mueve la lista.
-- **Gesto de "atrás":** la parte visible queda separada unos 8 px del borde derecho. La zona táctil mide 44 px de ancho, pero solo existe mientras el índice está visible. Con el índice escondido no captura nada, y el gesto de atrás funciona normal.
+- **Pegado al costado** (pedido al probarlo: separado quedaba invasivo): la manija es una línea fina en el borde y las marcas van justo a su izquierda.
+- **Gesto de "atrás":** La zona táctil mide 44 px de ancho, pero solo existe mientras el índice está visible. Con el índice escondido no captura nada, y el gesto de atrás funciona normal.
 
 ### Cuándo existe el índice
 
-- **Condiciones:** solo si `scrollHeight > 3 × innerHeight` y hay al menos 2 marcas distintas, no hay búsqueda y la lista tiene elementos.
+- **Condiciones:** solo si `scrollHeight > 3 × innerHeight`, no hay búsqueda y la lista tiene elementos. Con menos de 2 marcas distintas (por ejemplo, todo cargado el mismo mes) queda la manija sola, que igual sirve para ir rápido.
 - **Por qué 3 pantallas:** con ~55 bandas en grilla de 2 columnas está en el borde. En lista ya aparece. Es una constante fácil de ajustar al probar.
 
 ### Estilo
 
 - Respeta la identidad visual: bordes finos (`border-metal`), sin sombras difusas y sin emojis.
 - **Manija:** una píldora vertical con el acento.
-- **Marcas:** texto chico en `etiqueta`, sobre un fondo `bg-fondo/85` para que se lean sobre las tapas.
+- **Marcas:** redondas (letras en círculo, textos largos en píldora), con texto chico en `etiqueta` sobre `bg-fondo/85` para que se lean sobre las tapas.
 
 **Alternativas descartadas:**
 - Una columna A–Z siempre visible, al estilo de los contactos: la usuaria eligió la manija.
 - Marcas repartidas parejo: con pocas bandas por letra se pierde la noción de dónde está cada cosa. Google Fotos usa la posición real.
+
+### Preferencia en Ajustes
+
+A alguien le puede resultar incómodo. Por eso se suma la preferencia `indice` (por dispositivo, como la vista y el orden), que se elige en Ajustes con un `Segmentado` de tres opciones:
+- "Con letras" (`completo`, por defecto);
+- "Solo manija" (`manija`): sin marcas, pero con la burbuja al arrastrar, que solo aparece mientras se arrastra;
+- "No": el índice no se monta.
 
 ## Risks / Trade-offs
 

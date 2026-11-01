@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Índice al desplazarse
-Cuando la lista de la pantalla principal es larga (más de tres pantallas de alto y al menos dos marcas distintas), el sistema SHALL mostrar al desplazarse un índice al costado derecho, con una manija que se arrastra y las marcas de la lista. El índice MUST esconderse solo después de un momento sin desplazarse ni tocarlo. Mientras está escondido, MUST NOT capturar toques.
+Cuando la lista de la pantalla principal es larga (más de tres pantallas de alto), el sistema SHALL mostrar al desplazarse un índice pegado al costado derecho, con una manija que se arrastra y las marcas de la lista. Las marcas MUST verse redondas: las letras en círculo y los textos largos en píldora. El índice MUST empezar debajo de la barra de la lista, para no tapar el orden ni el cambio de vista. Con menos de dos marcas distintas, MUST mostrarse solo la manija. El índice MUST esconderse solo después de un momento sin desplazarse ni tocarlo. Mientras está escondido, MUST NOT capturar toques.
 
 Las marcas dependen de cómo se ve la lista:
 - **A → Z o Z → A** (por banda o todos los discos): la primera letra de la banda, sin tildes. Los nombres que empiezan con número o signo van en `#`.
@@ -16,6 +16,8 @@ Interacción:
 - Tocar una marca MUST llevar la lista a su primer elemento, sin que lo tape el encabezado.
 
 El índice MUST NOT aparecer al buscar, en la pantalla de una banda ni con listas cortas.
+
+En Ajustes, la usuaria SHALL poder elegir cómo se ve el índice: con letras (manija y marcas, por defecto), solo la manija (con la burbuja al arrastrar) o no mostrarlo. La elección MUST guardarse en el dispositivo, como el resto de las preferencias de vista.
 
 #### Scenario: Aparece al desplazarse
 - **WHEN** la usuaria tiene 120 bandas en vinilo, A → Z, y desplaza la lista
@@ -40,6 +42,22 @@ El índice MUST NOT aparecer al buscar, en la pantalla de una banda ni con lista
 #### Scenario: Última compra
 - **WHEN** la lista está ordenada por última compra
 - **THEN** las marcas son meses como "nov 2026", "oct 2026"
+
+#### Scenario: Todo del mismo mes
+- **WHEN** la lista larga está ordenada por última compra y todos los discos se cargaron el mismo mes
+- **THEN** al desplazarse aparece la manija sola, sin marcas
+
+#### Scenario: No tapa la barra de la lista
+- **WHEN** la usuaria vuelve al principio de la lista y el índice todavía está visible
+- **THEN** el cambio entre cuadrícula y lista se puede tocar sin esperar a que el índice se esconda
+
+#### Scenario: Solo la manija
+- **WHEN** la usuaria eligió "Solo manija" en Ajustes y desplaza una lista larga
+- **THEN** aparece la manija sin las marcas, y al arrastrarla la burbuja muestra dónde está
+
+#### Scenario: Sin índice
+- **WHEN** la usuaria eligió "No" en Ajustes y desplaza una lista larga
+- **THEN** el índice no aparece
 
 #### Scenario: Lista corta
 - **WHEN** la lista entra en menos de tres pantallas

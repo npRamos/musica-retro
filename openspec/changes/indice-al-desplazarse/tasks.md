@@ -26,6 +26,7 @@
   - marcar el primer elemento de cada marca en bandas y en discos sueltos;
   - en las secciones por género, el `h2`;
   - montar `Indice` solo sin búsqueda.
+- [x] 3.3 Preferencia `indice` ('completo' | 'manija' | 'no') en `preferencias.js`, selector "Índice al desplazarse" en Ajustes, e `Indice` con `conMarcas`.
 
 ## 4. Verificación
 

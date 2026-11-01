@@ -203,7 +203,14 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
         )}
       </main>
 
-      {!buscando && <Indice contenido={contenido} encabezado={encabezado} version={`${formato}|${agrupar}|${orden}|${vista}|${items.length}|${sueltos.length}`} />}
+      {!buscando && prefs.indice !== 'no' && (
+        <Indice
+          contenido={contenido}
+          encabezado={encabezado}
+          conMarcas={prefs.indice === 'completo'}
+          version={`${formato}|${agrupar}|${orden}|${vista}|${items.length}|${sueltos.length}`}
+        />
+      )}
 
       <Fab etiqueta={online ? 'Agregar disco' : 'Sin conexión'} disabled={!online} onClick={() => navegar(`agregar?formato=${formato}`)}>
         <IconoMas className="size-7" />
