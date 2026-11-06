@@ -1,16 +1,19 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { Encabezado, Vacio } from './componentes/ui.jsx'
 import { CatalogoProvider, useCatalogo } from './lib/catalogoContexto.jsx'
 import { cambiarPreferencia, usePreferencias } from './lib/preferencias.js'
-import { FORMATO_DE_SLUG, useRuta } from './lib/router.js'
+import { FORMATO_DE_SLUG, posiciones, useRuta } from './lib/router.js'
 import { configurado, supabase, vinoDeRecuperacion } from './lib/supabase.js'
 import Ajustes from './pantallas/Ajustes.jsx'
 import Banda from './pantallas/Banda.jsx'
 import { CambiarClave, NuevaClave } from './pantallas/Clave.jsx'
 import Completar from './pantallas/Completar.jsx'
 import CompletarGeneros from './pantallas/CompletarGeneros.jsx'
+import Deseados from './pantallas/Deseados.jsx'
 import Disco from './pantallas/Disco.jsx'
 import EditarBanda from './pantallas/EditarBanda.jsx'
+import Estados from './pantallas/Estados.jsx'
+import FormDeseado from './pantallas/FormDeseado.jsx'
 import FormDisco from './pantallas/FormDisco.jsx'
 import Importar from './pantallas/Importar.jsx'
 import Inicio from './pantallas/Inicio.jsx'
@@ -70,10 +73,9 @@ function Rutas({ mail }) {
 
   // Al volver a una pantalla, recupera la posición de scroll que tenía.
   const claveRuta = partes.join('/')
-  const posiciones = useRef(new Map())
   useLayoutEffect(() => {
-    scrollTo(0, posiciones.current.get(claveRuta) ?? 0)
-    return () => posiciones.current.set(claveRuta, scrollY)
+    scrollTo(0, posiciones.get(claveRuta) ?? 0)
+    return () => posiciones.set(claveRuta, scrollY)
   }, [claveRuta])
 
   let pantalla
@@ -104,8 +106,14 @@ function Rutas({ mail }) {
   } else if (primera === 'generos') {
     pantalla = <CompletarGeneros />
   } else if (primera === 'agregar') {
-    const inicial = { banda: consulta.get('banda') ?? '', titulo: consulta.get('titulo') ?? '', formato: consulta.get('formato') }
+    const inicial = { banda: consulta.get('banda') ?? '', titulo: consulta.get('titulo') ?? '', formato: consulta.get('formato'), deseado: consulta.get('deseado') }
     pantalla = <FormDisco key={consulta.toString()} inicial={inicial} />
+  } else if (primera === 'deseados' && segunda === 'agregar') {
+    pantalla = <FormDeseado key={consulta.toString()} bandaInicial={consulta.get('banda') ?? ''} />
+  } else if (primera === 'deseados') {
+    pantalla = <Deseados />
+  } else if (primera === 'estados') {
+    pantalla = <Estados consulta={consulta} />
   } else if (primera === 'importar') {
     pantalla = <Importar />
   } else if (primera === 'ajustes' && segunda === 'clave') {

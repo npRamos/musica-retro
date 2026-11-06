@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { claveDe, pasosHasta } from './router.js'
+import { FORMATO_DE_SLUG, SLUG_FORMATO, claveDe, pasosHasta } from './router.js'
 
 describe('claveDe', () => {
   it('trata las pestañas como el inicio', () => {
@@ -41,5 +41,11 @@ describe('pasosHasta', () => {
     expect(pasosHasta(pila, 'banda/8')).toBeNull()
     expect(pasosHasta([], '')).toBeNull()
     expect(pasosHasta(undefined, '')).toBeNull()
+  })
+})
+
+describe('slugs de formato', () => {
+  it('cada pestaña vuelve a su formato: la pantalla de una banda en vinilo depende de esto', () => {
+    for (const [formato, slug] of Object.entries(SLUG_FORMATO)) expect(FORMATO_DE_SLUG[slug]).toBe(formato)
   })
 })

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EditorGeneros } from '../componentes/Generos.jsx'
 import { Boton, Encabezado, Vacio } from '../componentes/ui.jsx'
+import { pendientesDeGeneros } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { elegirArtista, elegirGeneros } from '../lib/discografia.js'
 import { mensajeError } from '../lib/errores.js'
@@ -26,10 +27,9 @@ const detalleArtista = (a) => [nombrePais(a.pais), a.desambiguacion].filter(Bool
 // Recorre las bandas con los géneros sin revisar, en orden alfabético. Una banda sin enlazar primero
 // elige su artista de MusicBrainz; después, los géneros.
 export default function CompletarGeneros() {
-  const { bandas, bandasPorId, online, sincronizar } = useCatalogo()
+  const { bandas, discos, bandasPorId, online, sincronizar } = useCatalogo()
   const [cola] = useState(() =>
-    bandas
-      .filter((b) => b.generos_estado === 'pendiente')
+    pendientesDeGeneros(bandas, discos)
       .sort((a, b) => comparar(a.nombre, b.nombre))
       .map((b) => b.id),
   )

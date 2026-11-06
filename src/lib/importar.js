@@ -1,4 +1,5 @@
-import { esLinkSpotifyValido, leerAnio, mediodiaLocal } from './catalogo.js'
+import { leerAnio, limpiarLinkSpotify, mediodiaLocal } from './catalogo.js'
+import { leerEstado } from './estado.js'
 import { formatearTitulo, normalizar } from './texto.js'
 
 const ALIAS_FORMATO = { vinilo: 'vinilo', vinil: 'vinilo', lp: 'vinilo', v: 'vinilo', cd: 'cd', c: 'cd' }
@@ -16,6 +17,8 @@ const COLUMNAS = {
   anio: ['ano', 'anio'],
   fecha: ['cargado', 'fecha', 'fecha_carga', 'fecha de carga'],
   spotify: ['spotify', 'spotify_url'],
+  estado: ['estado'],
+  observacion: ['observacion', 'observaciones'],
 }
 
 // Separa una línea en campos con ";" o tabulación, respetando las comillas de un CSV: "Uno; ""Dos""".
@@ -67,7 +70,7 @@ function leerFecha(texto) {
 }
 
 // Datos opcionales de una fila con encabezado. Devuelve { datos } o { error }.
-function leerOpcionales(campos, indice) {
+function leerOpcionales(campos, indice, formato) {
   const valor = (campo) => (indice[campo] === undefined ? '' : (campos[indice[campo]] ?? '').trim())
   const datos = {}
   if (valor('copias')) {
@@ -86,14 +89,21 @@ function leerOpcionales(campos, indice) {
     datos.fecha_carga = fecha
   }
   if (valor('spotify')) {
-    if (!esLinkSpotifyValido(valor('spotify'))) return { error: 'El link de Spotify tiene que ser de open.spotify.com' }
-    datos.spotify_url = valor('spotify')
+    const link = limpiarLinkSpotify(valor('spotify'))
+    if (!link) return { error: 'El link de Spotify tiene que ser de un álbum' }
+    datos.spotify_url = link
   }
+  if (valor('estado')) {
+    const { estado, error } = leerEstado(valor('estado'), formato)
+    if (error) return { error }
+    datos.estado = estado
+  }
+  if (valor('observacion')) datos.observacion = valor('observacion')
   return { datos }
 }
 
 // Una línea por disco: "banda; disco; formato" (también separado por tabulaciones).
-// Con una fila de encabezado (Banda, Disco, Formato, Copias, Año, Cargado, Spotify) las columnas van por nombre.
+// Con una fila de encabezado (Banda, Disco, Formato, Copias, Año, Cargado, Spotify, Estado, Observación) las columnas van por nombre.
 export function parsearLista(texto) {
   const lineas = texto
     .replace(/^﻿/, '')
@@ -112,7 +122,7 @@ export function parsearLista(texto) {
     if (!formatoTexto) return { numero, original, error: 'Falta el formato' }
     const formato = interpretarFormato(formatoTexto)
     if (!formato) return { numero, original, error: `Formato desconocido: "${formatoTexto}"` }
-    const { datos = {}, error } = indice ? leerOpcionales(campos, indice) : {}
+    const { datos = {}, error } = indice ? leerOpcionales(campos, indice, formato) : {}
     if (error) return { numero, original, error }
     return { numero, original, banda: formatearTitulo(banda), titulo: formatearTitulo(titulo), formato, ...datos }
   })
@@ -129,13 +139,14 @@ export function clasificar(lineas, bandas, discos) {
     if (l.error) continue
     const clave = `${normalizar(l.banda)}|${normalizar(l.titulo)}|${l.formato}`
     const item = items.get(clave)
-    // Las repetidas suman sus copias; año, fecha y Spotify quedan los de la primera.
+    // Las repetidas suman sus copias; los demás datos quedan los de la primera.
     if (item) {
       item.copias += l.copias ?? 1
       item.lineas.push(l.numero)
     } else {
-      const { banda, titulo, formato, copias = 1, anio, fecha_carga, spotify_url } = l
-      items.set(clave, { banda, titulo, formato, copias, anio, fecha_carga, spotify_url, lineas: [l.numero] })
+      const { banda, titulo, formato, copias = 1, anio, fecha_carga, spotify_url, estado, observacion } = l
+      // `estado` ya es la clasificación del ítem (nuevo, existe…): el del disco va aparte.
+      items.set(clave, { banda, titulo, formato, copias, anio, fecha_carga, spotify_url, estado_disco: estado, observacion, lineas: [l.numero] })
     }
   }
 

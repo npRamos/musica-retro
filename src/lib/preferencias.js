@@ -7,7 +7,8 @@ import { supabase } from './supabase.js'
 // agrupar: las pestañas muestran bandas ('bandas'), bandas en secciones por género ('generos') o todos los discos sueltos ('discos').
 // sorteoFormato y sorteoGeneros: los últimos filtros del sorteo; sorteoSonido: si la batea suena.
 // indice: si se muestra el índice al costado de las listas largas (manija y marcas).
-const POR_DEFECTO = { tema: 'sistema', acento: 'violeta', vista: 'grilla', agrupar: 'bandas', orden: 'az', ordenBanda: 'anio', formato: 'vinilo', sorteoFormato: 'todos', sorteoGeneros: [], sorteoSonido: true, indice: true }
+// generosFiltro: los géneros elegidos para filtrar la lista por género; vacío, se ve toda.
+const POR_DEFECTO = { tema: 'sistema', acento: 'violeta', vista: 'grilla', agrupar: 'bandas', orden: 'az', ordenBanda: 'anio', formato: 'vinilo', sorteoFormato: 'todos', sorteoGeneros: [], sorteoSonido: true, indice: true, generosFiltro: [] }
 const oyentes = new Set()
 let estado = { ...POR_DEFECTO, ...leer('preferencias', {}) }
 // indice fue 'completo' | 'manija' | 'no' por un día: pasa a sí o no.

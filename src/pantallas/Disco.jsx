@@ -1,21 +1,39 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Boton, Dialogo, Encabezado, Vacio } from '../componentes/ui.jsx'
 import { IconoBorrar, IconoEditar, IconoSpotify } from '../componentes/Iconos.jsx'
 import Carrusel from '../componentes/Carrusel.jsx'
 import { ListaTemas } from '../componentes/Temas.jsx'
+import { FilaEstado } from '../componentes/Estado.jsx'
 import { BadgeFormato } from '../componentes/Tarjetas.jsx'
-import { linkSpotify } from '../lib/catalogo.js'
+import { discosDeBanda, discosVecinos, linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { useDeslizar } from '../lib/deslizar.js'
+import { estadoDe, tieneEstado } from '../lib/estado.js'
 import { mensajeError } from '../lib/errores.js'
-import { SLUG_FORMATO, navegar, subir } from '../lib/router.js'
+import { usePreferencias } from '../lib/preferencias.js'
+import { SLUG_FORMATO, navegar, posiciones, subir } from '../lib/router.js'
 
 export default function Disco({ id }) {
   const { discos, discosPorId, bandasPorId, online, borrarDisco } = useCatalogo()
+  const [{ ordenBanda }] = usePreferencias()
   const [confirmando, setConfirmando] = useState(false)
   const [borrando, setBorrando] = useState(false)
   const [error, setError] = useState(null)
   const disco = discosPorId.get(id)
   const banda = disco && bandasPorId.get(disco.banda_id)
+
+  // Deslizar fuera de la imagen pasa al disco de al lado, en el orden de la pantalla de la banda. Reemplaza la entrada
+  // del historial, así atrás no recorre los discos que se pasaron, y cada disco abre desde arriba.
+  const vecinos = useMemo(
+    () => (disco ? discosVecinos(discosDeBanda(discos, disco.banda_id, disco.formato, ordenBanda), disco.id) : {}),
+    [discos, disco, ordenBanda],
+  )
+  const gestos = useDeslizar((direccion) => {
+    const destino = vecinos[direccion]
+    if (!destino) return
+    posiciones.delete(`disco/${destino.id}`)
+    navegar(`disco/${destino.id}`, { reemplazar: true })
+  })
 
   if (!disco) {
     return (
@@ -43,6 +61,7 @@ export default function Disco({ id }) {
 
   return (
     <>
+      <div {...gestos} className="min-h-dvh [touch-action:pan-y_pinch-zoom]">
       <Encabezado titulo="Detalle" atras={rutaBanda} />
       <main className="mx-auto max-w-md px-4 pt-4 pb-16">
         <Carrusel disco={disco} />
@@ -74,6 +93,16 @@ export default function Disco({ id }) {
           </div>
         </dl>
 
+        {tieneEstado(disco) && (
+          <details className="border-b border-metal/40">
+            <summary className="etiqueta flex min-h-12 cursor-pointer items-center text-xs text-suave">Más datos</summary>
+            <div className="space-y-2 pb-4">
+              <FilaEstado estado={estadoDe(disco)} />
+              {disco.observacion && <p className="font-light">{disco.observacion}</p>}
+            </div>
+          </details>
+        )}
+
         {disco.temas?.length > 0 && (
           <section className="mt-6">
             <h3 className="etiqueta text-xs text-suave">Temas</h3>
@@ -103,6 +132,7 @@ export default function Disco({ id }) {
         {!online && <p className="mt-3 text-center text-sm font-light text-suave">Sin conexión: solo lectura.</p>}
         {error && <p className="mt-3 text-center text-sm text-acento-texto">{error}</p>}
       </main>
+      </div>
 
       {confirmando && (
         <Dialogo

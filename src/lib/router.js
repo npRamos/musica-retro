@@ -19,6 +19,9 @@ export function pasosHasta(pila = [], clave) {
   return i === -1 ? null : pila.length - i
 }
 
+// Posición de scroll de cada pantalla, para recuperarla al volver.
+export const posiciones = new Map()
+
 // Cada entrada de la app guarda las rutas que tiene detrás (de la más vieja a la más nueva).
 const rutaActual = () => location.hash.replace(/^#\/?/, '')
 const pilaActual = () => history.state?.pila ?? []
@@ -77,4 +80,4 @@ export function volver(alternativa) {
 }
 
 export const SLUG_FORMATO = { vinilo: 'vinilos', cd: 'cd' }
-export const FORMATO_DE_SLUG = { vinilo: 'vinilo', cd: 'cd' }
+export const FORMATO_DE_SLUG = { vinilos: 'vinilo', cd: 'cd' }

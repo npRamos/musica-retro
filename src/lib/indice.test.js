@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { criterioDe, marcaDe, primerasMarcas, ralear } from './indice.js'
 
 describe('criterioDe', () => {
-  it('letras para A → Z y Z → A, géneros, meses y secciones', () => {
+  it('letras para A → Z y Z → A, meses, y por género los títulos de las secciones', () => {
     expect(criterioDe('az', 'bandas')).toBe('letra')
     expect(criterioDe('za', 'discos')).toBe('letra')
-    expect(criterioDe('genero', 'bandas')).toBe('genero')
     expect(criterioDe('reciente', 'discos')).toBe('mes')
     expect(criterioDe('az', 'generos')).toBeNull()
+    expect(criterioDe('genero', 'bandas')).toBeNull()
+    expect(criterioDe('genero', 'discos')).toBeNull()
   })
 })
 
@@ -24,11 +25,6 @@ describe('marcaDe', () => {
     expect(letra('2 Minutos')).toBe('#')
     expect(letra('¡Ay!')).toBe('#')
     expect(letra('')).toBe('#')
-  })
-
-  it('el género principal, o "Sin género"', () => {
-    expect(marcaDe({ generos: ['thrash metal', 'heavy metal'] }, null, 'genero')).toBe('thrash metal')
-    expect(marcaDe({ generos: [] }, null, 'genero')).toBe('Sin género')
   })
 
   it('mes y año con la fecha local', () => {

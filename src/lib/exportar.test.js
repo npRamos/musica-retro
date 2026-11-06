@@ -18,14 +18,25 @@ const discos = [
 describe('CSV', () => {
   it('BOM, encabezado, ";" y CRLF; orden por banda, año y título', () => {
     const csv = generarCsv(discos, porId, 'todo')
-    expect(csv.startsWith('﻿Banda;Disco;Formato;Copias;Año;Cargado;Spotify\r\n')).toBe(true)
+    expect(csv.startsWith('﻿Banda;Disco;Formato;Copias;Año;Cargado;Spotify;Estado;Observación\r\n')).toBe(true)
     const filas = csv.slice(1).trimEnd().split('\r\n')
     expect(filas).toHaveLength(6)
-    expect(filas[1]).toBe('AC/DC;Back in Black;CD;1;1980;15/03/2025;')
-    expect(filas[2]).toBe('Black Sabbath;Paranoid;CD;1;1970;28/10/2026;')
-    expect(filas[3]).toBe('Black Sabbath;Sabotage;CD;2;1975;28/10/2026;')
-    expect(filas[4]).toBe('Soda Stereo;Canción Animal;Vinilo;1;;02/01/2026;https://open.spotify.com/album/x')
-    expect(filas[5]).toBe('Soda Stereo;"Uno; ""Dos""";CD;1;;02/01/2026;')
+    expect(filas[1]).toBe('AC/DC;Back in Black;CD;1;1980;15/03/2025;;;')
+    expect(filas[2]).toBe('Black Sabbath;Paranoid;CD;1;1970;28/10/2026;;;')
+    expect(filas[3]).toBe('Black Sabbath;Sabotage;CD;2;1975;28/10/2026;;;')
+    expect(filas[4]).toBe('Soda Stereo;Canción Animal;Vinilo;1;;02/01/2026;https://open.spotify.com/album/x;;')
+    expect(filas[5]).toBe('Soda Stereo;"Uno; ""Dos""";CD;1;;02/01/2026;;;')
+  })
+  it('exporta el link de Spotify limpio, o vacío si no es de un álbum', () => {
+    const banda = new Map([['b', { id: 'b', nombre: 'Sumo' }]])
+    const fila = (spotify_url) => generarCsv([{ banda_id: 'b', titulo: 'T', formato: 'cd', copias: 1, fecha_carga: '2026-01-02T15:00:00Z', spotify_url }], banda).slice(1).trimEnd().split('\r\n')[1]
+    expect(fila('https://open.spotify.com/album/abc?si=123')).toBe('Sumo;T;CD;1;;02/01/2026;https://open.spotify.com/album/abc;;')
+    expect(fila('https://open.spotify.com/user/nadia')).toBe('Sumo;T;CD;1;;02/01/2026;;;')
+  })
+  it('exporta el estado y la observación', () => {
+    const banda = new Map([['b', { id: 'b', nombre: 'Sumo' }]])
+    const fila = generarCsv([{ banda_id: 'b', titulo: 'T', formato: 'cd', copias: 1, fecha_carga: '2026-01-02T15:00:00Z', estado: ['rayado', 'caja_rota'], observacion: 'Salta; en el tema 3' }], banda).slice(1).trimEnd().split('\r\n')[1]
+    expect(fila).toBe('Sumo;T;CD;1;;02/01/2026;;Rayado, Caja rota;"Salta; en el tema 3"')
   })
   it('alcance y nombre de archivo', () => {
     expect(generarCsv(discos, porId, 'vinilo').trimEnd().split('\r\n')).toHaveLength(2)

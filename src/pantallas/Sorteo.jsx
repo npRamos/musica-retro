@@ -1,16 +1,18 @@
-import { useMemo, useReducer, useState } from 'react'
+import { useEffect, useMemo, useReducer, useState } from 'react'
 import Batea from '../componentes/Batea.jsx'
 import { FilaGeneros } from '../componentes/Generos.jsx'
-import { IconoDado, IconoSiguiente, IconoSilencio, IconoSonido, IconoSpotify } from '../componentes/Iconos.jsx'
+import { IconoCompartir, IconoDado, IconoSiguiente, IconoSilencio, IconoSonido, IconoSpotify } from '../componentes/Iconos.jsx'
 import { BadgeFormato } from '../componentes/Tarjetas.jsx'
 import { Boton, BotonCirculo, Encabezado, Segmentado } from '../componentes/ui.jsx'
 import { linkSpotify } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { compartirArchivo } from '../lib/compartir.js'
 import { mismoGenero } from '../lib/generos.js'
+import { generarImagenDisco } from '../lib/imagenCompartir.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { prepararSonido } from '../lib/sonido.js'
 import { navegar } from '../lib/router.js'
-import { FORMATOS_SORTEO, armarBombo, claveFiltros, contarGeneros, empezarDeNuevo, rondaDe, sacar } from '../lib/sorteo.js'
+import { FORMATOS_SORTEO, armarBombo, claveFiltros, contarGeneros, discoVisible, empezarDeNuevo, rondaDe, sacar } from '../lib/sorteo.js'
 
 // Chips de género visibles antes de "Ver todos".
 const CHIPS = 8
@@ -138,6 +140,40 @@ export default function Sorteo() {
   )
 }
 
+// La imagen se genera antes del toque, cuando termina la animación: compartir exige un gesto reciente de la usuaria,
+// y generarla al tocar podría hacer perder ese permiso.
+function Compartir({ bola, banda, ocupado }) {
+  const { urls } = useCatalogo()
+  const [archivo, setArchivo] = useState(null)
+  const [error, setError] = useState(null)
+  const [disco] = bola.discos
+
+  useEffect(() => {
+    if (ocupado) return
+    let vivo = true
+    generarImagenDisco({ banda: banda?.nombre, titulo: disco.titulo, anio: disco.anio, formato: disco.formato, urlTapa: urls[discoVisible(bola).tapa_path] })
+      .then((f) => vivo && setArchivo(f))
+      .catch(() => vivo && setError('No se pudo preparar la imagen.'))
+    return () => {
+      vivo = false
+    }
+  }, [ocupado]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const compartir = () => {
+    setError(null)
+    compartirArchivo(archivo, disco.titulo).catch(() => setError('No se pudo compartir la imagen. Probá de nuevo.'))
+  }
+
+  return (
+    <>
+      <Boton variante="secundario" className="mt-4 w-full" disabled={ocupado || !archivo} onClick={compartir}>
+        <IconoCompartir /> {!ocupado && !archivo && !error ? 'Preparando…' : 'Compartir'}
+      </Boton>
+      {error && <p className="mt-2 text-center text-sm text-acento-texto">{error}</p>}
+    </>
+  )
+}
+
 function Resultado({ bola, banda, ocupado, onOtro }) {
   const [disco] = bola.discos
   return (
@@ -161,7 +197,8 @@ function Resultado({ bola, banda, ocupado, onOtro }) {
       >
         <IconoSpotify /> Escuchar en Spotify
       </a>
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <Compartir bola={bola} banda={banda} ocupado={ocupado} />
+      <div className="mt-3 grid grid-cols-2 gap-3">
         <Boton variante="secundario" disabled={ocupado} onClick={() => navegar(`disco/${disco.id}`)}>
           Ver disco
         </Boton>

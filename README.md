@@ -80,6 +80,7 @@ Supabase pausa los proyectos gratuitos sin actividad. `.github/workflows/keepali
 |---|---|
 | Modelo, RLS y RPC (`agregar_disco`, `completar_disco`, `importar_discos`, `renombrar_banda`, `fusionar_bandas`…) | `supabase/migrations/` |
 | Ajustes del catálogo (máximo de géneros por banda, igual para todos los miembros) | tabla `ajustes_catalogo`, `src/pantallas/Ajustes.jsx` |
+| Estado de los discos y lista de deseados, compartida entre los miembros | columnas `discos.estado` y `discos.observacion`, tabla `deseados`, `src/lib/estado.js`, `src/lib/deseados.js` |
 | MusicBrainz y Cover Art Archive: cola de 1 pedido/s, búsquedas, edición según el formato, temas e imágenes | `src/lib/musicbrainz.js`, `src/lib/discografia.js` |
 | Normalización y formato tipo título | `src/lib/texto.js` (espejo de `public.normalizar()`) |
 | Sincronización, caché offline y escrituras | `src/lib/catalogoContexto.jsx`, `src/lib/almacen.js` |

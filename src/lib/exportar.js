@@ -1,4 +1,5 @@
-import { NOMBRE_FORMATO_SINGULAR, fechaLocal, ordenarDiscos } from './catalogo.js'
+import { NOMBRE_FORMATO_SINGULAR, fechaLocal, limpiarLinkSpotify, ordenarDiscos } from './catalogo.js'
+import { estadoDe, textoEstado } from './estado.js'
 
 // Planilla CSV (para Excel en español y Google Sheets) y texto para copiar o mandar por WhatsApp.
 
@@ -10,7 +11,7 @@ const deAlcance = (discos, alcance) => (alcance === 'todo' ? discos : discos.fil
 const ordenados = (discos, bandasPorId) => ordenarDiscos(discos, 'az', bandasPorId)
 
 // ─── CSV ────────────────────────────────────────────────────────────────
-export const COLUMNAS = ['Banda', 'Disco', 'Formato', 'Copias', 'Año', 'Cargado', 'Spotify']
+export const COLUMNAS = ['Banda', 'Disco', 'Formato', 'Copias', 'Año', 'Cargado', 'Spotify', 'Estado', 'Observación']
 const FORMATO_CSV = { vinilo: 'Vinilo', cd: 'CD' }
 
 // RFC 4180: entre comillas si tiene ; comillas o salto de línea, con las comillas duplicadas.
@@ -33,7 +34,9 @@ export function generarCsv(discos, bandasPorId, alcance = 'todo') {
     d.copias,
     d.anio ?? '',
     fechaCsv(d.fecha_carga),
-    d.spotify_url ?? '',
+    limpiarLinkSpotify(d.spotify_url) ?? '',
+    textoEstado(estadoDe(d)),
+    d.observacion ?? '',
   ])
   return `﻿${[COLUMNAS, ...filas].map((fila) => fila.map(celdaCsv).join(';')).join('\r\n')}\r\n`
 }

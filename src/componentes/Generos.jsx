@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import {
   agregarGenero,
@@ -24,6 +24,37 @@ export function FilaGeneros({ generos, className = '' }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+// Filtro de la lista por género: una fila de chips que se desplaza en horizontal. chips: [{ nombre, cantidad }].
+export function ChipsGeneros({ chips, elegidos, onAlternar }) {
+  const fila = useRef(null)
+  const nombres = chips.map((c) => c.nombre).join('|')
+
+  // Al aparecer o cambiar de pestaña, lleva a la vista el primer chip activo: si no, la fila parece no tener nada elegido.
+  useLayoutEffect(() => {
+    const activo = fila.current.querySelector('[aria-pressed="true"]')
+    fila.current.scrollLeft = activo ? activo.offsetLeft - fila.current.offsetLeft - 16 : 0
+  }, [nombres])
+
+  return (
+    <div ref={fila} role="group" aria-label="Filtrar por género" className="flex gap-2 overflow-x-auto border-b border-metal/40 px-4 py-3">
+      {chips.map((c) => {
+        const activo = elegidos.includes(c.nombre)
+        return (
+          <button
+            key={c.nombre}
+            type="button"
+            aria-pressed={activo}
+            onClick={() => onAlternar(c.nombre)}
+            className={`etiqueta min-h-11 shrink-0 rounded-full border px-4 text-xs whitespace-nowrap transition-colors ${activo ? 'border-acento text-acento-texto' : 'border-metal/70 text-suave'}`}
+          >
+            {c.nombre} <span className="font-light opacity-70">{c.cantidad}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 

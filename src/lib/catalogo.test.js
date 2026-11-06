@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agruparPorGenero, bandasDeFormato, buscar, esLinkSpotifyValido, fechaLocal, leerAnio, linkSpotify, mediodiaLocal, ordenarBandas, ordenarDiscos } from './catalogo.js'
+import { SIN_GENERO, agruparPorGenero, bandasDeFormato, buscar, chipsDeGeneros, discosDeBanda, discosVecinos, fechaLocal, filtrarPorGenero, filtrarSecciones, generosVigentes, leerAnio, limpiarLinkSpotify, linkSpotify, mediodiaLocal, ordenarBandas, ordenarDiscos, pendientesDeGeneros, seccionesPorOrden } from './catalogo.js'
 
 const bandas = [
   { id: 'b1', nombre: 'Soda Stereo' },
@@ -88,10 +88,107 @@ describe('spotify', () => {
     expect(linkSpotify({ titulo: 'Llegando los Monos' }, { nombre: 'Sumo' })).toBe('https://open.spotify.com/search/Sumo%20Llegando%20los%20Monos')
     expect(linkSpotify({ titulo: 'x', spotify_url: 'https://open.spotify.com/album/1' }, null)).toBe('https://open.spotify.com/album/1')
   })
-  it('valida el dominio', () => {
-    expect(esLinkSpotifyValido('https://open.spotify.com/album/abc')).toBe(true)
-    expect(esLinkSpotifyValido('https://evil.com/open.spotify.com')).toBe(false)
-    expect(esLinkSpotifyValido('cualquier cosa')).toBe(false)
+  it('abre el álbum limpio, y la búsqueda si el link guardado no es de un álbum', () => {
+    expect(linkSpotify({ titulo: 'x', spotify_url: 'https://open.spotify.com/album/abc?si=123' }, null)).toBe('https://open.spotify.com/album/abc')
+    expect(linkSpotify({ titulo: 'Signos', spotify_url: 'https://open.spotify.com/user/nadia' }, { nombre: 'Soda' })).toBe('https://open.spotify.com/search/Soda%20Signos')
+  })
+  it('limpia los links de álbum y rechaza el resto', () => {
+    expect(limpiarLinkSpotify('https://open.spotify.com/album/abc')).toBe('https://open.spotify.com/album/abc')
+    expect(limpiarLinkSpotify(' https://open.spotify.com/album/abc/?si=123&utm_source=x ')).toBe('https://open.spotify.com/album/abc')
+    expect(limpiarLinkSpotify('https://open.spotify.com/intl-es/album/abc')).toBe('https://open.spotify.com/album/abc')
+    expect(limpiarLinkSpotify('https://open.spotify.com/user/nadia')).toBeNull()
+    expect(limpiarLinkSpotify('https://open.spotify.com/track/abc')).toBeNull()
+    expect(limpiarLinkSpotify('https://evil.com/album/abc')).toBeNull()
+    expect(limpiarLinkSpotify('http://open.spotify.com/album/abc')).toBeNull()
+    expect(limpiarLinkSpotify('cualquier cosa')).toBeNull()
+    expect(limpiarLinkSpotify(null)).toBeNull()
+  })
+})
+
+describe('pendientesDeGeneros', () => {
+  it('sin revisar y con discos; las que solo tienen deseados no entran', () => {
+    const bandas = [
+      { id: 'a', generos_estado: 'pendiente' },
+      { id: 'b', generos_estado: 'pendiente' },
+      { id: 'c', generos_estado: 'listo' },
+    ]
+    const discos = [{ banda_id: 'a' }, { banda_id: 'c' }]
+    expect(pendientesDeGeneros(bandas, discos).map((b) => b.id)).toEqual(['a'])
+    expect(pendientesDeGeneros(bandas, [...discos, { banda_id: 'b' }]).map((b) => b.id)).toEqual(['a', 'b'])
+  })
+})
+
+describe('discos de una banda', () => {
+  const lista = [
+    { id: 'c', banda_id: 'soda', formato: 'cd', titulo: 'Dynamo', anio: 1992 },
+    { id: 'a', banda_id: 'soda', formato: 'cd', titulo: 'Signos', anio: 1986 },
+    { id: 'b', banda_id: 'soda', formato: 'cd', titulo: 'Doble Vida', anio: 1988 },
+    { id: 'v', banda_id: 'soda', formato: 'vinilo', titulo: 'Sueño Stereo', anio: 1995 },
+    { id: 'x', banda_id: 'otra', formato: 'cd', titulo: 'Otro', anio: 1990 },
+  ]
+
+  it('solo esa banda y ese formato, en el orden pedido', () => {
+    expect(discosDeBanda(lista, 'soda', 'cd', 'anio').map((d) => d.id)).toEqual(['a', 'b', 'c'])
+    expect(discosDeBanda(lista, 'soda', 'cd', 'az').map((d) => d.id)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('el anterior y el siguiente, sin dar la vuelta', () => {
+    const orden = discosDeBanda(lista, 'soda', 'cd', 'anio')
+    expect(discosVecinos(orden, 'b')).toMatchObject({ anterior: { id: 'a' }, siguiente: { id: 'c' } })
+    expect(discosVecinos(orden, 'a')).toMatchObject({ anterior: null, siguiente: { id: 'b' } })
+    expect(discosVecinos(orden, 'c')).toMatchObject({ anterior: { id: 'b' }, siguiente: null })
+    expect(discosVecinos(orden, 'nada')).toEqual({ anterior: null, siguiente: null })
+  })
+})
+
+describe('lista por género', () => {
+  const item = (nombre, generos) => ({ banda: { nombre, generos } })
+  const deItem = (i) => i.banda
+  const megadeth = item('Megadeth', ['thrash metal', 'heavy metal'])
+  const sabbath = item('Black Sabbath', ['heavy metal'])
+  const sumo = item('Sumo', [])
+  const items = [sabbath, megadeth, sumo]
+  const nombres = (s) => s.items.map((i) => i.banda.nombre)
+
+  it('chips en orden alfabético, con cantidades y "Sin género" al final', () => {
+    expect(chipsDeGeneros(items, deItem)).toEqual([
+      { nombre: 'heavy metal', cantidad: 2 },
+      { nombre: 'thrash metal', cantidad: 1 },
+      { nombre: 'Sin género', cantidad: 1 },
+    ])
+  })
+
+  it('un género que no está en la lista se ignora', () => {
+    const chips = chipsDeGeneros(items, deItem)
+    expect(generosVigentes(['Heavy  Metal', 'new wave'], chips)).toEqual(['heavy metal'])
+    expect(generosVigentes(['new wave'], chips)).toEqual([])
+  })
+
+  it('filtra por alguno de los elegidos, y sin elegidos deja todo', () => {
+    expect(filtrarPorGenero(items, deItem, [])).toBe(items)
+    expect(filtrarPorGenero(items, deItem, ['thrash metal'])).toEqual([megadeth])
+    expect(filtrarPorGenero(items, deItem, ['thrash metal', SIN_GENERO])).toEqual([megadeth, sumo])
+    expect(filtrarPorGenero(items, deItem, [SIN_GENERO])).toEqual([sumo])
+  })
+
+  it('agrupada: una banda solo aparece en las secciones elegidas', () => {
+    const secciones = filtrarSecciones(agruparPorGenero(items), ['thrash metal'])
+    expect(secciones.map((s) => s.genero)).toEqual(['thrash metal'])
+    expect(nombres(secciones[0])).toEqual(['Megadeth'])
+    expect(filtrarSecciones(agruparPorGenero(items), [SIN_GENERO]).map((s) => s.genero)).toEqual([null])
+    expect(filtrarSecciones(agruparPorGenero(items), [])).toHaveLength(3)
+  })
+
+  it('ordenada: cada banda una sola vez, bajo su género principal', () => {
+    const secciones = seccionesPorOrden(items, deItem)
+    expect(secciones.map((s) => s.genero)).toEqual(['heavy metal', 'thrash metal', null])
+    expect(secciones.map(nombres)).toEqual([['Black Sabbath'], ['Megadeth'], ['Sumo']])
+  })
+
+  it('ordenada con filtro: bajo el primero de sus géneros elegidos', () => {
+    const secciones = seccionesPorOrden(filtrarPorGenero(items, deItem, ['heavy metal']), deItem, ['heavy metal'])
+    expect(secciones.map((s) => s.genero)).toEqual(['heavy metal'])
+    expect(nombres(secciones[0])).toEqual(['Black Sabbath', 'Megadeth'])
   })
 })
 

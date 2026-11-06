@@ -1,15 +1,38 @@
 import { useMemo, useRef, useState } from 'react'
 import { BarraLista, BotonCirculo, Boton, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
+import { ChipsGeneros } from '../componentes/Generos.jsx'
 import Indice from '../componentes/Indice.jsx'
 import { IconoAjustes, IconoBuscar, IconoCerrar, IconoDado, IconoMas, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaBanda, TarjetaDisco } from '../componentes/Tarjetas.jsx'
-import { AGRUPACIONES, FORMATOS, NOMBRE_FORMATO, NOMBRE_FORMATO_SINGULAR, ORDENES, agruparPorGenero, bandasDeFormato, buscar, contarPorFormato, ordenarBandas, ordenarDiscos, otroFormato } from '../lib/catalogo.js'
+import {
+  AGRUPACIONES,
+  FORMATOS,
+  NOMBRE_FORMATO,
+  NOMBRE_FORMATO_SINGULAR,
+  ORDENES,
+  SIN_GENERO,
+  agruparPorGenero,
+  bandasDeFormato,
+  buscar,
+  chipsDeGeneros,
+  contarPorFormato,
+  filtrarPorGenero,
+  filtrarSecciones,
+  generosVigentes,
+  ordenarBandas,
+  ordenarDiscos,
+  otroFormato,
+  seVePorGenero,
+  seccionesPorOrden,
+} from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { mismoGenero } from '../lib/generos.js'
 import { criterioDe, marcaDe, primerasMarcas } from '../lib/indice.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
 const contar = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`
+const ALTO_CHIPS = 69 // la fila de chips: botón de 44 px, márgenes y borde
 
 export default function Inicio({ formato, busqueda, setBusqueda }) {
   const { bandas, discos, bandasPorId, online, actualizadoEn } = useCatalogo()
@@ -17,7 +40,8 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
   const [eligiendoOrden, setEligiendoOrden] = useState(false)
   const encabezado = useRef(null)
   const contenido = useRef(null)
-  const { vista, orden, agrupar } = prefs
+  const { vista, orden, agrupar, generosFiltro } = prefs
+  const buscando = busqueda.trim() !== ''
 
   const cuenta = useMemo(() => contarPorFormato(discos), [discos])
   const items = useMemo(() => ordenarBandas(bandasDeFormato(bandas, discos, formato), orden), [bandas, discos, formato, orden])
@@ -25,12 +49,26 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
     () => (agrupar === 'discos' ? ordenarDiscos(discos.filter((d) => d.formato === formato), orden, bandasPorId) : []),
     [agrupar, discos, formato, orden, bandasPorId],
   )
-  // Por género, cada sección ya es un género: adentro, el orden por género se lee como A → Z.
-  const secciones = useMemo(
-    () => (agrupar === 'generos' ? agruparPorGenero(orden === 'genero' ? ordenarBandas(items, 'az') : items) : []),
-    [agrupar, items, orden],
-  )
-  // Marcas del índice al costado: solo en el primer elemento de cada tramo (por género agrupado, los títulos).
+  // Lo que se lista (discos sueltos o bandas) y cómo llegar a la banda de cada elemento.
+  const sonDiscos = agrupar === 'discos'
+  const elementos = sonDiscos ? sueltos : items
+  const bandaDe = useMemo(() => (sonDiscos ? (d) => bandasPorId.get(d.banda_id) : (i) => i.banda), [sonDiscos, bandasPorId])
+
+  // Vista por género: chips para filtrar y secciones con título. No aplica al buscar.
+  const porGenero = !buscando && seVePorGenero(agrupar, orden)
+  const chips = useMemo(() => (porGenero ? chipsDeGeneros(elementos, bandaDe) : []), [porGenero, elementos, bandaDe])
+  const elegidos = useMemo(() => generosVigentes(generosFiltro, chips), [generosFiltro, chips])
+  const visibles = useMemo(() => filtrarPorGenero(elementos, bandaDe, elegidos), [elementos, bandaDe, elegidos])
+  const secciones = useMemo(() => {
+    if (!porGenero) return []
+    // Agrupada, cada sección ya es un género: adentro, el orden por género se lee como A → Z.
+    if (agrupar === 'generos') return filtrarSecciones(agruparPorGenero(orden === 'genero' ? ordenarBandas(items, 'az') : items), elegidos)
+    return seccionesPorOrden(visibles, bandaDe, elegidos)
+  }, [porGenero, agrupar, orden, items, visibles, bandaDe, elegidos])
+  const alternarGenero = (g) =>
+    cambiar('generosFiltro', generosFiltro.some((f) => mismoGenero(f, g)) ? generosFiltro.filter((f) => !mismoGenero(f, g)) : [...generosFiltro, g])
+
+  // Marcas del índice al costado: solo en el primer elemento de cada tramo (por género, los títulos).
   const criterio = criterioDe(orden, agrupar)
   const marcasBandas = useMemo(
     () => (criterio ? primerasMarcas(items.map((i) => marcaDe(i.banda, i.ultima, criterio))) : []),
@@ -50,13 +88,12 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
     navegar(SLUG_FORMATO[f], { reemplazar: true })
   }
   const Contenedor = vista === 'lista' ? Lista : Grilla
-  const buscando = busqueda.trim() !== ''
-  // La barra cuenta lo que se ve: resultados, discos sueltos o bandas.
+  // La barra cuenta lo que se ve: resultados, discos sueltos o bandas, con el filtro de géneros aplicado.
   const cantidad = buscando
     ? contar(resultados.enFormato.length, 'resultado', 'resultados')
-    : agrupar === 'discos' && sueltos.length > 0
-      ? contar(sueltos.length, 'disco', 'discos')
-      : contar(items.length, 'banda', 'bandas')
+    : sonDiscos && sueltos.length > 0
+      ? contar(visibles.length, 'disco', 'discos')
+      : contar(sonDiscos ? items.length : visibles.length, 'banda', 'bandas')
   const hayLista = buscando || items.length > 0
   const tarjetaBanda = (item, marca) => (
     <TarjetaBanda
@@ -67,6 +104,9 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
       marca={marca}
       onClick={() => navegar(`${SLUG_FORMATO[formato]}/banda/${item.banda.id}`)}
     />
+  )
+  const tarjetaDisco = (d, marca) => (
+    <TarjetaDisco key={d.id} disco={d} banda={bandasPorId.get(d.banda_id)} vista={vista} mostrarBanda marca={marca} onClick={() => navegar(`disco/${d.id}`)} />
   )
 
   return (
@@ -132,6 +172,7 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
             onVista={() => cambiar('vista', vista === 'grilla' ? 'lista' : 'grilla')}
           />
         )}
+        {chips.length > 0 && <ChipsGeneros chips={chips} elegidos={elegidos} onAlternar={alternarGenero} />}
         {buscando ? (
           <>
             {resultados.enOtro > 0 && (
@@ -149,9 +190,7 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
             )}
             {resultados.enFormato.length > 0 ? (
               <Contenedor>
-                {resultados.enFormato.map((d) => (
-                  <TarjetaDisco key={d.id} disco={d} banda={bandasPorId.get(d.banda_id)} vista={vista} mostrarBanda onClick={() => navegar(`disco/${d.id}`)} />
-                ))}
+                {resultados.enFormato.map((d) => tarjetaDisco(d))}
               </Contenedor>
             ) : (
               resultados.enOtro === 0 && (
@@ -168,29 +207,17 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
               )
             )}
           </>
-        ) : agrupar === 'discos' && sueltos.length > 0 ? (
-          <Contenedor>
-            {sueltos.map((d, i) => (
-              <TarjetaDisco
-                key={d.id}
-                disco={d}
-                banda={bandasPorId.get(d.banda_id)}
-                vista={vista}
-                mostrarBanda
-                marca={marcasSueltos[i]}
-                onClick={() => navegar(`disco/${d.id}`)}
-              />
-            ))}
-          </Contenedor>
-        ) : agrupar === 'generos' && secciones.length > 0 ? (
+        ) : secciones.length > 0 ? (
           secciones.map((s) => (
-            <section key={s.genero ?? ''} aria-label={s.genero ?? 'Sin género'}>
-              <h2 data-marca={s.genero ?? 'Sin género'} className="etiqueta px-4 pt-5 text-sm tracking-[0.1em]">
-                {s.genero ?? 'Sin género'} <span className="font-light text-suave">{s.items.length}</span>
+            <section key={s.genero ?? ''} aria-label={s.genero ?? SIN_GENERO} className="[&:first-of-type>h2]:border-t-0">
+              <h2 data-marca={s.genero ?? SIN_GENERO} className="etiqueta mx-4 border-t border-metal/40 pt-5 text-xl tracking-[0.1em]">
+                {s.genero ?? SIN_GENERO} <span className="text-base font-light text-suave">{s.items.length}</span>
               </h2>
-              <Contenedor>{s.items.map((item) => tarjetaBanda(item))}</Contenedor>
+              <Contenedor>{s.items.map((item) => (sonDiscos ? tarjetaDisco(item) : tarjetaBanda(item)))}</Contenedor>
             </section>
           ))
+        ) : sonDiscos && sueltos.length > 0 ? (
+          <Contenedor>{sueltos.map((d, i) => tarjetaDisco(d, marcasSueltos[i]))}</Contenedor>
         ) : items.length > 0 ? (
           <Contenedor>{items.map((item, i) => tarjetaBanda(item, marcasBandas[i]))}</Contenedor>
         ) : (
@@ -207,7 +234,8 @@ export default function Inicio({ formato, busqueda, setBusqueda }) {
         <Indice
           contenido={contenido}
           encabezado={encabezado}
-          version={`${formato}|${agrupar}|${orden}|${vista}|${items.length}|${sueltos.length}`}
+          version={`${formato}|${agrupar}|${orden}|${vista}|${items.length}|${sueltos.length}|${elegidos.join(',')}`}
+          extra={chips.length > 0 ? ALTO_CHIPS : 0}
         />
       )}
 

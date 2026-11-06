@@ -182,6 +182,19 @@ export const IconoSalir = (p) => (
   </Icono>
 )
 
+export const IconoDeseado = (p) => (
+  <Icono {...p}>
+    <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" />
+  </Icono>
+)
+
+export const IconoEstado = (p) => (
+  <Icono {...p}>
+    <path d="M12 4 2.8 20h18.4L12 4Z" />
+    <path d="M12 10v5M12 17.6v.1" />
+  </Icono>
+)
+
 export const IconoCompartir = (p) => (
   <Icono {...p}>
     <circle cx="6" cy="12" r="2.5" />

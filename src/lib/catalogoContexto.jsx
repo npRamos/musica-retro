@@ -11,7 +11,7 @@ import { formatearTitulo, normalizar } from './texto.js'
 const Contexto = createContext(null)
 const CLAVE_CACHE = 'catalogo'
 // maximoGeneros: null mientras no se pudo leer (sin migrar, por ejemplo); se usa el valor por defecto.
-const VACIO = { bandas: [], discos: [], urls: {}, maximoGeneros: null, actualizadoEn: null }
+const VACIO = { bandas: [], discos: [], deseados: [], urls: {}, maximoGeneros: null, actualizadoEn: null }
 
 export function CatalogoProvider({ sesion, children }) {
   const uid = sesion.user.id
@@ -29,24 +29,26 @@ export function CatalogoProvider({ sesion, children }) {
     enCurso.current = (async () => {
       setSincronizando(true)
       try {
-        const [bandasRes, discosRes, miembroRes, ajustesRes] = await Promise.all([
+        const [bandasRes, discosRes, deseadosRes, miembroRes, ajustesRes] = await Promise.all([
           supabase.from('bandas').select('id, nombre, nombre_norm, imagen_path, creado_en, mbid, logo_path, logo_invertir, logo_buscado_en, generos, generos_estado'),
           supabase
             .from('discos')
             .select(
-              'id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path, contratapa_path, anio, temas, mb_estado, mb_release_group, mb_release',
+              'id, banda_id, titulo, titulo_norm, formato, copias, fecha_carga, spotify_url, tapa_path, contratapa_path, anio, temas, mb_estado, mb_release_group, mb_release, estado, observacion',
             ),
+          supabase.from('deseados').select('id, banda_id, titulo, titulo_norm, formato, anio, mb_release_group, creado_en'),
           supabase.rpc('es_miembro'),
           supabase.from('ajustes_catalogo').select('maximo_generos').maybeSingle(),
         ])
         if (bandasRes.error) throw bandasRes.error
         if (discosRes.error) throw discosRes.error
+        if (deseadosRes.error) throw deseadosRes.error
         if (!miembroRes.error) setMiembro(miembroRes.data === true)
         const rutas = [...bandasRes.data.flatMap((b) => [b.imagen_path, b.logo_path]), ...discosRes.data.flatMap((d) => [d.tapa_path, d.contratapa_path])].filter(Boolean)
         const urls = await firmarImagenes(rutas)
         // Si los ajustes no se pueden leer (la tabla todavía no existe), sigue con el valor por defecto.
         const maximoGeneros = ajustesRes.error ? null : (ajustesRes.data?.maximo_generos ?? null)
-        const nuevos = { bandas: bandasRes.data, discos: discosRes.data, urls, maximoGeneros, actualizadoEn: new Date().toISOString() }
+        const nuevos = { bandas: bandasRes.data, discos: discosRes.data, deseados: deseadosRes.data, urls, maximoGeneros, actualizadoEn: new Date().toISOString() }
         setDatos(nuevos)
         guardar(CLAVE_CACHE, nuevos)
         setOnline(true)
@@ -84,6 +86,8 @@ export function CatalogoProvider({ sesion, children }) {
   const maximoGeneros = datos.maximoGeneros ?? GENEROS_POR_DEFECTO
   const bandasPorId = useMemo(() => new Map(datos.bandas.map((b) => [b.id, b])), [datos.bandas])
   const discosPorId = useMemo(() => new Map(datos.discos.map((d) => [d.id, d])), [datos.discos])
+  // La copia del dispositivo puede venir de antes de que existiera la lista.
+  const deseados = datos.deseados ?? []
 
   // ─── Escrituras ────────────────────────────────────────────────────────
   const rpc = async (nombre, args) => {
@@ -104,7 +108,7 @@ export function CatalogoProvider({ sesion, children }) {
   }
 
   // datos: año y datos de MusicBrainz (p_datos). bandaTalCual: el nombre viene de MusicBrainz y no se formatea.
-  const agregarDisco = async ({ banda, titulo, formato, copias, imagen, contratapa, datos = null, bandaTalCual = false }) => {
+  const agregarDisco = async ({ banda, titulo, formato, copias, imagen, contratapa, datos = null, bandaTalCual = false, estado = [], observacion = null }) => {
     const resultado = await rpc('agregar_disco', {
       p_banda: bandaTalCual ? banda.trim() : formatearTitulo(banda),
       p_titulo: formatearTitulo(titulo),
@@ -114,7 +118,11 @@ export function CatalogoProvider({ sesion, children }) {
     })
     if (resultado.estado === 'creado' && imagen) await ponerImagen(resultado.disco, 'tapa_path', imagen)
     if (resultado.estado === 'creado' && contratapa) await ponerImagen(resultado.disco, 'contratapa_path', contratapa)
+    // Si esto falla, el disco ya está creado: se recarga igual, y el estado se completa editándolo.
+    const conEstado = resultado.estado === 'creado' && (estado.length > 0 || observacion)
+    const errEstado = conEstado ? (await supabase.from('discos').update({ estado, observacion }).eq('id', resultado.disco.id)).error : null
     if (resultado.estado === 'creado') await sincronizar()
+    if (errEstado) throw errEstado
     buscarLogoSiFalta(resultado.banda, resultado.banda?.mbid)
     buscarGenerosSiFalta(resultado.banda, resultado.banda?.mbid)
     return resultado
@@ -136,10 +144,11 @@ export function CatalogoProvider({ sesion, children }) {
 
   // Busca la banda por nombre normalizado o la crea (con formato tipo título).
   // Si la base dice que ya existe (normalizó distinto que acá), usa esa en vez de fallar.
-  const bandaPorNombre = async (nombre) => {
+  // talCual: el nombre viene de MusicBrainz y no se formatea.
+  const bandaPorNombre = async (nombre, { talCual = false } = {}) => {
     const existente = datos.bandas.find((b) => b.nombre_norm === normalizar(nombre))
     if (existente) return existente
-    const { data, error: err } = await supabase.from('bandas').insert({ nombre: formatearTitulo(nombre) }).select().single()
+    const { data, error: err } = await supabase.from('bandas').insert({ nombre: talCual ? nombre.trim() : formatearTitulo(nombre) }).select().single()
     if (err?.code === '23505') {
       const norm = await rpc('normalizar', { t: nombre })
       const { data: enLaBase, error: errBusqueda } = await supabase.from('bandas').select().eq('nombre_norm', norm).single()
@@ -152,11 +161,11 @@ export function CatalogoProvider({ sesion, children }) {
 
   // Devuelve { estado: 'ok' } o { estado: 'conflicto', existente } si choca con otro disco.
   // fecha_carga: solo si cambió (undefined = no se toca).
-  const actualizarDisco = async (disco, { banda, titulo, formato, copias, anio = null, fecha_carga, spotify_url, imagen, contratapa }) => {
+  const actualizarDisco = async (disco, { banda, titulo, formato, copias, anio = null, fecha_carga, spotify_url, imagen, contratapa, estado = [], observacion = null }) => {
     const bandaDestino = await bandaPorNombre(banda)
     const { error: err } = await supabase
       .from('discos')
-      .update({ banda_id: bandaDestino.id, titulo: titulo.trim(), formato, copias, anio, spotify_url: spotify_url || null, ...(fecha_carga && { fecha_carga }) })
+      .update({ banda_id: bandaDestino.id, titulo: titulo.trim(), formato, copias, anio, spotify_url: spotify_url || null, estado, observacion, ...(fecha_carga && { fecha_carga }) })
       .eq('id', disco.id)
     if (err?.code === '23505') {
       const existente = datos.discos.find(
@@ -193,12 +202,36 @@ export function CatalogoProvider({ sesion, children }) {
     const { error: err } = await supabase.from('discos').delete().eq('id', disco.id)
     if (err) throw err
     await borrarImagenes([disco.tapa_path, disco.contratapa_path]).catch(() => {})
-    // Una banda sin discos ya no aparece en ninguna pestaña: se limpia.
-    if (!datos.discos.some((d) => d.id !== disco.id && d.banda_id === disco.banda_id)) {
-      const banda = bandasPorId.get(disco.banda_id)
-      const { error: errBanda } = await supabase.from('bandas').delete().eq('id', disco.banda_id)
-      if (!errBanda) await borrarImagenes([banda?.imagen_path, banda?.logo_path]).catch(() => {})
-    }
+    await borrarBandaSinUso(disco.banda_id, { disco: disco.id })
+    await sincronizar()
+  }
+
+  // Una banda sin discos ni deseados ya no aparece en ningún lado: se limpia. disco y deseado: los que se acaban de
+  // quitar. Si los datos de esta pantalla quedaron viejos y la banda tiene un disco nuevo, la base no deja borrarla.
+  const borrarBandaSinUso = async (bandaId, { disco, deseado } = {}) => {
+    const enUso = datos.discos.some((d) => d.id !== disco && d.banda_id === bandaId) || deseados.some((d) => d.id !== deseado && d.banda_id === bandaId)
+    if (enUso) return
+    const banda = bandasPorId.get(bandaId)
+    const { error: errBanda } = await supabase.from('bandas').delete().eq('id', bandaId)
+    if (!errBanda) await borrarImagenes([banda?.imagen_path, banda?.logo_path]).catch(() => {})
+  }
+
+  // ─── Deseados ──────────────────────────────────────────────────────────
+  // Si la banda no existe, se crea (no aparece en las pestañas hasta tener un disco) y se enlaza al artista elegido.
+  // Devuelve { estado: 'ok' } o { estado: 'repetido' } si otro miembro lo agregó mientras tanto.
+  const agregarDeseado = async ({ banda, bandaTalCual = false, titulo, formato = null, anio = null, mb_release_group = null, mbid = null }) => {
+    const destino = await bandaPorNombre(banda, { talCual: bandaTalCual })
+    const { error: err } = await supabase.from('deseados').insert({ banda_id: destino.id, titulo: formatearTitulo(titulo), formato, anio, mb_release_group })
+    if (err && err.code !== '23505') throw err
+    if (!err && mbid && !destino.mbid) await enlazarBanda(destino, mbid, { recargar: false }).catch(() => {})
+    await sincronizar()
+    return { estado: err ? 'repetido' : 'ok' }
+  }
+
+  const quitarDeseado = async (deseado) => {
+    const { error: err } = await supabase.from('deseados').delete().eq('id', deseado.id)
+    if (err) throw err
+    await borrarBandaSinUso(deseado.banda_id, { deseado: deseado.id })
     await sincronizar()
   }
 
@@ -311,7 +344,7 @@ export function CatalogoProvider({ sesion, children }) {
 
   const importar = async (items, duplicados) => {
     const resumen = await rpc('importar_discos', {
-      p_items: items.map(({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url }) => ({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url })),
+      p_items: items.map(({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url, estado_disco, observacion }) => ({ banda, titulo, formato, copias, anio, fecha_carga, spotify_url, estado: estado_disco, observacion })),
       p_duplicados: duplicados,
     })
     await sincronizar()
@@ -326,6 +359,7 @@ export function CatalogoProvider({ sesion, children }) {
 
   const valor = {
     ...datos,
+    deseados,
     bandasPorId,
     discosPorId,
     online,
@@ -340,6 +374,8 @@ export function CatalogoProvider({ sesion, children }) {
     completarDisco,
     marcarSinCoincidencia,
     borrarDisco,
+    agregarDeseado,
+    quitarDeseado,
     renombrarBanda,
     fusionarBandas,
     cambiarImagenBanda,

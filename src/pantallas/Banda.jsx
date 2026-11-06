@@ -2,22 +2,24 @@ import { useMemo, useState } from 'react'
 import { AccionesTexto } from '../componentes/Compartir.jsx'
 import { FilaGeneros } from '../componentes/Generos.jsx'
 import { BarraLista, Boton, BotonCirculo, Dialogo, Encabezado, Fab, Hoja, Vacio } from '../componentes/ui.jsx'
-import { IconoCompartir, IconoEditar, IconoMas } from '../componentes/Iconos.jsx'
+import { IconoCompartir, IconoDeseado, IconoEditar, IconoMas, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { Grilla, Lista, TarjetaDisco } from '../componentes/Tarjetas.jsx'
-import { NOMBRE_FORMATO, ORDENES_BANDA, ordenarDiscos } from '../lib/catalogo.js'
+import { NOMBRE_FORMATO, ORDENES_BANDA, discosDeBanda } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { pendientesDeBanda, rutaCargar } from '../lib/deseados.js'
 import { textoBanda } from '../lib/exportar.js'
 import { usePreferencias } from '../lib/preferencias.js'
 import { SLUG_FORMATO, navegar } from '../lib/router.js'
 
 export default function Banda({ id, formato }) {
-  const { bandasPorId, discos, online } = useCatalogo()
+  const { bandasPorId, discos, deseados, online } = useCatalogo()
   // El orden de esta pantalla es propio (por año por defecto), independiente del de la grilla de bandas.
   const [{ vista, ordenBanda: orden }, cambiar] = usePreferencias()
   const [eligiendoOrden, setEligiendoOrden] = useState(false)
   const [compartiendo, setCompartiendo] = useState(false)
   const banda = bandasPorId.get(id)
-  const suyos = useMemo(() => ordenarDiscos(discos.filter((d) => d.banda_id === id && d.formato === formato), orden), [discos, id, formato, orden])
+  const suyos = useMemo(() => discosDeBanda(discos, id, formato, orden), [discos, id, formato, orden])
+  const pendientes = useMemo(() => pendientesDeBanda(deseados, id, formato), [deseados, id, formato])
 
   if (!banda) {
     return (
@@ -62,7 +64,31 @@ export default function Banda({ id, formato }) {
         ) : (
           <Vacio titulo={`Sin ${NOMBRE_FORMATO[formato].toLowerCase()} de ${banda.nombre}`} />
         )}
-        <div className="px-4 pt-4">
+        {pendientes.length > 0 && (
+          <details className="mx-4 mt-2 border-y border-metal/40">
+            <summary className="etiqueta flex min-h-12 cursor-pointer items-center text-sm">Pendientes ({pendientes.length})</summary>
+            <ul className="pb-2">
+              {pendientes.map((d) => (
+                <li key={d.id}>
+                  <button
+                    type="button"
+                    disabled={!online}
+                    onClick={() => navegar(rutaCargar(d, banda))}
+                    className="flex min-h-12 w-full items-center gap-3 border-t border-metal/40 text-left disabled:opacity-60"
+                  >
+                    <span className="min-w-0 flex-1 truncate">{d.titulo}</span>
+                    {d.anio && <span className="text-sm font-light text-suave">{d.anio}</span>}
+                    <IconoSiguiente className="size-4 text-suave" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+        <div className="grid gap-1 px-4 pt-4">
+          <Boton variante="fantasma" className="w-full" disabled={!online} onClick={() => navegar(`deseados/agregar?banda=${encodeURIComponent(banda.nombre)}`)}>
+            <IconoDeseado /> Agregar a deseados
+          </Boton>
           <Boton variante="fantasma" className="w-full" onClick={() => setCompartiendo(true)}>
             <IconoCompartir /> Compartir esta banda
           </Boton>

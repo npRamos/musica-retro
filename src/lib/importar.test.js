@@ -59,9 +59,38 @@ describe('planilla con encabezado', () => {
       'Copias inválidas: "0"',
       'El año tiene que tener 4 cifras: "86"',
       'Fecha inválida: "31/02/2020"',
-      'El link de Spotify tiene que ser de open.spotify.com',
+      'El link de Spotify tiene que ser de un álbum',
       'Falta el formato',
     ])
+  })
+
+  it('guarda el link de Spotify limpio y rechaza el que no es de un álbum', () => {
+    const lineas = parsearLista(['Banda;Disco;Formato;Spotify', 'A;B;CD;https://open.spotify.com/album/abc?si=123', 'A;C;CD;https://open.spotify.com/user/nadia'].join('\n'))
+    expect(lineas[0].spotify_url).toBe('https://open.spotify.com/album/abc')
+    expect(lineas[1].error).toBe('El link de Spotify tiene que ser de un álbum')
+  })
+
+  it('lee el estado y la observación, y marca inválido lo que no corresponde al formato', () => {
+    const lineas = parsearLista(['Banda;Disco;Formato;Estado;Observación', 'A;B;CD;rayado, Caja Rota;Salta en el tema 3', 'A;C;CD;Tapa rota;', 'A;D;Vinilo;Necesita funda;', 'A;E;CD;;'].join('\n'))
+    expect(lineas[0]).toMatchObject({ estado: ['rayado', 'caja_rota'], observacion: 'Salta en el tema 3' })
+    expect(lineas[1].error).toBe('Estado inválido para CD: "Tapa rota"')
+    expect(lineas[2].estado).toEqual(['necesita_funda'])
+    expect(lineas[3].estado).toBeUndefined()
+    expect(lineas[3].observacion).toBeUndefined()
+  })
+
+  it('el estado y la observación pasan a los ítems, y una planilla vieja se importa sin ellos', () => {
+    const { items } = clasificar(parsearLista('Banda;Disco;Formato;Estado;Observación\nA;B;CD;Rayado;Nota'), [], [])
+    expect(items[0]).toMatchObject({ estado: 'banda-nueva', estado_disco: ['rayado'], observacion: 'Nota' })
+    const vieja = clasificar(parsearLista('Banda;Disco;Formato;Copias;Año;Cargado;Spotify\nA;B;CD;1;;;'), [], [])
+    expect(vieja.items[0].estado_disco).toBeUndefined()
+  })
+
+  it('ida y vuelta del estado con la planilla exportada', async () => {
+    const { generarCsv } = await import('./exportar.js')
+    const bandas = new Map([['b', { id: 'b', nombre: 'Sumo' }]])
+    const [linea] = parsearLista(generarCsv([{ banda_id: 'b', titulo: 'T', formato: 'vinilo', copias: 1, fecha_carga: '2026-01-02T15:00:00Z', estado: ['muy_rayado', 'tapa_rota'], observacion: 'Nota; con punto y coma' }], bandas))
+    expect(linea).toMatchObject({ estado: ['muy_rayado', 'tapa_rota'], observacion: 'Nota; con punto y coma' })
   })
 
   it('repetidas suman las copias de cada fila', () => {

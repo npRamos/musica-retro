@@ -14,7 +14,9 @@ const DEBAJO = 64 // la barra arranca debajo de la barra de la lista (orden y vi
 
 const recortar = (n) => Math.min(1, Math.max(0, n))
 
-export default function Indice({ contenido, encabezado, version }) {
+// extra: alto de lo que hay entre la barra de la lista y el primer elemento, para no taparlo (los chips de géneros).
+export default function Indice({ contenido, encabezado, version, extra = 0 }) {
+  const debajo = DEBAJO + extra
   const barra = useRef(null)
   const [medidas, setMedidas] = useState(null) // { marcas: [{ texto, top }], arriba, maximo, alto }
   const [scroll, setScroll] = useState(0)
@@ -35,7 +37,7 @@ export default function Indice({ contenido, encabezado, version }) {
       // Con una sola marca (por ejemplo, todo comprado el mismo mes) queda la manija sola: igual sirve para ir rápido.
       const largo = document.documentElement.scrollHeight > PANTALLAS * innerHeight
       // El fondo de la barra lo fija el CSS (arriba del botón +); el tope, el encabezado.
-      const alto = (barra.current?.getBoundingClientRect().bottom ?? 0) - (arriba + DEBAJO)
+      const alto = (barra.current?.getBoundingClientRect().bottom ?? 0) - (arriba + debajo)
       setMedidas(largo ? { marcas, arriba, maximo, alto } : null)
     }
     medir()
@@ -47,7 +49,7 @@ export default function Indice({ contenido, encabezado, version }) {
       observador.disconnect()
       removeEventListener('resize', medir)
     }
-  }, [contenido, encabezado, version])
+  }, [contenido, encabezado, version, debajo])
 
   // ─── Mostrar al desplazarse ───────────────────────────────────────────
   const programarEscondida = () => {
@@ -116,7 +118,7 @@ export default function Indice({ contenido, encabezado, version }) {
     <div
       ref={barra}
       aria-hidden={!mostrar}
-      style={{ top: arriba + DEBAJO }}
+      style={{ top: arriba + debajo }}
       className={`${clasesBarra} transition-opacity duration-200 motion-reduce:transition-none ${mostrar ? 'opacity-100' : 'opacity-0'}`}
     >
       {/* Pegadas al costado, justo a la izquierda de la manija: letras en círculo, textos largos en píldora. */}

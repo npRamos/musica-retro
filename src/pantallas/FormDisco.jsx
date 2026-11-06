@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { EditorEstado } from '../componentes/Estado.jsx'
 import { CampoBanda, CampoDisco, Copias, HojaEdiciones, SelectorImagen } from '../componentes/Formulario.jsx'
 import { IconoCd, IconoVinilo } from '../componentes/Iconos.jsx'
 import { Imagen } from '../componentes/Portadas.jsx'
 import { TemasPlegables } from '../componentes/Temas.jsx'
 import { Boton, Campo, Dialogo, Encabezado, Segmentado } from '../componentes/ui.jsx'
-import { NOMBRE_FORMATO_SINGULAR, esLinkSpotifyValido, fechaLocal, leerAnio, mediodiaLocal } from '../lib/catalogo.js'
+import { NOMBRE_FORMATO_SINGULAR, fechaLocal, leerAnio, limpiarLinkSpotify, mediodiaLocal } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
 import { coincideFormato, describirEdicion, elegirEdicion } from '../lib/discografia.js'
 import { mensajeError } from '../lib/errores.js'
+import { estadoDe, estadoDelFormato, tieneEstado } from '../lib/estado.js'
 import { OPCIONES_CONTRATAPA, imagenesDeMusicbrainz } from '../lib/imagen.js'
 import { datosParaGuardar, musicbrainz } from '../lib/musicbrainz.js'
 import { navegar, subir } from '../lib/router.js'
@@ -22,16 +24,25 @@ const OPCIONES_FORMATO = [
 // Alta (sin disco) o edición (con disco). En la edición se guarda tal cual lo escrito.
 export default function FormDisco({ disco, inicial = {} }) {
   const catalogo = useCatalogo()
-  const { bandas, bandasPorId, online } = catalogo
+  const { bandas, bandasPorId, deseados, online } = catalogo
+  // El deseado del que viene este alta. Se guarda al encontrarlo: al resolverse, sale de la lista con esta pantalla
+  // abierta. Se sigue buscando porque, al recargar, la copia del dispositivo puede no tenerlo todavía.
+  const deseadoGuardado = useRef(null)
+  if (inicial.deseado) deseadoGuardado.current ??= deseados.find((d) => d.id === inicial.deseado) ?? null
+  const deseado = deseadoGuardado.current
   const editando = Boolean(disco)
   const conMusicbrainz = !editando && online
   const [banda, setBanda] = useState(editando ? (bandasPorId.get(disco.banda_id)?.nombre ?? '') : (inicial.banda ?? ''))
   const [titulo, setTitulo] = useState(editando ? disco.titulo : (inicial.titulo ?? ''))
   const [formato, setFormato] = useState(editando ? disco.formato : (inicial.formato ?? null))
   const [copias, setCopias] = useState(editando ? disco.copias : 1)
-  const [anioTexto, setAnioTexto] = useState(editando ? String(disco.anio ?? '') : '')
+  const [anioTexto, setAnioTexto] = useState(editando ? String(disco.anio ?? '') : String(deseado?.anio ?? ''))
   const [spotify, setSpotify] = useState(editando ? (disco.spotify_url ?? '') : '')
   const [fecha, setFecha] = useState(editando ? fechaLocal(disco.fecha_carga) : '')
+  const [estado, setEstado] = useState(editando ? estadoDe(disco) : [])
+  const [observacion, setObservacion] = useState(editando ? (disco.observacion ?? '') : '')
+  // "Más datos" arranca plegado, salvo que el disco ya tenga un estado.
+  const [conEstadoInicial] = useState(editando && tieneEstado(disco))
   const hoy = fechaLocal(new Date())
   const [imagen, setImagen] = useState(undefined)
   const [contratapa, setContratapa] = useState(undefined)
@@ -45,7 +56,10 @@ export default function FormDisco({ disco, inicial = {} }) {
 
   // ─── MusicBrainz ──────────────────────────────────────────────────────
   const [artistaMb, setArtistaMb] = useState(null) // artista elegido para una banda que no está en el catálogo
-  const [discoMb, setDiscoMb] = useState(null)
+  // Un deseado elegido de MusicBrainz deja el disco elegido, así busca ediciones, tapa y temas sin volver a elegirlo.
+  const [discoMb, setDiscoMb] = useState(() =>
+    deseado?.mb_release_group ? { id: deseado.mb_release_group, titulo: deseado.titulo, anio: deseado.anio, artista: null } : null,
+  )
   const [edicionManual, setEdicionManual] = useState(null) // id elegido a mano, 'ninguna' o null (automática)
   const [eligiendoEdicion, setEligiendoEdicion] = useState(false)
 
@@ -87,6 +101,7 @@ export default function FormDisco({ disco, inicial = {} }) {
   // Una edición elegida a mano que no es del formato nuevo vuelve a la automática. "Ninguna" se respeta.
   const cambiarFormato = (f) => {
     setFormato(f)
+    setEstado((e) => estadoDelFormato(e, f))
     const manual = ediciones.datos?.find((e) => e.id === edicionManual)
     if (manual && !coincideFormato(manual, f)) setEdicionManual(null)
   }
@@ -114,7 +129,7 @@ export default function FormDisco({ disco, inicial = {} }) {
     if (!Number.isInteger(copias) || copias < 1) e.copias = 'El mínimo es 1 copia'
     const { error: errorAnio } = leerAnio(anioTexto)
     if (errorAnio) e.anio = errorAnio
-    if (spotify.trim() && !esLinkSpotifyValido(spotify.trim())) e.spotify = 'Tiene que ser un link de open.spotify.com'
+    if (spotify.trim() && !limpiarLinkSpotify(spotify)) e.spotify = 'Tiene que ser el link de un álbum de open.spotify.com'
     if (editando && !fecha) e.fecha = 'Elegí una fecha'
     else if (editando && fecha > hoy) e.fecha = 'La fecha no puede ser futura'
     setErrores(e)
@@ -135,9 +150,11 @@ export default function FormDisco({ disco, inicial = {} }) {
           copias,
           anio: leerAnio(anioTexto).anio,
           fecha_carga: fecha !== fechaLocal(disco.fecha_carga) ? mediodiaLocal(fecha) : undefined,
-          spotify_url: spotify.trim(),
+          spotify_url: limpiarLinkSpotify(spotify),
           imagen,
           contratapa,
+          estado,
+          observacion: observacion.trim() || null,
         })
         if (r.estado === 'conflicto') setConflicto(r.existente)
         else subir(`disco/${disco.id}`)
@@ -151,9 +168,14 @@ export default function FormDisco({ disco, inicial = {} }) {
           contratapa,
           datos: datosMb(),
           bandaTalCual: Boolean(artistaElegido && !bandaLocal),
+          estado,
+          observacion: observacion.trim() || null,
         })
         if (r.estado === 'duplicado') setDuplicado(r.disco)
-        else navegar(`disco/${r.disco.id}`, { reemplazar: true })
+        else {
+          await resolverDeseado()
+          navegar(`disco/${r.disco.id}`, { reemplazar: true })
+        }
       }
     } catch (e) {
       setErrorGeneral(mensajeError(e))
@@ -162,10 +184,14 @@ export default function FormDisco({ disco, inicial = {} }) {
     }
   }
 
+  // El disco ya está cargado: si no se pudo sacar el deseado, se quita a mano.
+  const resolverDeseado = () => (deseado ? catalogo.quitarDeseado(deseado).catch(() => {}) : null)
+
   const sumarCopia = async () => {
     setGuardando(true)
     try {
       await catalogo.sumarCopia(duplicado, copias, imagen ?? undefined, contratapa ?? undefined, datosMb())
+      await resolverDeseado()
       navegar(`disco/${duplicado.id}`, { reemplazar: true })
     } catch (e) {
       setErrorGeneral(mensajeError(e, 'sumar la copia'))
@@ -277,14 +303,13 @@ export default function FormDisco({ disco, inicial = {} }) {
             ayuda="Si lo dejás vacío, se busca por banda y título."
           />
         )}
-        {editando && (
-          <details className="border-y border-metal/40" open={Boolean(errores.fecha)}>
-            <summary className="etiqueta flex min-h-12 cursor-pointer items-center text-sm">Más datos</summary>
-            <div className="pb-4">
-              <Campo etiqueta="Fecha de carga" type="date" max={hoy} value={fecha} onChange={(e) => setFecha(e.target.value)} error={errores.fecha} />
-            </div>
-          </details>
-        )}
+        <details className="border-y border-metal/40" open={Boolean(errores.fecha) || conEstadoInicial}>
+          <summary className="etiqueta flex min-h-12 cursor-pointer items-center text-sm">Más datos</summary>
+          <div className="space-y-5 pb-4">
+            <EditorEstado formato={formato} estado={estado} onEstado={setEstado} observacion={observacion} onObservacion={setObservacion} />
+            {editando && <Campo etiqueta="Fecha de carga" type="date" max={hoy} value={fecha} onChange={(e) => setFecha(e.target.value)} error={errores.fecha} />}
+          </div>
+        </details>
         {editando && online && (
           <Boton variante="secundario" className="w-full" onClick={() => navegar(`disco/${disco.id}/completar`)}>
             Completar desde MusicBrainz

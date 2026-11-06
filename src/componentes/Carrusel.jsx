@@ -25,7 +25,8 @@ export default function Carrusel({ disco }) {
       <div
         ref={pista}
         onScroll={alDeslizar}
-        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-sin-deslizar
+        className="flex touch-pan-x touch-pan-y snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
       >
         {caras.map((cara, i) => (
           <button

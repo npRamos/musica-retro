@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { IconoBuscar, IconoEditar, IconoEtiqueta, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
+import { IconoBuscar, IconoDeseado, IconoEditar, IconoEstado, IconoEtiqueta, IconoImportar, IconoSalir, IconoSiguiente } from '../componentes/Iconos.jsx'
 import { CompartirCatalogo } from '../componentes/Compartir.jsx'
 import { Encabezado, Segmentado } from '../componentes/ui.jsx'
+import { pendientesDeGeneros } from '../lib/catalogo.js'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { discosConEstado } from '../lib/estado.js'
 import { mensajeError } from '../lib/errores.js'
 import { RANGO_GENEROS } from '../lib/generos.js'
 import { usePreferencias } from '../lib/preferencias.js'
@@ -14,10 +16,11 @@ const ACENTOS = [
 ]
 
 export default function Ajustes({ mail }) {
-  const { bandas, discos, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion, maximoGeneros, ajusteGenerosLeido, cambiarMaximoGeneros } =
+  const { bandas, discos, deseados, online, actualizadoEn, sincronizando, sincronizar, cerrarSesion, maximoGeneros, ajusteGenerosLeido, cambiarMaximoGeneros } =
     useCatalogo()
   const pendientes = discos.filter((d) => d.mb_estado === 'pendiente').length
-  const sinGeneros = bandas.filter((b) => b.generos_estado === 'pendiente').length
+  const sinGeneros = pendientesDeGeneros(bandas, discos).length
+  const conEstado = discosConEstado(discos).length
   const [prefs, cambiar] = usePreferencias()
 
   return (
@@ -76,6 +79,31 @@ export default function Ajustes({ mail }) {
         <CompartirCatalogo />
 
         <ul className="border-t border-metal/40">
+          <li>
+            <button type="button" onClick={() => navegar('deseados')} className="flex min-h-14 w-full items-center gap-3 border-b border-metal/40 text-left">
+              <IconoDeseado />
+              <span className="flex-1">
+                Lista de deseados
+                <span className="block text-sm font-light text-suave">{deseados.length ? `${deseados.length} ${deseados.length === 1 ? 'disco' : 'discos'}` : 'Vacía'}</span>
+              </span>
+              <IconoSiguiente className="size-4 text-suave" />
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              disabled={!conEstado}
+              onClick={() => navegar('estados')}
+              className="flex min-h-14 w-full items-center gap-3 border-b border-metal/40 text-left disabled:opacity-40"
+            >
+              <IconoEstado />
+              <span className="flex-1">
+                Discos con estado
+                <span className="block text-sm font-light text-suave">{conEstado ? `${conEstado} ${conEstado === 1 ? 'disco' : 'discos'}` : 'Ninguno'}</span>
+              </span>
+              <IconoSiguiente className="size-4 text-suave" />
+            </button>
+          </li>
           <li>
             <button
               type="button"

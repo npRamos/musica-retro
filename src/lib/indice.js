@@ -1,20 +1,18 @@
 import { normalizar } from './texto.js'
 
-// Índice al costado de la lista: qué marca le toca a cada elemento (letra, género o mes) según cómo se ve.
+// Índice al costado de la lista: qué marca le toca a cada elemento (letra o mes) según cómo se ve.
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 
-// null: agrupada por género, las marcas son los títulos de las secciones.
+// null: agrupada u ordenada por género, las marcas son los títulos de las secciones.
 export function criterioDe(orden, agrupar) {
-  if (agrupar === 'generos') return null
+  if (agrupar === 'generos' || orden === 'genero') return null
   if (orden === 'reciente') return 'mes'
-  if (orden === 'genero') return 'genero'
   return 'letra'
 }
 
 // La ñ cae en la N (normalizar le quita la tilde); lo que no empieza con letra va en "#".
 export function marcaDe(banda, fecha, criterio) {
-  if (criterio === 'genero') return banda?.generos?.[0] ?? 'Sin género'
   if (criterio === 'mes') {
     if (!fecha) return '—'
     const d = new Date(fecha)

@@ -1,27 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useCatalogo } from '../lib/catalogoContexto.jsx'
+import { compartirArchivo } from '../lib/compartir.js'
 import { ALCANCES, LIMITE_WHATSAPP, enlaceWhatsapp, generarCsv, nombreArchivo, textoCatalogo } from '../lib/exportar.js'
 import { IconoCopiar, IconoMensaje, IconoPlanilla } from './Iconos.jsx'
 import { Boton, Segmentado } from './ui.jsx'
-
-// En el celular abre la hoja de compartir con el archivo; donde no se puede, lo descarga.
-async function compartirPlanilla(contenido, nombre) {
-  const archivo = new File([contenido], nombre, { type: 'text/csv' })
-  if (navigator.canShare?.({ files: [archivo] })) {
-    try {
-      await navigator.share({ files: [archivo], title: nombre })
-    } catch (e) {
-      if (e.name !== 'AbortError') throw e
-    }
-    return
-  }
-  const url = URL.createObjectURL(archivo)
-  const enlace = Object.assign(document.createElement('a'), { href: url, download: nombre })
-  document.body.append(enlace)
-  enlace.click()
-  enlace.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
 
 // Copiar el texto o abrirlo en WhatsApp para elegir el chat.
 export function AccionesTexto({ texto }) {
@@ -75,7 +57,7 @@ export function CompartirCatalogo() {
   const descargar = async () => {
     setError(null)
     try {
-      await compartirPlanilla(generarCsv(discos, bandasPorId, alcance), nombreArchivo(alcance))
+      await compartirArchivo(new File([generarCsv(discos, bandasPorId, alcance)], nombreArchivo(alcance), { type: 'text/csv' }))
     } catch {
       setError('No se pudo compartir la planilla. Probá de nuevo.')
     }

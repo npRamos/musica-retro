@@ -1,3 +1,4 @@
+import { mismoGenero } from './generos.js'
 import { normalizar } from './texto.js'
 
 export const FORMATOS = ['vinilo', 'cd']
@@ -71,13 +72,30 @@ export function ordenarDiscos(discos, orden, bandasPorId) {
   return orden === 'za' ? copia.reverse() : copia
 }
 
-// Secciones por género, en orden alfabético y "Sin género" (genero: null) al final. Una banda con varios
-// géneros aparece en cada uno; dentro de cada sección se respeta el orden de items.
-export function agruparPorGenero(items) {
+// Bandas para "Completar géneros": con los géneros sin revisar y al menos un disco (las que solo tienen deseados, no).
+export function pendientesDeGeneros(bandas, discos) {
+  const conDiscos = new Set(discos.map((d) => d.banda_id))
+  return bandas.filter((b) => b.generos_estado === 'pendiente' && conDiscos.has(b.id))
+}
+
+// Los discos de una banda en un formato, en el orden de su pantalla.
+export const discosDeBanda = (discos, bandaId, formato, orden) =>
+  ordenarDiscos(discos.filter((d) => d.banda_id === bandaId && d.formato === formato), orden)
+
+// El anterior y el siguiente de un disco dentro de la lista; en los extremos, null.
+export function discosVecinos(lista, id) {
+  const i = lista.findIndex((d) => d.id === id)
+  if (i === -1) return { anterior: null, siguiente: null }
+  return { anterior: lista[i - 1] ?? null, siguiente: lista[i + 1] ?? null }
+}
+
+// Secciones por género, en orden alfabético y "Sin género" (genero: null) al final. Dentro de cada sección se
+// respeta el orden de los elementos. generosDe(elemento) dice en qué secciones va; vacío, en "Sin género".
+function armarSecciones(elementos, generosDe) {
   const secciones = new Map()
   const sinGenero = []
-  for (const item of items) {
-    const generos = item.banda.generos ?? []
+  for (const item of elementos) {
+    const generos = generosDe(item)
     if (!generos.length) sinGenero.push(item)
     for (const g of generos) {
       const clave = normalizar(g)
@@ -88,6 +106,43 @@ export function agruparPorGenero(items) {
   const lista = [...secciones.values()].sort((a, b) => comparar(a.genero, b.genero))
   return sinGenero.length ? [...lista, { genero: null, items: sinGenero }] : lista
 }
+
+// Agrupada por género: una banda con varios géneros aparece en cada uno.
+export const agruparPorGenero = (items) => armarSecciones(items, (item) => item.banda.generos ?? [])
+
+export const SIN_GENERO = 'Sin género'
+const generoElegido = (genero, elegidos) => elegidos.some((e) => mismoGenero(e, genero ?? SIN_GENERO))
+const generosDeBanda = (banda) => banda?.generos ?? []
+
+export const seVePorGenero = (agrupar, orden) => agrupar === 'generos' || orden === 'genero'
+
+// Ordenada por género: cada elemento aparece una sola vez, bajo su género principal o, con un filtro activo, bajo el
+// primero de sus géneros que esté elegido. Si no, una banda elegida por su segundo género se vería bajo otro título.
+export function seccionesPorOrden(elementos, bandaDe, elegidos = []) {
+  return armarSecciones(elementos, (item) => {
+    const generos = generosDeBanda(bandaDe(item))
+    const titulo = generos.find((g) => generoElegido(g, elegidos)) ?? generos[0]
+    return titulo ? [titulo] : []
+  })
+}
+
+// Chips del filtro: [{ nombre, cantidad }] en el orden de las secciones.
+export function chipsDeGeneros(elementos, bandaDe) {
+  return armarSecciones(elementos, (item) => generosDeBanda(bandaDe(item))).map((s) => ({ nombre: s.genero ?? SIN_GENERO, cantidad: s.items.length }))
+}
+
+// Los elegidos que existen en la lista actual: los demás se ignoran, sin borrarse de la preferencia.
+export const generosVigentes = (filtro, chips) => chips.filter((c) => filtro.some((f) => mismoGenero(f, c.nombre))).map((c) => c.nombre)
+
+export function filtrarPorGenero(elementos, bandaDe, elegidos) {
+  if (!elegidos.length) return elementos
+  return elementos.filter((item) => {
+    const generos = generosDeBanda(bandaDe(item))
+    return generos.length ? generos.some((g) => generoElegido(g, elegidos)) : generoElegido(null, elegidos)
+  })
+}
+
+export const filtrarSecciones = (secciones, elegidos) => (elegidos.length ? secciones.filter((s) => generoElegido(s.genero, elegidos)) : secciones)
 
 // Discos que coinciden por título o banda en el formato activo, y cuántos hay en el otro.
 export function buscar(discos, bandasPorId, texto, formato) {
@@ -104,9 +159,22 @@ export function buscar(discos, bandasPorId, texto, formato) {
   return { enFormato, enOtro }
 }
 
+// El link limpio del álbum, o null si no es de un álbum. Saca los parámetros, como el `si` que identifica a quien
+// copió el link, y el prefijo de idioma.
+const RUTA_ALBUM = /^\/(?:intl-[a-z]{2}\/)?album\/([A-Za-z0-9]+)\/?$/
+export function limpiarLinkSpotify(url) {
+  try {
+    const u = new URL(String(url ?? '').trim())
+    if (u.protocol !== 'https:' || u.hostname !== 'open.spotify.com') return null
+    const [, id] = RUTA_ALBUM.exec(u.pathname) ?? []
+    return id ? `https://open.spotify.com/album/${id}` : null
+  } catch {
+    return null
+  }
+}
+
 export function linkSpotify(disco, banda) {
-  if (disco.spotify_url) return disco.spotify_url
-  return `https://open.spotify.com/search/${encodeURIComponent(`${banda?.nombre ?? ''} ${disco.titulo}`.trim())}`
+  return limpiarLinkSpotify(disco.spotify_url) ?? `https://open.spotify.com/search/${encodeURIComponent(`${banda?.nombre ?? ''} ${disco.titulo}`.trim())}`
 }
 
 // Año opcional: vacío o 4 cifras entre 1900 y 2100.
@@ -128,15 +196,6 @@ export function fechaLocal(fecha) {
 export function mediodiaLocal(dia) {
   const [a, m, d] = dia.split('-').map(Number)
   return new Date(a, m - 1, d, 12).toISOString()
-}
-
-export function esLinkSpotifyValido(url) {
-  try {
-    const u = new URL(url)
-    return u.protocol === 'https:' && u.hostname === 'open.spotify.com'
-  } catch {
-    return false
-  }
 }
 
 // Índice de un color estable a partir de un nombre (para tarjetas sin imagen).
