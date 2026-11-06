@@ -95,7 +95,7 @@ El sistema MUST detectar un alta de un disco que ya existe con la misma banda, e
 - **THEN** el sistema lo guarda como un disco nuevo, sin aviso de duplicado
 
 ### Requirement: Edición de disco
-El sistema SHALL permitir modificar el título, la banda, el formato, las copias (entero ≥ 1), el año (entre 1900 y 2100, opcional), la tapa, la contratapa, un link de Spotify opcional (que MUST pertenecer a `open.spotify.com`) y, dentro de una sección plegada "Más datos", la fecha de carga (que MUST NOT ser futura). El título editado MUST guardarse exactamente como se escribió. Si la edición lo convierte en un disco que ya existe, el sistema MUST NOT guardarla y SHALL ofrecer ir al disco existente.
+El sistema SHALL permitir modificar el título, la banda, el formato, las copias (entero ≥ 1), el año (entre 1900 y 2100, opcional), la tapa, la contratapa, un link de Spotify opcional (que MUST ser de un álbum de `open.spotify.com` y MUST guardarse sin parámetros) y, dentro de una sección plegada "Más datos", la fecha de carga (que MUST NOT ser futura). El título editado MUST guardarse exactamente como se escribió. Si la edición lo convierte en un disco que ya existe, el sistema MUST NOT guardarla y SHALL ofrecer ir al disco existente.
 
 #### Scenario: Corregir título
 - **WHEN** la usuaria cambia el título "Sigons" por "Signos" y guarda
@@ -108,6 +108,14 @@ El sistema SHALL permitir modificar el título, la banda, el formato, las copias
 #### Scenario: Link de Spotify inválido
 - **WHEN** la usuaria pega un link que no es de `open.spotify.com`
 - **THEN** el sistema no lo guarda e indica el error
+
+#### Scenario: Link de Spotify que no es de un álbum
+- **WHEN** la usuaria pega el link de un perfil o de un tema de Spotify
+- **THEN** el sistema no lo guarda e indica que tiene que ser el link de un álbum
+
+#### Scenario: Link de Spotify con parámetros
+- **WHEN** la usuaria pega `https://open.spotify.com/album/abc?si=123` y guarda
+- **THEN** el sistema guarda `https://open.spotify.com/album/abc`
 
 #### Scenario: Edición que genera duplicado
 - **WHEN** la usuaria cambia el formato de "Signos" de CD a vinilo y ya tiene "Signos" en vinilo
@@ -191,4 +199,43 @@ El sistema MUST deshabilitar el alta, la edición, el borrado, la importación y
 #### Scenario: Intento de alta sin conexión
 - **WHEN** el dispositivo no tiene conexión
 - **THEN** el botón de agregar disco aparece deshabilitado con el aviso "Sin conexión"
+
+### Requirement: Estado del disco
+Al agregar o editar un disco, el sistema SHALL permitir, dentro de la sección plegada "Más datos", marcar etiquetas de estado y escribir una observación libre, ambas opcionales. Las etiquetas MUST depender del formato: Rayado, Muy rayado, Caja rota y Sin caja para CD; Rayado, Muy rayado, Tapa rota y Necesita funda para vinilo. Rayado y Muy rayado MUST excluirse entre sí; las demás MUST poder combinarse. Si se cambia el formato, MUST quitarse las etiquetas que no corresponden al nuevo. La sección "Más datos" MUST estar plegada, salvo que el disco ya tenga un estado. Al sumar copias a un disco existente, su estado MUST NOT cambiar. Al unir dos bandas con el mismo disco, el disco que queda MUST tener las etiquetas de los dos, con Muy rayado en lugar de Rayado, y sus dos observaciones.
+
+#### Scenario: Marcar el estado
+- **WHEN** la usuaria edita un CD, abre "Más datos", marca "Rayado" y "Caja rota" y guarda
+- **THEN** el disco queda con esos dos estados
+
+#### Scenario: Estado al cargar
+- **WHEN** la usuaria agrega un vinilo, abre "Más datos", marca "Necesita funda" y guarda
+- **THEN** el disco queda con ese estado
+
+#### Scenario: Oculto por defecto
+- **WHEN** la usuaria abre la edición de un disco sin estado
+- **THEN** las etiquetas no se ven hasta que abre "Más datos"
+
+#### Scenario: Etiquetas según el formato
+- **WHEN** la usuaria edita un vinilo
+- **THEN** puede marcar "Tapa rota" y no ve "Caja rota"
+
+#### Scenario: Rayado y muy rayado
+- **WHEN** el disco tiene "Rayado" y la usuaria marca "Muy rayado"
+- **THEN** queda solo "Muy rayado"
+
+#### Scenario: Observación
+- **WHEN** la usuaria escribe "Una de las dos copias está rayada" y guarda
+- **THEN** el disco queda con esa observación
+
+#### Scenario: Cambiar de formato
+- **WHEN** la usuaria cambia un CD con "Rayado" y "Caja rota" a vinilo y guarda
+- **THEN** el disco queda solo con "Rayado"
+
+#### Scenario: Sumar una copia
+- **WHEN** la usuaria carga un disco repetido marcando "Rayado" y acepta "Sumar copia"
+- **THEN** el disco existente suma la copia y conserva el estado que tenía
+
+#### Scenario: Unir bandas con el mismo disco
+- **WHEN** se unen dos bandas con el mismo CD, uno "Rayado" y otro "Muy rayado" y "Sin caja"
+- **THEN** queda un solo disco con "Muy rayado" y "Sin caja"
 

@@ -4,7 +4,7 @@
 Sacar el catálogo de la app: descargarlo como planilla CSV que se abre bien en Excel en español y Google Sheets, y compartirlo como texto para copiar o mandar por WhatsApp, completo, por formato o de una sola banda, también sin conexión.
 ## Requirements
 ### Requirement: Descargar el catálogo como planilla
-El sistema SHALL permitir, desde Ajustes, descargar el catálogo como planilla CSV eligiendo el alcance: Todo, Vinilos o CDs. La planilla MUST tener una fila por disco, con las columnas Banda, Disco, Formato, Copias, Año, Cargado y Spotify, ordenadas por banda, año y título.
+El sistema SHALL permitir, desde Ajustes, descargar el catálogo como planilla CSV eligiendo el alcance: Todo, Vinilos o CDs. La planilla MUST tener una fila por disco, con las columnas Banda, Disco, Formato, Copias, Año, Cargado, Spotify, Estado y Observación, ordenadas por banda, año y título. La columna Estado MUST listar las etiquetas separadas por coma.
 
 #### Scenario: Descargar todo
 - **WHEN** la usuaria elige "Todo" y toca "Descargar planilla"
@@ -15,8 +15,12 @@ El sistema SHALL permitir, desde Ajustes, descargar el catálogo como planilla C
 - **THEN** la planilla tiene solo los discos en vinilo y el nombre del archivo incluye "vinilos"
 
 #### Scenario: Datos vacíos
-- **WHEN** un disco no tiene año ni link de Spotify
+- **WHEN** un disco no tiene año, link de Spotify, estado ni observación
 - **THEN** esas celdas quedan vacías
+
+#### Scenario: Disco con estado
+- **WHEN** un CD tiene "Rayado" y "Caja rota" y la observación "Salta en el tema 3"
+- **THEN** su fila muestra "Rayado, Caja rota" en Estado y "Salta en el tema 3" en Observación
 
 ### Requirement: Compatible con Excel en español
 La planilla MUST usar `;` como separador, codificación UTF-8 con BOM y comillas en los campos que contengan `;`, comillas o saltos de línea, para que Excel en español y Google Sheets la abran en columnas y con las tildes correctas. La fecha de carga MUST escribirse como `dd/mm/aaaa`.
@@ -65,4 +69,15 @@ El sistema SHALL permitir copiar o enviar por WhatsApp el catálogo como texto l
 #### Scenario: Sin conexión
 - **WHEN** la usuaria copia el catálogo sin señal
 - **THEN** el texto se copia con los datos de la última sincronización
+
+### Requirement: Link de Spotify en la planilla
+La columna Spotify de la planilla MUST tener el link limpio del álbum, sin parámetros. Si el link guardado no es de un álbum, la celda MUST quedar vacía.
+
+#### Scenario: Link con parámetros
+- **WHEN** un disco tiene guardado `https://open.spotify.com/album/abc?si=123`
+- **THEN** la planilla muestra `https://open.spotify.com/album/abc`
+
+#### Scenario: Link que no es de un álbum
+- **WHEN** un disco tiene guardado el link de un perfil de Spotify
+- **THEN** la celda de Spotify queda vacía
 

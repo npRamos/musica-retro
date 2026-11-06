@@ -50,13 +50,13 @@
 ## 6. Verificación
 
 - [x] 6.1 Tests y build en verde.
-- [ ] 6.2 Probar en el celular el estado:
+- [x] 6.2 Probar en el celular el estado:
   - marcar y quitar, en alta y edición, en CD y vinilo;
   - cambiar de formato;
   - sumar una copia;
   - "Discos con estado", con filtros y sin conexión;
   - exportar y reimportar una planilla.
-- [ ] 6.3 Probar en el celular los deseados:
+- [x] 6.3 Probar en el celular los deseados:
   - agregar con y sin formato, de una banda nueva y de una existente;
   - los avisos de repetido y "Ya lo tenés";
   - cargar un deseado de MusicBrainz y uno escrito a mano, cambiando el título y sumando una copia;
@@ -66,4 +66,4 @@
   - borrar el último disco de una banda con deseados, y quitar el último deseado de una banda sin discos;
   - comprobar que una banda con solo deseados no aparece en "Completar géneros", y que entra al cargarle su primer disco;
   - ver la lista desde otra cuenta del catálogo y sin conexión.
-- [ ] 6.4 Sincronizar las specs, archivar el change y cerrar los issues #8 y #10.
+- [x] 6.4 Sincronizar las specs, archivar el change y cerrar los issues #8 y #10.

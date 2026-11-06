@@ -36,7 +36,7 @@
 
 ## 5. Compartir el disco sorteado (#9)
 
-- [ ] 5.1 Probar en un celular real, con una imagen de prueba, qué opciones ofrece Instagram al recibirla desde la web. Registrar el resultado en este change.
+- [x] 5.1 Probar en un celular real, con una imagen de prueba, qué opciones ofrece Instagram al recibirla desde la web. Registrar el resultado en este change.
 - [x] 5.2 Sacar `compartirPlanilla` de `Compartir.jsx` y generalizarla a `compartirArchivo(archivo, titulo)`, que comparte o descarga. Se sigue usando para la planilla.
 - [x] 5.3 `src/lib/imagenCompartir.js`: generar el JPEG de 1080×1920 con tapa o ícono, disco asomado, textos con corte de línea y nombre de la app, esperando las fuentes.
 - [x] 5.4 `Sorteo.jsx`: generar la imagen cuando termina la animación, y sumar el botón "Compartir", que dice "Preparando…" mientras tanto y llama a `share` de forma síncrona.
@@ -44,11 +44,11 @@
 ## 6. Verificación
 
 - [x] 6.1 Tests y build en verde.
-- [ ] 6.2 Confirmar qué dice "Link de Spotify" en un disco donde falla el #11. Si está vacío, revisar la causa antes de cerrar el issue.
-- [ ] 6.3 Probar en el celular:
+- [x] 6.2 Confirmar qué dice "Link de Spotify" en un disco donde falla el #11. Si está vacío, revisar la causa antes de cerrar el issue.
+- [x] 6.3 Probar en el celular:
   - **Scroll:** una lista larga, con y sin índice.
   - **Spotify:** el botón en un disco cargado por cada miembro.
   - **Gesto:** cambiar de disco y volver atrás; deslizar sobre la tapa, con y sin contratapa; con el visor abierto; hacer scroll vertical sin cambiar de disco; usar el gesto de atrás del sistema.
   - **Géneros:** filtrar por uno y varios, cambiar de pestaña, volver a abrir la app, buscar y usar el índice.
   - **Compartir:** a Instagram, cancelar el menú, un disco sin tapa, tema claro y sin conexión.
-- [ ] 6.4 Sincronizar las specs, archivar el change y cerrar los issues #7, #9, #11, #12 y #13.
+- [x] 6.4 Sincronizar las specs, archivar el change y cerrar los issues #7, #9, #11, #12 y #13.

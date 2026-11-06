@@ -150,15 +150,27 @@ El sistema SHALL ofrecer un buscador siempre visible que filtra por título de d
 - **THEN** el sistema indica "No lo tenés" y ofrece agregarlo con el texto buscado y el formato de la pestaña precargados
 
 ### Requirement: Abrir en Spotify
-El detalle de disco SHALL ofrecer la acción "Escuchar en Spotify". Si el disco tiene un link guardado, MUST abrir ese link. Si no, MUST abrir la búsqueda web de Spotify con banda y título.
+El detalle de disco SHALL ofrecer la acción "Escuchar en Spotify". Si el disco tiene guardado un link de álbum, MUST abrir ese álbum con un link limpio, sin parámetros, sin importar quién cargó el link. Si no tiene link, o el link guardado no es de un álbum, MUST abrir la búsqueda web de Spotify con banda y título.
 
 #### Scenario: Disco sin link guardado
 - **WHEN** la usuaria elige "Escuchar en Spotify" en "Sumo – Llegando los Monos"
 - **THEN** el sistema abre `https://open.spotify.com/search/` con "Sumo Llegando los Monos" codificado en la URL
 
 #### Scenario: Disco con link guardado
-- **WHEN** el disco tiene un link de Spotify guardado
-- **THEN** el sistema abre ese link
+- **WHEN** el disco tiene un link de álbum de Spotify guardado
+- **THEN** el sistema abre ese álbum
+
+#### Scenario: Link con parámetros
+- **WHEN** el link guardado es `https://open.spotify.com/album/abc?si=123`
+- **THEN** el sistema abre `https://open.spotify.com/album/abc`
+
+#### Scenario: Link con idioma
+- **WHEN** el link guardado es `https://open.spotify.com/intl-es/album/abc`
+- **THEN** el sistema abre `https://open.spotify.com/album/abc`
+
+#### Scenario: Link que no es de un álbum
+- **WHEN** el link guardado es de un perfil de Spotify
+- **THEN** el sistema abre la búsqueda con banda y título
 
 ### Requirement: Consulta sin conexión
 El sistema SHALL guardar en el dispositivo el último catálogo obtenido (datos e imágenes de todos los discos y bandas, aunque no se hayan mirado) y mostrarlo sin conexión, indicando la fecha de esa copia. Al abrir la app MUST mostrar primero la copia local y después actualizarla desde la base. El sistema SHALL pedir al navegador almacenamiento persistente para que la copia no se borre.
@@ -323,8 +335,7 @@ Cuando la lista de la pantalla principal es larga (más de tres pantallas de alt
 
 Las marcas dependen de cómo se ve la lista:
 - **A → Z o Z → A** (por banda o todos los discos): la primera letra de la banda, sin tildes. Los nombres que empiezan con número o signo van en `#`.
-- **Agrupada por género:** una marca por sección.
-- **Ordenada por género sin agrupar:** el género principal de la banda, o "Sin género".
+- **Agrupada u ordenada por género:** una marca por cada título de género que se ve.
 - **Última compra:** el mes y el año.
 
 Cada marca MUST ubicarse a la altura proporcional a su posición en la lista. Si dos marcas quedan demasiado cerca, el sistema SHALL mostrar solo una.
@@ -354,8 +365,12 @@ En Ajustes, la usuaria SHALL poder elegir si se muestra el índice (por defecto)
 - **THEN** "2 Minutos" está bajo "#" y "Él Mató…" bajo "E"
 
 #### Scenario: Por género
-- **WHEN** la lista está agrupada por género
-- **THEN** las marcas del índice son los géneros de las secciones
+- **WHEN** la lista está agrupada u ordenada por género
+- **THEN** las marcas del índice son los títulos de género que se ven
+
+#### Scenario: Géneros filtrados
+- **WHEN** la lista por género está filtrada por "thrash metal" y "speed metal"
+- **THEN** el índice solo tiene las marcas de esos títulos
 
 #### Scenario: Última compra
 - **WHEN** la lista está ordenada por última compra
@@ -380,4 +395,147 @@ En Ajustes, la usuaria SHALL poder elegir si se muestra el índice (por defecto)
 #### Scenario: Buscando
 - **WHEN** la usuaria está buscando
 - **THEN** el índice no aparece
+
+### Requirement: Cambiar de disco deslizando
+En el detalle de un disco, deslizar horizontalmente fuera de la imagen SHALL pasar al disco anterior o siguiente de la misma banda y el mismo formato, en el orden elegido para la pantalla de la banda. Deslizar sobre la imagen MUST cambiar solo entre tapa y contratapa, y MUST NOT cambiar de disco, aunque el disco no tenga contratapa. El gesto MUST NOT tener botones ni indicadores visibles. En el primer y el último disco, deslizar hacia el extremo MUST NOT hacer nada. Cambiar de disco MUST NOT agregar entradas al historial. Con una capa abierta, el gesto MUST NOT cambiar de disco. El desplazamiento vertical MUST seguir funcionando igual.
+
+#### Scenario: Disco siguiente
+- **WHEN** la usuaria está en "Signos", con "Doble Vida" después en el orden de la banda, y desliza hacia la izquierda sobre los datos del disco
+- **THEN** el sistema muestra el detalle de "Doble Vida", desde la tapa y desde arriba
+
+#### Scenario: Disco anterior
+- **WHEN** la usuaria está en "Doble Vida" y desliza hacia la derecha sobre los datos del disco
+- **THEN** el sistema muestra el detalle de "Signos"
+
+#### Scenario: Sobre la imagen
+- **WHEN** la usuaria desliza sobre la tapa de un disco con contratapa
+- **THEN** se muestra la contratapa y sigue en el mismo disco
+
+#### Scenario: Sobre la imagen en el extremo
+- **WHEN** la usuaria está viendo la contratapa y sigue deslizando hacia el mismo lado sobre la imagen
+- **THEN** sigue en el mismo disco
+
+#### Scenario: Disco sin contratapa
+- **WHEN** el disco solo tiene tapa y la usuaria desliza sobre ella
+- **THEN** sigue en el mismo disco
+
+#### Scenario: Último disco
+- **WHEN** la usuaria está en el último disco de la banda en ese formato y desliza hacia la izquierda
+- **THEN** sigue en el mismo disco
+
+#### Scenario: Solo discos del mismo formato
+- **WHEN** la usuaria está en un CD de una banda que también tiene vinilos
+- **THEN** al deslizar solo pasa por los CDs de esa banda
+
+#### Scenario: Atrás después de deslizar
+- **WHEN** la usuaria entra a Soda Stereo, abre "Signos", desliza dos discos y usa atrás
+- **THEN** el sistema vuelve a la pantalla de Soda Stereo
+
+#### Scenario: Con el visor abierto
+- **WHEN** la usuaria tiene la tapa ampliada y la desliza
+- **THEN** sigue en el visor del mismo disco
+
+#### Scenario: Scroll vertical
+- **WHEN** la usuaria desplaza el detalle hacia abajo con un movimiento apenas inclinado
+- **THEN** la pantalla se desplaza y sigue en el mismo disco
+
+### Requirement: Títulos de género en la lista
+Cuando la lista de la pantalla principal se ve agrupada u ordenada por género, cada título de género MUST verse más grande que el nombre de la banda, y MUST NOT usar el color de acento. Ordenada por género sin agrupar, la lista MUST mostrar un título por cada tramo y cada banda o disco MUST aparecer una sola vez, bajo su género principal o, con un filtro activo, bajo el primero de sus géneros que esté elegido. Los elementos sin géneros MUST ir bajo "Sin género", al final. Al buscar, MUST NOT mostrarse títulos de género.
+
+#### Scenario: Agrupada por género
+- **WHEN** la usuaria elige "Por género"
+- **THEN** cada título de género se ve más grande que los nombres de las bandas
+
+#### Scenario: Ordenada por género
+- **WHEN** la usuaria elige el orden "Género" con la vista "Por banda" y Megadeth tiene "thrash metal" y "heavy metal"
+- **THEN** ve títulos de género, con Megadeth una sola vez, bajo "thrash metal"
+
+#### Scenario: Ordenada por género con filtro
+- **WHEN** la lista ordenada por género está filtrada por "heavy metal" y Megadeth tiene "thrash metal" y "heavy metal"
+- **THEN** Megadeth aparece bajo "heavy metal"
+
+### Requirement: Filtrar la lista por género
+Cuando la lista de la pantalla principal se ve agrupada u ordenada por género, el sistema SHALL mostrar al principio de la lista una fila de chips en píldora, que se desplaza horizontalmente, con los géneros del formato activo y, si corresponde, "Sin género" al final. Cada chip MUST mostrar cuántas bandas tiene o, en "Todos los discos", cuántos discos. Tocar un chip MUST activarlo o desactivarlo. Sin chips activos, MUST verse toda la lista; con chips activos, MUST verse solo lo que tenga alguno de esos géneros. La barra de la lista MUST contar lo que queda visible. La selección SHALL recordarse en el dispositivo y aplicarse a las dos pestañas; un género que no existe en la pestaña activa MUST ignorarse sin perder la selección. Al buscar, la fila MUST NOT aparecer y el filtro MUST NOT aplicarse.
+
+#### Scenario: Ver un solo género
+- **WHEN** la usuaria toca "thrash metal" en la fila de chips
+- **THEN** ve solo las bandas con ese género, y la barra cuenta esas bandas
+
+#### Scenario: Varios géneros
+- **WHEN** la usuaria activa "thrash metal" y "speed metal"
+- **THEN** ve las bandas que tienen alguno de los dos
+
+#### Scenario: Banda con varios géneros
+- **WHEN** la lista agrupada está filtrada por "thrash metal" y Megadeth también tiene "heavy metal"
+- **THEN** Megadeth aparece solo en la sección "thrash metal"
+
+#### Scenario: Solo sin género
+- **WHEN** la usuaria activa "Sin género"
+- **THEN** ve solo las bandas sin géneros
+
+#### Scenario: Quitar el filtro
+- **WHEN** la usuaria desactiva el último chip activo
+- **THEN** vuelve a ver toda la lista
+
+#### Scenario: Recordar la selección
+- **WHEN** la usuaria eligió "thrash metal" y vuelve a abrir la app
+- **THEN** la lista por género sigue filtrada por "thrash metal"
+
+#### Scenario: Género de la otra pestaña
+- **WHEN** "new wave" está elegido y la usuaria pasa a una pestaña donde ninguna banda lo tiene
+- **THEN** ese género no aparece ni filtra, y sigue elegido al volver a la pestaña anterior
+
+#### Scenario: Otra vista
+- **WHEN** la lista se ve por banda con orden A → Z
+- **THEN** no aparece la fila de chips y se ve toda la lista
+
+#### Scenario: Buscando con filtro
+- **WHEN** la lista está filtrada por "thrash metal" y la usuaria busca "signos"
+- **THEN** ve todos los resultados de la búsqueda, sin la fila de chips
+
+### Requirement: Estado en el detalle
+Si un disco tiene etiquetas de estado u observación, su detalle SHALL ofrecer una sección "Más datos", plegada por defecto, que las muestra al abrirla. Sin etiquetas ni observación, el detalle MUST NOT mostrar esa sección. Las tarjetas y filas de las listas de la colección MUST NOT mostrar el estado.
+
+#### Scenario: Disco con estado
+- **WHEN** la usuaria abre un CD con "Rayado" y la observación "Salta en el tema 3"
+- **THEN** el detalle muestra "Más datos" plegado, sin la etiqueta ni la observación a la vista
+
+#### Scenario: Abrir el estado
+- **WHEN** la usuaria abre "Más datos" en ese CD
+- **THEN** ve "Rayado" y "Salta en el tema 3"
+
+#### Scenario: Disco sin estado
+- **WHEN** la usuaria abre un disco sin etiquetas ni observación
+- **THEN** el detalle no muestra la sección "Más datos"
+
+#### Scenario: Tarjetas
+- **WHEN** la usuaria ve la lista de discos de una banda
+- **THEN** las tarjetas no muestran el estado
+
+### Requirement: Discos con estado
+Ajustes SHALL ofrecer la entrada "Discos con estado", con la cantidad, deshabilitada si no hay ninguno, que abre una pantalla con los discos de los dos formatos que tienen etiquetas u observación, ordenados por banda, año y título. Cada fila MUST mostrar el disco, la banda, el formato y sus etiquetas, y tocarla MUST abrir el detalle. La pantalla SHALL permitir filtrar con chips en píldora, con selección múltiple, por las etiquetas que estén en uso y por "Con observación"; sin chips activos, MUST mostrar todos. La pantalla MUST funcionar sin conexión.
+
+#### Scenario: Ver los que tienen problemas
+- **WHEN** la usuaria abre "Discos con estado" y tres discos tienen algún estado
+- **THEN** ve esos tres discos con sus etiquetas
+
+#### Scenario: Filtrar por etiqueta
+- **WHEN** la usuaria activa "Necesita funda" y "Tapa rota"
+- **THEN** ve solo los discos con alguna de esas dos etiquetas
+
+#### Scenario: Solo con observación
+- **WHEN** un disco no tiene etiquetas y tiene una observación
+- **THEN** aparece en la lista, y también al activar "Con observación"
+
+#### Scenario: Abrir un disco
+- **WHEN** la usuaria toca un disco de la lista y usa atrás
+- **THEN** ve el detalle del disco y, después, vuelve a la lista con el mismo filtro
+
+#### Scenario: Ninguno con estado
+- **WHEN** ningún disco tiene estado
+- **THEN** la entrada de Ajustes aparece deshabilitada
+
+#### Scenario: Sin conexión
+- **WHEN** la usuaria abre la pantalla sin conexión
+- **THEN** ve los discos con estado de la copia guardada
 

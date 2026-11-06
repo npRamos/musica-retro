@@ -108,5 +108,4 @@ La fila aparece solo cuando la lista se ve por género (`agrupar === 'generos'` 
 
 ## Open Questions
 
-- **#11:** falta confirmar qué dice "Link de Spotify" en un disco donde falla. Si está vacío, la causa es otra y hay que revisarlo antes de cerrar el issue.
-- **#9:** falta confirmar en un celular real qué opciones ofrece Instagram al recibir la imagen.
+Ninguna. La usuaria probó en el celular el enlace a Spotify (#11) y compartir el disco sorteado (#9), y los dio por buenos.
