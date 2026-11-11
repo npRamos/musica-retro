@@ -59,15 +59,16 @@ describe('planilla con encabezado', () => {
       'Copias inválidas: "0"',
       'El año tiene que tener 4 cifras: "86"',
       'Fecha inválida: "31/02/2020"',
-      'El link de Spotify tiene que ser de un álbum',
+      'El link de Spotify tiene que ser de un álbum o una playlist',
       'Falta el formato',
     ])
   })
 
-  it('guarda el link de Spotify limpio y rechaza el que no es de un álbum', () => {
-    const lineas = parsearLista(['Banda;Disco;Formato;Spotify', 'A;B;CD;https://open.spotify.com/album/abc?si=123', 'A;C;CD;https://open.spotify.com/user/nadia'].join('\n'))
+  it('guarda el link de Spotify limpio y rechaza el que no es de un álbum ni de una playlist', () => {
+    const lineas = parsearLista(['Banda;Disco;Formato;Spotify', 'A;B;CD;https://open.spotify.com/album/abc?si=123', 'A;C;CD;https://open.spotify.com/user/nadia', 'A;D;CD;https://open.spotify.com/playlist/xyz?si=9'].join('\n'))
     expect(lineas[0].spotify_url).toBe('https://open.spotify.com/album/abc')
-    expect(lineas[1].error).toBe('El link de Spotify tiene que ser de un álbum')
+    expect(lineas[2].spotify_url).toBe('https://open.spotify.com/playlist/xyz')
+    expect(lineas[1].error).toBe('El link de Spotify tiene que ser de un álbum o una playlist')
   })
 
   it('lee el estado y la observación, y marca inválido lo que no corresponde al formato', () => {

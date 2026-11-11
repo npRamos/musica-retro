@@ -27,10 +27,11 @@ describe('CSV', () => {
     expect(filas[4]).toBe('Soda Stereo;Canción Animal;Vinilo;1;;02/01/2026;https://open.spotify.com/album/x;;')
     expect(filas[5]).toBe('Soda Stereo;"Uno; ""Dos""";CD;1;;02/01/2026;;;')
   })
-  it('exporta el link de Spotify limpio, o vacío si no es de un álbum', () => {
+  it('exporta el link de Spotify limpio, o vacío si no es de un álbum ni de una playlist', () => {
     const banda = new Map([['b', { id: 'b', nombre: 'Sumo' }]])
     const fila = (spotify_url) => generarCsv([{ banda_id: 'b', titulo: 'T', formato: 'cd', copias: 1, fecha_carga: '2026-01-02T15:00:00Z', spotify_url }], banda).slice(1).trimEnd().split('\r\n')[1]
     expect(fila('https://open.spotify.com/album/abc?si=123')).toBe('Sumo;T;CD;1;;02/01/2026;https://open.spotify.com/album/abc;;')
+    expect(fila('https://open.spotify.com/playlist/xyz?si=9')).toBe('Sumo;T;CD;1;;02/01/2026;https://open.spotify.com/playlist/xyz;;')
     expect(fila('https://open.spotify.com/user/nadia')).toBe('Sumo;T;CD;1;;02/01/2026;;;')
   })
   it('exporta el estado y la observación', () => {

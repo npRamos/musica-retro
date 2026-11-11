@@ -159,15 +159,15 @@ export function buscar(discos, bandasPorId, texto, formato) {
   return { enFormato, enOtro }
 }
 
-// El link limpio del álbum, o null si no es de un álbum. Saca los parámetros, como el `si` que identifica a quien
-// copió el link, y el prefijo de idioma.
-const RUTA_ALBUM = /^\/(?:intl-[a-z]{2}\/)?album\/([A-Za-z0-9]+)\/?$/
+// El link limpio del álbum o de la playlist, o null si es de otra cosa (un tema, un perfil). Saca los parámetros,
+// como el `si` que identifica a quien copió el link, y el prefijo de idioma.
+const RUTA_DISCO = /^\/(?:intl-[a-z]{2}\/)?(album|playlist)\/([A-Za-z0-9]+)\/?$/
 export function limpiarLinkSpotify(url) {
   try {
     const u = new URL(String(url ?? '').trim())
     if (u.protocol !== 'https:' || u.hostname !== 'open.spotify.com') return null
-    const [, id] = RUTA_ALBUM.exec(u.pathname) ?? []
-    return id ? `https://open.spotify.com/album/${id}` : null
+    const [, tipo, id] = RUTA_DISCO.exec(u.pathname) ?? []
+    return id ? `https://open.spotify.com/${tipo}/${id}` : null
   } catch {
     return null
   }

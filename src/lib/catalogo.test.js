@@ -92,10 +92,17 @@ describe('spotify', () => {
     expect(linkSpotify({ titulo: 'x', spotify_url: 'https://open.spotify.com/album/abc?si=123' }, null)).toBe('https://open.spotify.com/album/abc')
     expect(linkSpotify({ titulo: 'Signos', spotify_url: 'https://open.spotify.com/user/nadia' }, { nombre: 'Soda' })).toBe('https://open.spotify.com/search/Soda%20Signos')
   })
-  it('limpia los links de álbum y rechaza el resto', () => {
+  it('abre la playlist guardada, limpia', () => {
+    expect(linkSpotify({ titulo: 'x', spotify_url: 'https://open.spotify.com/playlist/0JAGbTK5y60Xj4V?si=123' }, null)).toBe('https://open.spotify.com/playlist/0JAGbTK5y60Xj4V')
+  })
+  it('limpia los links de álbum o playlist y rechaza el resto', () => {
     expect(limpiarLinkSpotify('https://open.spotify.com/album/abc')).toBe('https://open.spotify.com/album/abc')
     expect(limpiarLinkSpotify(' https://open.spotify.com/album/abc/?si=123&utm_source=x ')).toBe('https://open.spotify.com/album/abc')
     expect(limpiarLinkSpotify('https://open.spotify.com/intl-es/album/abc')).toBe('https://open.spotify.com/album/abc')
+    expect(limpiarLinkSpotify('https://open.spotify.com/playlist/0JAGbTK5y60Xj4V')).toBe('https://open.spotify.com/playlist/0JAGbTK5y60Xj4V')
+    expect(limpiarLinkSpotify('https://open.spotify.com/playlist/abc?si=123&pt=x')).toBe('https://open.spotify.com/playlist/abc')
+    expect(limpiarLinkSpotify('https://open.spotify.com/intl-es/playlist/abc/')).toBe('https://open.spotify.com/playlist/abc')
+    expect(limpiarLinkSpotify('https://open.spotify.com/artist/abc')).toBeNull()
     expect(limpiarLinkSpotify('https://open.spotify.com/user/nadia')).toBeNull()
     expect(limpiarLinkSpotify('https://open.spotify.com/track/abc')).toBeNull()
     expect(limpiarLinkSpotify('https://evil.com/album/abc')).toBeNull()

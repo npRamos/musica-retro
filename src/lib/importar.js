@@ -90,7 +90,7 @@ function leerOpcionales(campos, indice, formato) {
   }
   if (valor('spotify')) {
     const link = limpiarLinkSpotify(valor('spotify'))
-    if (!link) return { error: 'El link de Spotify tiene que ser de un álbum' }
+    if (!link) return { error: 'El link de Spotify tiene que ser de un álbum o una playlist' }
     datos.spotify_url = link
   }
   if (valor('estado')) {

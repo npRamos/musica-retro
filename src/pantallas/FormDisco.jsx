@@ -129,7 +129,7 @@ export default function FormDisco({ disco, inicial = {} }) {
     if (!Number.isInteger(copias) || copias < 1) e.copias = 'El mínimo es 1 copia'
     const { error: errorAnio } = leerAnio(anioTexto)
     if (errorAnio) e.anio = errorAnio
-    if (spotify.trim() && !limpiarLinkSpotify(spotify)) e.spotify = 'Tiene que ser el link de un álbum de open.spotify.com'
+    if (spotify.trim() && !limpiarLinkSpotify(spotify)) e.spotify = 'Tiene que ser el link de un álbum o una playlist de open.spotify.com'
     if (editando && !fecha) e.fecha = 'Elegí una fecha'
     else if (editando && fecha > hoy) e.fecha = 'La fecha no puede ser futura'
     setErrores(e)
